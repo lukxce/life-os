@@ -1,16 +1,16 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarDays, CalendarCheck, CalendarRange, Settings, Plus } from 'lucide-react'
+import { CalendarDays, CalendarCheck, Target, Users, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const LINKS_LEFT = [
-  { href: '/life',        label: 'Today',    icon: CalendarDays  },
-  { href: '/life/weekly', label: 'Weekly',   icon: CalendarCheck },
+  { href: '/life',        label: 'Today',   icon: CalendarDays  },
+  { href: '/life/weekly', label: 'Weekly',  icon: CalendarCheck },
 ]
 const LINKS_RIGHT = [
-  { href: '/life/schedule', label: 'Schedule', icon: CalendarRange },
-  { href: '/life/habits',   label: 'Habits',   icon: Settings      },
+  { href: '/life/goals',    label: 'Goals',  icon: Target },
+  { href: '/life/contacts', label: 'People', icon: Users  },
 ]
 
 export function LifeBottomNav({ onAdd }: { onAdd: () => void }) {

@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { LifeSidebar } from './LifeSidebar'
 import { LifeBottomNav } from './LifeBottomNav'
-import { QuickAddModal } from '@/components/habits/QuickAddModal'
+import { QuickAddSheet } from './QuickAddSheet'
 import { ThemeToggle } from './ThemeToggle'
 
 export function LifeShell({ children }: { children: React.ReactNode }) {
@@ -29,7 +29,7 @@ export function LifeShell({ children }: { children: React.ReactNode }) {
       <LifeBottomNav onAdd={() => setShowAdd(true)} />
 
       {showAdd && (
-        <QuickAddModal onClose={() => setShowAdd(false)} onCreated={() => window.location.reload()} />
+        <QuickAddSheet onClose={() => setShowAdd(false)} onCreated={() => window.location.reload()} />
       )}
     </div>
   )

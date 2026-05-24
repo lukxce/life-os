@@ -271,6 +271,72 @@ model ScheduleDay {
   summary String?
 }
 
+// ─── Life — Goals, Contacts, Journal, Calendars ──────────────────────────────
+
+model Goal {
+  id         String          @id @default(cuid())
+  name       String
+  emoji      String?
+  color      String?
+  targetDate DateTime?
+  completed  Boolean         @default(false)
+  type       String          @default("long_term")
+  order      Int             @default(0)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  milestones GoalMilestone[]
+}
+
+model GoalMilestone {
+  id        String  @id @default(cuid())
+  goalId    String
+  goal      Goal    @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  name      String
+  completed Boolean @default(false)
+  order     Int     @default(0)
+}
+
+model Contact {
+  id                String    @id @default(cuid())
+  name              String
+  emoji             String?
+  color             String?
+  birthday          String?
+  reachOutFrequency String    @default("monthly")
+  lastContactDate   DateTime?
+  note              String?
+  order             Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model JournalQuestion {
+  id    String @id @default(cuid())
+  text  String
+  order Int    @default(0)
+}
+
+model JournalEntry {
+  id        String   @id @default(cuid())
+  date      DateTime @unique
+  answers   Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ICSCalendar {
+  id    String @id @default(cuid())
+  name  String
+  url   String
+  color String @default("#6366f1")
+  order Int    @default(0)
+}
+
+model AppConfig {
+  key   String @id
+  value String
+}
+
 // ─── Shared ───────────────────────────────────────────────────────────────────
 
 model Settings {

@@ -1,16 +1,21 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarDays, BarChart2, Settings, History, Plus, CalendarCheck, CalendarRange, Home } from 'lucide-react'
+import { CalendarDays, BarChart2, Settings, History, Plus, CalendarCheck, CalendarRange, Home, Target, Users, BookOpen, Calendar, SlidersHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const links = [
-  { href: '/life',          label: 'Today',         icon: CalendarDays  },
-  { href: '/life/weekly',   label: 'Weekly',         icon: CalendarCheck },
-  { href: '/life/schedule', label: 'Schedule',       icon: CalendarRange },
-  { href: '/life/history',  label: 'History',        icon: History       },
-  { href: '/life/analytics',label: 'Analytics',      icon: BarChart2     },
-  { href: '/life/habits',   label: 'Manage Habits',  icon: Settings      },
+  { href: '/life',           label: 'Today',         icon: CalendarDays  },
+  { href: '/life/weekly',    label: 'Weekly',        icon: CalendarCheck },
+  { href: '/life/schedule',  label: 'Schedule',      icon: CalendarRange },
+  { href: '/life/goals',     label: 'Goals',         icon: Target        },
+  { href: '/life/contacts',  label: 'People',        icon: Users         },
+  { href: '/life/journal',   label: 'Journal',       icon: BookOpen      },
+  { href: '/life/ics',       label: 'Calendars',     icon: Calendar      },
+  { href: '/life/history',   label: 'History',       icon: History       },
+  { href: '/life/analytics', label: 'Analytics',     icon: BarChart2     },
+  { href: '/life/habits',    label: 'Habits',        icon: Settings      },
+  { href: '/life/settings',  label: 'Life Settings', icon: SlidersHorizontal },
 ]
 
 export function LifeSidebar({ onAdd }: { onAdd?: () => void }) {
@@ -42,7 +47,7 @@ export function LifeSidebar({ onAdd }: { onAdd?: () => void }) {
       <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
         <button onClick={onAdd}
           className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 w-full transition-colors">
-          <Plus size={16} /> Add habit
+          <Plus size={16} /> Add
         </button>
       </div>
     </aside>
