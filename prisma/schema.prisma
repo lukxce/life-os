@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+// ─── Finance models ───────────────────────────────────────────────────────────
+
+model Account {
+  id              String    @id @default(cuid())
+  userId          String    @default("default")
+  name            String
+  type            String    // "personal" | "company"
+  currency        String    // "RSD" | "EUR"
+  startingBalance Float     @default(0)
+  manualOverride  Float?
+  overrideDate    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  incomeEntries   IncomeEntry[]
+  expenseEntries  ExpenseEntry[]
+  conversionsFrom Conversion[]  @relation("ConvFromAccount")
+  conversionsTo   Conversion[]  @relation("ConvToAccount")
+  transfersFrom   Transfer[]    @relation("TrfFromAccount")
+  transfersTo     Transfer[]    @relation("TrfToAccount")
+}
+
+model IncomeEntry {
+  id          String   @id @default(cuid())
+  userId      String   @default("default")
+  date        DateTime
+  type        String   // "Salary" | "Invoice" | "Other"
+  currency    String
+  grossAmount Float
+  deduction   Float    @default(0)
+  netAmount   Float
+  client      String?
+  accountId   String
+  account     Account  @relation(fields: [accountId], references: [id])
+  notes       String?
+  createdAt   DateTime @default(now())
+}
+
+model ExpenseEntry {
+  id             String    @id @default(cuid())
+  userId         String    @default("default")
+  date           DateTime
+  type           String    // "personal" | "business"
+  category       String
+  subcategory    String?
+  description    String?
+  amount         Float
+  currency       String
+  accountId      String
+  account        Account   @relation(fields: [accountId], references: [id])
+  amountRSD      Float
+  vatReclaimable Boolean   @default(false)
+  notes          String?
+  createdAt      DateTime  @default(now())
+  merchantName   String?
+  merchantPib    String?
+  sufUrl         String?
+  pdfUrl         String?
+  photoUrl       String?
+  hasWarranty    Boolean   @default(false)
+  warrantyMonths Int?
+  warrantyNotes  String?
+  tags           String[]  @default([])
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  @@index([merchantPib])
+  @@index([subscriptionId])
+  @@index([date])
+}
+
+model Conversion {
+  id             String   @id @default(cuid())
+  userId         String   @default("default")
+  date           DateTime
+  amountSent     Float
+  fromAccountId  String
+  fromAccount    Account  @relation("ConvFromAccount", fields: [fromAccountId], references: [id])
+  amountReceived Float
+  toAccountId    String
+  toAccount      Account  @relation("ConvToAccount", fields: [toAccountId], references: [id])
+  rateUsed       Float
+  notes          String?
+  createdAt      DateTime @default(now())
+}
+
+model Transfer {
+  id             String   @id @default(cuid())
+  userId         String   @default("default")
+  date           DateTime
+  amountSent     Float
+  fromAccountId  String
+  fromAccount    Account  @relation("TrfFromAccount", fields: [fromAccountId], references: [id])
+  amountReceived Float
+  toAccountId    String
+  toAccount      Account  @relation("TrfToAccount", fields: [toAccountId], references: [id])
+  rateUsed       Float
+  notes          String?
+  createdAt      DateTime @default(now())
+}
+
+model Category {
+  id            String   @id @default(cuid())
+  userId        String   @default("default")
+  name          String
+  type          String
+  subcategories String[]
+  createdAt     DateTime @default(now())
+  @@unique([userId, name, type])
+}
+
+model Subscription {
+  id              String   @id @default(cuid())
+  userId          String   @default("default")
+  name            String
+  billingAmount   Float
+  billingCurrency String
+  category        String?
+  subcategory     String?
+  accountId       String?
+  active          Boolean  @default(true)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  expenseEntries  ExpenseEntry[]
+}
+
+model Bill {
+  id          String   @id @default(cuid())
+  userId      String   @default("default")
+  name        String
+  amount      Float
+  currency    String
+  category    String?
+  subcategory String?
+  accountId   String?
+  dayOfMonth  Int
+  active      Boolean  @default(true)
+  notes       String?
+  isLoan      Boolean  @default(false)
+  lender      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  payments    BillPayment[]
+}
+
+model BillPayment {
+  id        String   @id @default(cuid())
+  billId    String
+  bill      Bill     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  paidDate  DateTime @default(now())
+  amount    Float
+  expenseId String?
+  createdAt DateTime @default(now())
+}
+
+model CryptoHolding {
+  id        String   @id @default(cuid())
+  userId    String   @default("default")
+  symbol    String
+  quantity  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Budget {
+  id        String   @id @default(cuid())
+  userId    String   @default("default")
+  category  String
+  amountRSD Float?
+  amountEUR Float?
+  period    String   @default("month")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SavingGoal {
+  id           String          @id @default(cuid())
+  userId       String          @default("default")
+  name         String
+  targetAmount Float
+  currency     String
+  accountId    String?
+  targetDate   DateTime?
+  notes        String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deposits     SavingDeposit[]
+}
+
+model SavingDeposit {
+  id        String     @id @default(cuid())
+  goalId    String
+  goal      SavingGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  amount    Float
+  currency  String
+  date      DateTime   @default(now())
+  notes     String?
+  createdAt DateTime   @default(now())
+}
+
+// ─── Life / Habit models ──────────────────────────────────────────────────────
+
+model Habit {
+  id            String         @id @default(cuid())
+  name          String
+  category      String
+  type          String
+  unit          String?
+  target        Float?
+  frequency     String
+  frequencyDays Int[]
+  icon          String?
+  color         String?
+  timeOfDay     String         @default("all_day")
+  order         Int            @default(0)
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  logs          HabitLog[]
+  subTasks      HabitSubTask[]
+}
+
+model HabitSubTask {
+  id      String @id @default(cuid())
+  habitId String
+  habit   Habit  @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  name    String
+  order   Int    @default(0)
+}
+
+model HabitLog {
+  id                  String   @id @default(cuid())
+  habitId             String
+  habit               Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  date                DateTime
+  completed           Boolean  @default(false)
+  value               Float?
+  notes               String?
+  completedSubTaskIds String[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  @@unique([habitId, date])
+}
+
+model ScheduleBlock {
+  id        String   @id @default(cuid())
+  day       String
+  startTime String
+  endTime   String?
+  name      String
+  note      String?
+  category  String
+  sacred    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ScheduleDay {
+  id      String  @id @default(cuid())
+  day     String  @unique
+  label   String?
+  summary String?
+}
+
+// ─── Shared ───────────────────────────────────────────────────────────────────
+
+model Settings {
+  id           String   @id @default("default")
+  userId       String   @default("default") @unique
+  manualRate   Float    @default(117.5)
+  weekStartsOn Int      @default(1)
+  theme        String   @default("light")
+  updatedAt    DateTime @updatedAt
+}
