@@ -87,7 +87,7 @@ export default function TodayPage() {
     if (isHoliday) next.delete(selectedKey)
     else next.add(selectedKey)
     setHolidays(next)
-    localStorage.setItem('holidays', JSON.stringify([...next]))
+    localStorage.setItem('holidays', JSON.stringify(Array.from(next)))
   }
 
   useEffect(() => {
