@@ -63,7 +63,7 @@ function HabitsPage() {
     if (searchParams.get('add') === '1') setShowForm(true)
   }, [searchParams])
 
-  const categories = [...new Set(habits.map((h) => h.category))]
+  const categories = Array.from(new Set(habits.map((h) => h.category)))
 
   async function saveHabit() {
     if (!form.name.trim() || !form.category.trim()) return
