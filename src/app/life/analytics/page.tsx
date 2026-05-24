@@ -167,7 +167,7 @@ export default function AnalyticsPage() {
               <section>
                 <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Monthly view</h2>
                 <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 space-y-4">
-                  {[...months.entries()].reverse().map(([month, days]) => {
+                  {Array.from(months.entries()).reverse().map(([month, days]) => {
                     const [y, m] = month.split('-').map(Number)
                     const label = new Date(y, m - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
                     const avg = Math.round(days.reduce((s, d) => s + d.completionRate, 0) / days.length)
