@@ -37,10 +37,19 @@ const MODULES = [
     href: '/life',
     emoji: '✅',
     title: 'Life',
-    description: 'Habits, schedule & weekly review',
+    description: 'Habits, goals, journal & schedule',
     color: 'from-indigo-500 to-indigo-600',
     border: 'border-indigo-100 dark:border-indigo-900',
     bg: 'bg-indigo-50 dark:bg-indigo-950/40',
+  },
+  {
+    href: '/food',
+    emoji: '🗺️',
+    title: 'Food Map',
+    description: 'Restaurants & places you love',
+    color: 'from-orange-400 to-orange-500',
+    border: 'border-orange-100 dark:border-orange-900',
+    bg: 'bg-orange-50 dark:bg-orange-950/40',
   },
 ]
 

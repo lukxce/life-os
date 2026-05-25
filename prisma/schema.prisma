@@ -271,6 +271,28 @@ model ScheduleDay {
   summary String?
 }
 
+// ─── Food module ─────────────────────────────────────────────────────────────
+
+model Place {
+  id            String    @id @default(cuid())
+  name          String
+  city          String
+  country       String    @default("")
+  cuisine       String    @default("")
+  category      String    // "been" | "want_to_go" | "regular"
+  myRating      Float?
+  notes         String?
+  mustOrder     String?
+  priceRange    String?   // "budget" | "mid" | "upscale"
+  latitude      Float
+  longitude     Float
+  address       String?
+  visitedAt     DateTime?
+  googlePlaceId String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
 // ─── Life — Goals, Contacts, Journal, Calendars ──────────────────────────────
 
 model Goal {

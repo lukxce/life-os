@@ -156,13 +156,14 @@ export default function AnalyticsPage() {
               if (!months.has(key)) months.set(key, [])
               months.get(key)!.push(t)
             }
-            function dotColor(rate: number) {
-              if (rate === 0) return '#e5e7eb'
-              if (rate < 33)  return '#bbf7d0'
-              if (rate < 66)  return '#4ade80'
-              if (rate < 100) return '#22c55e'
-              return '#16a34a'
+            function dotColor(rate: number, dark: boolean) {
+              if (rate === 0) return dark ? '#374151' : '#e5e7eb'
+              if (rate < 33)  return dark ? '#14532d' : '#bbf7d0'
+              if (rate < 66)  return dark ? '#16a34a' : '#4ade80'
+              if (rate < 100) return dark ? '#22c55e' : '#16a34a'
+              return '#15803d'
             }
+            const isDark = typeof window !== 'undefined' && document.documentElement.classList.contains('dark')
             return (
               <section>
                 <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Monthly view</h2>
@@ -181,7 +182,7 @@ export default function AnalyticsPage() {
                           {days.map(d => (
                             <div key={d.date} title={`${d.date}: ${d.completionRate}%`}
                               className="w-5 h-5 rounded-md"
-                              style={{ background: dotColor(d.completionRate) }} />
+                              style={{ background: dotColor(d.completionRate, isDark) }} />
                           ))}
                         </div>
                       </div>
