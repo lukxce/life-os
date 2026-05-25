@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { formatEUR, formatRSD } from '@/lib/utils'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
@@ -7,6 +8,11 @@ import {
   TrendingUp, TrendingDown, CheckCircle2, Circle, FileText,
   ArrowRight, Wallet, Sparkles
 } from 'lucide-react'
+
+const FoodMapPreview = dynamic(
+  () => import('@/components/food/FoodMapPreview').then(m => m.FoodMapPreview),
+  { ssr: false, loading: () => <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" /> }
+)
 
 interface DashboardData {
   finance: {
@@ -177,6 +183,12 @@ export default function HomePage() {
               </Link>
             ))}
           </div>
+        </div>
+
+        {/* Food map preview */}
+        <div>
+          <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase mb-4">Food Map</h2>
+          <FoodMapPreview />
         </div>
 
         {/* Quick actions */}

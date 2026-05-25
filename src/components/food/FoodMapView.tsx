@@ -1,12 +1,32 @@
 'use client'
 import { useState, useMemo } from 'react'
-import { Map, AdvancedMarker } from '@vis.gl/react-google-maps'
-import { Plus, X, Pencil, Trash2 } from 'lucide-react'
+import { Map, AdvancedMarker, useMap } from '@vis.gl/react-google-maps'
+import { Plus, X, Pencil, Trash2, Crosshair } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PlaceFormSheet } from './PlaceFormSheet'
 import { CATEGORY_CONFIG, Place } from './constants'
 
 const PRICE_LABEL: Record<string, string> = { budget: '€', mid: '€€', upscale: '€€€' }
+
+function LocateMeButton() {
+  const map = useMap()
+  function locate() {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        map?.panTo({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        map?.setZoom(14)
+      },
+      () => {}
+    )
+  }
+  return (
+    <button onClick={locate} title="Go to my location"
+      className="absolute bottom-24 md:bottom-6 left-4 md:left-6 z-10 w-10 h-10 bg-white dark:bg-gray-900 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+      <Crosshair size={17} className="text-gray-600 dark:text-gray-300" />
+    </button>
+  )
+}
 
 interface Props {
   places: Place[]
@@ -44,6 +64,7 @@ export function FoodMapView({ places, onReload }: Props) {
         disableDefaultUI
         mapId="DEMO_MAP_ID"
         style={{ width: '100%', height: '100%' }}
+        onClick={() => setSelected(null)}
       >
         {filtered.map(place => {
           const cfg = CATEGORY_CONFIG[place.category as keyof typeof CATEGORY_CONFIG]
@@ -167,13 +188,14 @@ export function FoodMapView({ places, onReload }: Props) {
         </div>
       )}
 
-      {/* FAB */}
-      {!selected && (
-        <button onClick={() => setEditing(null)}
-          className="absolute bottom-24 md:bottom-6 right-4 md:right-6 z-10 w-14 h-14 bg-orange-500 text-white rounded-full shadow-xl shadow-orange-500/30 flex items-center justify-center hover:bg-orange-600 active:scale-95 transition-all">
-          <Plus size={24} />
-        </button>
-      )}
+      {/* Locate me */}
+      <LocateMeButton />
+
+      {/* FAB — always visible */}
+      <button onClick={() => { setSelected(null); setEditing(null) }}
+        className="absolute bottom-24 md:bottom-6 right-4 md:right-6 z-10 w-14 h-14 bg-orange-500 text-white rounded-full shadow-xl shadow-orange-500/30 flex items-center justify-center hover:bg-orange-600 active:scale-95 transition-all">
+        <Plus size={24} />
+      </button>
 
       {/* Add/Edit form */}
       {editing !== undefined && (
