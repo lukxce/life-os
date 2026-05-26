@@ -2,25 +2,22 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { flushSync } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { Camera, X, Zap, ZapOff, ZoomIn, ZoomOut, Hash } from 'lucide-react'
+import {
+  Camera, X, Zap, ZapOff, ZoomIn, ZoomOut,
+  Hash, ScanText, QrCode, RotateCcw, Check,
+} from 'lucide-react'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-/** PFR broj: 8-8-4 alphanumeric, e.g. "ABCD1234-EFGH5678-IJ90" */
 function isPfrBroj(text: string): boolean {
   return /^[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{4}$/i.test(text.trim())
 }
-
 function pfrToUrl(pfr: string): string {
   return `https://suf.purs.gov.rs/v/?vl=${btoa(pfr.trim())}`
 }
-
-function normaliseReceiptInput(raw: string): string | null {
-  const t = raw.trim()
-  if (!t) return null
-  if (t.startsWith('http')) return t
-  if (isPfrBroj(t))         return pfrToUrl(t)
-  return null
+function extractPfr(text: string): string | null {
+  const m = text.match(/[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{4}/i)
+  return m ? m[0].toUpperCase() : null
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -28,24 +25,34 @@ function normaliseReceiptInput(raw: string): string | null {
 export default function ScanPage() {
   const router = useRouter()
 
-  const scannerRef = useRef<any>(null)
-  const trackRef   = useRef<MediaStreamTrack | null>(null)
+  // QR scanner
+  const qrScannerRef  = useRef<any>(null)
+  // PFR text scanner
+  const pfrVideoRef   = useRef<HTMLVideoElement>(null)
+  const pfrCanvasRef  = useRef<HTMLCanvasElement>(null)
+  const pfrStreamRef  = useRef<MediaStream | null>(null)
+  // shared camera track (for torch/zoom)
+  const trackRef      = useRef<MediaStreamTrack | null>(null)
 
-  const [scanning,       setScanning]       = useState(false)
-  const [manualUrl,      setManualUrl]       = useState('')
-  const [manualPfr,      setManualPfr]       = useState('')
-  const [parsed,         setParsed]          = useState<any>(null)
-  const [loading,        setLoading]         = useState(false)
-  const [error,          setError]           = useState('')
-  const [expenseType,    setExpenseType]     = useState<'personal' | 'business'>('personal')
-  const [torchOn,        setTorchOn]         = useState(false)
-  const [torchSupported, setTorchSupported]  = useState(false)
-  const [zoom,           setZoom]            = useState(1)
-  const [zoomSupported,  setZoomSupported]   = useState(false)
-  const [zoomMin,        setZoomMin]         = useState(1)
-  const [zoomMax,        setZoomMax]         = useState(5)
+  type Mode = 'idle' | 'qr' | 'pfr'
+  const [mode,          setMode]          = useState<Mode>('idle')
+  const [manualUrl,     setManualUrl]     = useState('')
+  const [manualPfr,     setManualPfr]     = useState('')
+  const [parsed,        setParsed]        = useState<any>(null)
+  const [loading,       setLoading]       = useState(false)
+  const [error,         setError]         = useState('')
+  const [expenseType,   setExpenseType]   = useState<'personal' | 'business'>('personal')
+  const [torchOn,       setTorchOn]       = useState(false)
+  const [torchSupported,setTorchSupported]= useState(false)
+  const [zoom,          setZoom]          = useState(1)
+  const [zoomSupported, setZoomSupported] = useState(false)
+  const [zoomMin,       setZoomMin]       = useState(1)
+  const [zoomMax,       setZoomMax]       = useState(5)
+  // OCR specific
+  const [ocrRunning,    setOcrRunning]    = useState(false)
+  const [pfrFound,      setPfrFound]      = useState<string | null>(null)
 
-  // ── Parse ──────────────────────────────────────────────────────────────
+  // ── Parse receipt ────────────────────────────────────────────────────────
 
   const handleSufUrl = async (url: string) => {
     setLoading(true)
@@ -65,111 +72,212 @@ export default function ScanPage() {
     setLoading(false)
   }
 
-  const handleQrResult = useCallback((text: string) => {
-    const url = normaliseReceiptInput(text)
-    if (url) handleSufUrl(url)
-    else setError(`Unrecognised QR code — try entering the PFR broj or URL below`)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // ── Shared camera helpers ────────────────────────────────────────────────
 
-  // ── Scanner ────────────────────────────────────────────────────────────
+  function applyTrackCaps(track: MediaStreamTrack) {
+    trackRef.current = track
+    const caps = track.getCapabilities() as any
+    if (caps?.torch) setTorchSupported(true)
+    if (caps?.zoom) {
+      setZoomSupported(true)
+      setZoomMin(caps.zoom.min ?? 1)
+      setZoomMax(Math.min(caps.zoom.max ?? 5, 5))
+    }
+  }
 
-  const stopScanner = useCallback(async () => {
+  const toggleTorch = async () => {
+    const t = trackRef.current
+    if (!t) return
     try {
-      if (scannerRef.current) {
-        await scannerRef.current.stop()
-        scannerRef.current.clear()
-        scannerRef.current = null
-      }
+      await t.applyConstraints({ advanced: [{ torch: !torchOn } as any] })
+      setTorchOn(v => !v)
+    } catch { setError('Flash not available') }
+  }
+
+  const applyZoom = async (val: number) => {
+    const t = trackRef.current
+    if (!t) return
+    try {
+      await t.applyConstraints({ advanced: [{ zoom: val } as any] })
+      setZoom(val)
     } catch {}
+  }
+
+  function resetCameraState() {
     trackRef.current = null
-    setScanning(false)
     setTorchOn(false)
     setTorchSupported(false)
     setZoomSupported(false)
     setZoom(1)
-  }, [])
-
-  const startScanner = () => {
-    setError('')
-    // flushSync forces React to paint the #qr-reader div before we try to attach to it
-    flushSync(() => setScanning(true))
-    initScanner()
   }
 
-  const initScanner = async () => {
+  // ── QR scanner ───────────────────────────────────────────────────────────
+
+  const stopQr = useCallback(async () => {
+    try {
+      if (qrScannerRef.current) {
+        await qrScannerRef.current.stop()
+        qrScannerRef.current.clear()
+        qrScannerRef.current = null
+      }
+    } catch {}
+    resetCameraState()
+    setMode('idle')
+  }, [])
+
+  const startQr = () => {
+    setError('')
+    flushSync(() => setMode('qr'))
+    void initQr()
+  }
+
+  const initQr = async () => {
     const { Html5Qrcode } = await import('html5-qrcode')
     const scanner = new Html5Qrcode('qr-reader', { verbose: false })
-    scannerRef.current = scanner
-
+    qrScannerRef.current = scanner
     try {
       await scanner.start(
         { facingMode: 'environment' },
         {
           fps: 15,
           qrbox: (w: number, h: number) => {
-            const side = Math.floor(Math.min(w, h) * 0.72)
-            return { width: side, height: side }
+            const s = Math.floor(Math.min(w, h) * 0.72)
+            return { width: s, height: s }
           },
           aspectRatio: 1,
           disableFlip: false,
         },
-        (decodedText: string) => {
-          stopScanner()
-          handleQrResult(decodedText)
-        },
-        () => {}, // suppress per-frame not-found errors
+        (text: string) => { stopQr(); handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text)) },
+        () => {},
       )
-
-      // Grab the underlying video track for torch + zoom
       await new Promise(r => setTimeout(r, 600))
-      const videoEl = document.querySelector('#qr-reader video') as HTMLVideoElement | null
-      if (videoEl?.srcObject) {
-        const track = (videoEl.srcObject as MediaStream).getVideoTracks()[0]
-        if (track) {
-          trackRef.current = track
-          const caps = track.getCapabilities() as any
-          if (caps?.torch) setTorchSupported(true)
-          if (caps?.zoom) {
-            setZoomSupported(true)
-            setZoomMin(caps.zoom.min ?? 1)
-            setZoomMax(Math.min(caps.zoom.max ?? 5, 5))
-          }
-        }
+      const vid = document.querySelector('#qr-reader video') as HTMLVideoElement | null
+      if (vid?.srcObject) applyTrackCaps((vid.srcObject as MediaStream).getVideoTracks()[0])
+    } catch (e: any) {
+      qrScannerRef.current = null
+      setMode('idle')
+      setError(/permission|denied/i.test(String(e))
+        ? 'Camera access denied — enter PFR or URL below.'
+        : 'Could not start camera.')
+    }
+  }
+
+  // ── PFR text (OCR) scanner ───────────────────────────────────────────────
+
+  const stopPfr = useCallback(() => {
+    pfrStreamRef.current?.getTracks().forEach(t => t.stop())
+    pfrStreamRef.current = null
+    resetCameraState()
+    setMode('idle')
+    setOcrRunning(false)
+    setPfrFound(null)
+  }, [])
+
+  const startPfr = async () => {
+    setError('')
+    setPfrFound(null)
+    flushSync(() => setMode('pfr'))
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      })
+      pfrStreamRef.current = stream
+      if (pfrVideoRef.current) {
+        pfrVideoRef.current.srcObject = stream
+        await pfrVideoRef.current.play()
       }
-    } catch (err: any) {
-      scannerRef.current = null
-      setScanning(false)
-      if (/permission|denied/i.test(String(err))) {
-        setError('Camera access denied — enter the PFR broj or URL below.')
+      applyTrackCaps(stream.getVideoTracks()[0])
+    } catch (e: any) {
+      setMode('idle')
+      setError(/permission|denied/i.test(String(e))
+        ? 'Camera access denied — type the PFR broj below.'
+        : 'Could not start camera.')
+    }
+  }
+
+  const captureAndOcr = async () => {
+    const video  = pfrVideoRef.current
+    const canvas = pfrCanvasRef.current
+    if (!video || !canvas || video.videoWidth === 0) return
+
+    setOcrRunning(true)
+    setError('')
+
+    // Draw frame — boost contrast to help Tesseract on receipt paper
+    canvas.width  = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d')!
+    ctx.filter = 'contrast(1.8) brightness(1.1)'
+    ctx.drawImage(video, 0, 0)
+    ctx.filter = 'none'
+
+    try {
+      const { createWorker } = await import('tesseract.js')
+      const worker = await createWorker('eng', 1, {
+        // Suppress verbose Tesseract console output
+        logger: () => {},
+      })
+      await worker.setParameters({
+        // Only look for chars that can appear in a PFR broj
+        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-',
+      })
+      const { data: { text } } = await worker.recognize(canvas)
+      await worker.terminate()
+
+      const pfr = extractPfr(text)
+      if (pfr) {
+        setPfrFound(pfr)
       } else {
-        setError('Could not start camera — enter the PFR broj or URL below.')
+        setError('No PFR broj found — move closer or improve lighting, then try again.')
       }
-    }
-  }
-
-  const toggleTorch = async () => {
-    const track = trackRef.current
-    if (!track) return
-    try {
-      await track.applyConstraints({ advanced: [{ torch: !torchOn } as any] })
-      setTorchOn(v => !v)
     } catch {
-      setError('Flash not available on this device')
+      setError('OCR failed — try again or enter manually below.')
+    } finally {
+      setOcrRunning(false)
     }
   }
 
-  const applyZoom = async (val: number) => {
-    const track = trackRef.current
-    if (!track) return
-    try {
-      await track.applyConstraints({ advanced: [{ zoom: val } as any] })
-      setZoom(val)
-    } catch {}
-  }
+  useEffect(() => () => { stopQr(); stopPfr() }, [stopQr, stopPfr])
 
-  useEffect(() => () => { stopScanner() }, [stopScanner])
+  // ── Controls shared by both camera modes ──────────────────────────────────
 
-  // ── UI ─────────────────────────────────────────────────────────────────
+  const CameraControls = () => (
+    <>
+      {zoomSupported && (
+        <div className="flex items-center gap-2 px-1">
+          <ZoomOut size={15} className="text-gray-400 shrink-0" />
+          <input type="range" min={zoomMin} max={zoomMax} step={0.1} value={zoom}
+            onChange={e => applyZoom(Number(e.target.value))}
+            className="flex-1 accent-blue-600" />
+          <ZoomIn size={15} className="text-gray-400 shrink-0" />
+          <span className="text-xs text-gray-400 w-8 text-right tabular-nums">{zoom.toFixed(1)}×</span>
+        </div>
+      )}
+      <div className="flex gap-2">
+        {torchSupported && (
+          <button onClick={toggleTorch}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${
+              torchOn ? 'bg-yellow-500 text-white' : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
+            }`}>
+            {torchOn ? <Zap size={16} /> : <ZapOff size={16} />}
+            {torchOn ? 'Flash on' : 'Flash off'}
+          </button>
+        )}
+        <button
+          onClick={mode === 'qr' ? stopQr : stopPfr}
+          className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2 rounded-lg text-sm font-medium">
+          <X size={16} /> Stop
+        </button>
+      </div>
+    </>
+  )
+
+  // ── Render ─────────────────────────────────────────────────────────────
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
@@ -177,73 +285,109 @@ export default function ScanPage() {
 
       {!parsed && (
         <>
-          {/* Camera */}
+          {/* Camera card */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
-            {!scanning ? (
-              <button onClick={startScanner}
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700">
-                <Camera size={18} /> Open Camera
-              </button>
-            ) : (
+
+            {mode === 'idle' && (
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={startQr}
+                  className="flex flex-col items-center gap-1.5 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors">
+                  <QrCode size={24} />
+                  <span className="text-sm font-medium">Scan QR Code</span>
+                </button>
+                <button onClick={startPfr}
+                  className="flex flex-col items-center gap-1.5 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-colors">
+                  <ScanText size={24} />
+                  <span className="text-sm font-medium">Scan PFR Text</span>
+                </button>
+              </div>
+            )}
+
+            {/* ── QR mode ── */}
+            {mode === 'qr' && (
               <div className="space-y-3">
                 <div id="qr-reader"
                   className="w-full overflow-hidden rounded-xl [&_video]:w-full [&_video]:rounded-xl [&_img]:hidden [&_select]:hidden" />
+                <CameraControls />
+                <p className="text-xs text-gray-400 text-center">Point at the QR code on the receipt</p>
+              </div>
+            )}
 
-                {/* Zoom slider */}
-                {zoomSupported && (
-                  <div className="flex items-center gap-2 px-1">
-                    <ZoomOut size={15} className="text-gray-400 shrink-0" />
-                    <input
-                      type="range"
-                      min={zoomMin} max={zoomMax} step={0.1} value={zoom}
-                      onChange={e => applyZoom(Number(e.target.value))}
-                      className="flex-1 accent-blue-600"
-                    />
-                    <ZoomIn size={15} className="text-gray-400 shrink-0" />
-                    <span className="text-xs text-gray-400 w-8 text-right tabular-nums">{zoom.toFixed(1)}×</span>
+            {/* ── PFR text mode ── */}
+            {mode === 'pfr' && (
+              <div className="space-y-3">
+                {/* Video viewfinder */}
+                <div className="relative rounded-xl overflow-hidden bg-black">
+                  <video
+                    ref={pfrVideoRef}
+                    playsInline muted
+                    className="w-full rounded-xl"
+                  />
+                  {/* Guide overlay — highlight the strip where PFR text sits */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <div className="w-11/12 border-2 border-white/70 rounded-lg py-4 bg-white/10 backdrop-blur-[1px] flex items-center justify-center">
+                      <span className="text-white/80 text-xs font-medium tracking-widest uppercase">
+                        PFR broj
+                      </span>
+                    </div>
                   </div>
+                </div>
+                {/* Hidden canvas for OCR */}
+                <canvas ref={pfrCanvasRef} className="hidden" />
+
+                {/* OCR result */}
+                {pfrFound ? (
+                  <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-3 space-y-2">
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Found PFR broj:</p>
+                    <p className="font-mono text-lg font-bold text-gray-900 dark:text-white tracking-wider text-center">
+                      {pfrFound}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPfrFound(null)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-400">
+                        <RotateCcw size={13} /> Try again
+                      </button>
+                      <button
+                        onClick={() => { stopPfr(); handleSufUrl(pfrToUrl(pfrFound)) }}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">
+                        <Check size={13} /> Use this
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={captureAndOcr}
+                    disabled={ocrRunning}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold transition-colors">
+                    {ocrRunning
+                      ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Reading text…</>
+                      : <><Camera size={16} /> Capture &amp; Read PFR</>
+                    }
+                  </button>
                 )}
 
-                <div className="flex gap-2">
-                  {torchSupported && (
-                    <button onClick={toggleTorch}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        torchOn
-                          ? 'bg-yellow-500 text-white'
-                          : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
-                      }`}>
-                      {torchOn ? <Zap size={16} /> : <ZapOff size={16} />}
-                      {torchOn ? 'Flash on' : 'Flash off'}
-                    </button>
-                  )}
-                  <button onClick={stopScanner}
-                    className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2 rounded-lg text-sm font-medium">
-                    <X size={16} /> Stop
-                  </button>
-                </div>
-
+                <CameraControls />
                 <p className="text-xs text-gray-400 text-center">
-                  Point camera at the QR code on the receipt
+                  Align the PFR broj in the box, then tap Capture
                 </p>
               </div>
             )}
           </div>
 
-          {/* PFR broj — manual entry only */}
+          {/* PFR manual entry */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-2">
             <div className="flex items-center gap-1.5 mb-1">
               <Hash size={13} className="text-gray-400" />
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                Enter PFR broj (printed above the QR code)
+                Or type PFR broj manually (printed above QR code)
               </label>
             </div>
             <input
               value={manualPfr}
               onChange={e => setManualPfr(e.target.value.toUpperCase())}
               placeholder="ABCD1234-EFGH5678-IJ90"
-              spellCheck={false}
-              autoCorrect="off"
-              autoCapitalize="characters"
+              spellCheck={false} autoCorrect="off" autoCapitalize="characters"
               className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm font-mono bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 tracking-wider"
             />
             <button
@@ -254,7 +398,7 @@ export default function ScanPage() {
             </button>
           </div>
 
-          {/* Full URL */}
+          {/* URL paste */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-2">
             <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
               Or paste the receipt URL
@@ -316,22 +460,16 @@ export default function ScanPage() {
           <div>
             <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 block">Expense type</label>
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => setExpenseType('personal')}
-                className={`py-2 rounded-lg text-sm font-medium border transition-colors ${
-                  expenseType === 'personal'
-                    ? 'bg-red-600 text-white border-red-600'
-                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}>
-                Personal
-              </button>
-              <button onClick={() => setExpenseType('business')}
-                className={`py-2 rounded-lg text-sm font-medium border transition-colors ${
-                  expenseType === 'business'
-                    ? 'bg-purple-600 text-white border-purple-600'
-                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}>
-                Business
-              </button>
+              {(['personal', 'business'] as const).map(t => (
+                <button key={t} onClick={() => setExpenseType(t)}
+                  className={`py-2 rounded-lg text-sm font-medium border transition-colors capitalize ${
+                    expenseType === t
+                      ? t === 'personal' ? 'bg-red-600 text-white border-red-600' : 'bg-purple-600 text-white border-purple-600'
+                      : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}>
+                  {t}
+                </button>
+              ))}
             </div>
           </div>
 
