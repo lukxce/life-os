@@ -2,6 +2,8 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import * as cheerio from 'cheerio'
 
+const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /**
@@ -13,6 +15,35 @@ function pick($: ReturnType<typeof cheerio.load>, ...selectors: string[]): strin
     if (t) return t
   }
   return null
+}
+
+/**
+ * Visit the portal base URL to collect any session/CSRF cookies,
+ * then return them as a Cookie header string.
+ */
+async function getPortalCookies(): Promise<string> {
+  try {
+    const res = await fetch('https://suf.purs.gov.rs/', {
+      headers: {
+        'User-Agent': UA,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'sr-RS,sr;q=0.9,en;q=0.8',
+      },
+      redirect: 'follow',
+      // @ts-ignore — Node 18 fetch supports this
+      next: { revalidate: 0 },
+    })
+    const raw = res.headers.get('set-cookie') ?? ''
+    if (!raw) return ''
+    // Parse out name=value from each Set-Cookie directive
+    return raw
+      .split(/,(?=[^ ].*?=)/)           // split on comma-separated directives
+      .map(c => c.split(';')[0].trim())  // keep only name=value
+      .filter(Boolean)
+      .join('; ')
+  } catch {
+    return ''
+  }
 }
 
 /**
@@ -71,17 +102,27 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Grab session cookie first — portal returns 400 without it
+    const cookies = await getPortalCookies()
+
+    const headers: Record<string, string> = {
+      'User-Agent': UA,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'sr-RS,sr;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Referer': 'https://suf.purs.gov.rs/',
+      'Cache-Control': 'no-cache',
+    }
+    if (cookies) headers['Cookie'] = cookies
+
     const res = await fetch(sufUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Accept-Language': 'sr,en;q=0.9',
-      },
-      // Next.js cache: revalidate frequently since receipts are unique
+      headers,
+      redirect: 'follow',
+      // @ts-ignore
       next: { revalidate: 0 },
     })
 
     if (!res.ok) {
+      console.error('[scan] Portal responded', res.status, 'for', sufUrl)
       return NextResponse.json(
         { error: `Receipt portal returned ${res.status}` },
         { status: 502 },
