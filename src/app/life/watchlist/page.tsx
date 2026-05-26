@@ -471,7 +471,7 @@ function DetailSheet({
   onUpdated: (item: WatchlistItem) => void
   onDeleted: (id: string) => void
 }) {
-  const [status,   setStatus]   = useState(item.status)
+  const [status,   setStatus]   = useState<string>(item.status)
   const [myRating, setMyRating] = useState<number | null>(item.myRating)
   const [notes,    setNotes]    = useState(item.notes ?? '')
   const [saving,   setSaving]   = useState(false)
