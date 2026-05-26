@@ -6,10 +6,10 @@ import { Camera, X, Zap, ZapOff, Hash } from 'lucide-react'
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 /**
- * PFR broj: alphanumeric string with a single dash, e.g. "ABC123XY-12345678"
+ * PFR broj: 8 alphanum - 8 alphanum - 4 alphanum, e.g. "ABCD1234-EFGH5678-IJ90"
  */
 function isPfrBroj(text: string): boolean {
-  return /^[A-Z0-9]+-[A-Z0-9]+$/i.test(text.trim())
+  return /^[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{4}$/i.test(text.trim())
 }
 
 /**
@@ -228,7 +228,7 @@ export default function ScanPage() {
             <input
               value={manualPfr}
               onChange={e => setManualPfr(e.target.value.toUpperCase())}
-              placeholder="ABC123XY-12345678"
+              placeholder="ABCD1234-EFGH5678-IJ90"
               spellCheck={false}
               autoCorrect="off"
               autoCapitalize="characters"
@@ -241,7 +241,7 @@ export default function ScanPage() {
               {loading ? 'Looking up…' : 'Look Up Receipt'}
             </button>
             <p className="text-[10px] text-gray-400 text-center">
-              Printed above the QR code — e.g. <span className="font-mono">ABC123XY-12345678</span>
+              Printed above the QR code — e.g. <span className="font-mono">ABCD1234-EFGH5678-IJ90</span>
             </p>
           </div>
 
