@@ -1,24 +1,41 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Command } from 'cmdk'
-import { Search, X, Receipt, TrendingUp, Building2, CreditCard, FileText } from 'lucide-react'
+import { Search, X, Receipt, TrendingUp, CreditCard, FileText, Dumbbell, Target, Users, MapPin, Loader2, Clapperboard } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils'
 
-interface SearchResults {
-  expenses: any[]
-  income: any[]
-  accounts: any[]
-  subscriptions: any[]
-  bills: any[]
+interface AllResults {
+  finance: {
+    expenses: any[]
+    income: any[]
+    subscriptions: any[]
+    bills: any[]
+  }
+  life: {
+    habits: any[]
+    goals: any[]
+    contacts: any[]
+    watchlist: any[]
+  }
+  food: {
+    places: any[]
+  }
+}
+
+const CATEGORY_DOT: Record<string, string> = {
+  been: '#22c55e',
+  want_to_go: '#3b82f6',
+  regular: '#f59e0b',
 }
 
 export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?: boolean; keyboardOnly?: boolean } = {}) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
-  const [results, setResults] = useState<SearchResults | null>(null)
+  const [results, setResults] = useState<AllResults | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -33,11 +50,15 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
   }, [])
 
   useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 50)
+  }, [open])
+
+  useEffect(() => {
     if (!q || q.length < 2) { setResults(null); return }
     const t = setTimeout(async () => {
       setLoading(true)
       try {
-        const r = await fetch(`/api/finance/search?q=${encodeURIComponent(q)}`).then(res => res.json())
+        const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`).then(res => res.json())
         setResults(r)
       } finally {
         setLoading(false)
@@ -46,19 +67,23 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
     return () => clearTimeout(t)
   }, [q])
 
-  const go = (href: string) => {
+  const go = useCallback((href: string) => {
     setOpen(false)
     setQ('')
     setResults(null)
     router.push(href)
-  }
+  }, [router])
 
-  const total = results ? results.expenses.length + results.income.length + results.accounts.length + results.subscriptions.length + results.bills.length : 0
+  const totalResults = results
+    ? (results.finance.expenses.length + results.finance.income.length + results.finance.subscriptions.length + results.finance.bills.length
+      + results.life.habits.length + results.life.goals.length + results.life.contacts.length + (results.life.watchlist?.length ?? 0)
+      + results.food.places.length)
+    : 0
 
   if (!open && keyboardOnly) return null
 
   if (!open && mobileIconOnly) return (
-    <button onClick={() => setOpen(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+    <button onClick={() => setOpen(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Search (⌘K)">
       <Search size={20} className="text-gray-600 dark:text-gray-300" />
     </button>
   )
@@ -69,117 +94,228 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
       className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors"
     >
       <Search size={14} />
-      <span>Search...</span>
+      <span>Search everything...</span>
       <kbd className="ml-2 text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded px-1.5 py-0.5">⌘K</kbd>
     </button>
   )
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] px-4">
       <div className="fixed inset-0 bg-black/50" onClick={() => setOpen(false)} />
-      <div className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <Command shouldFilter={false}>
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <Search size={16} className="text-gray-400 shrink-0" />
-            <Command.Input
-              autoFocus
-              value={q}
-              onValueChange={setQ}
-              placeholder="Search expenses, income, accounts..."
-              className="flex-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 outline-none"
-            />
-            {loading && <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />}
-            <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-              <X size={16} />
-            </button>
-          </div>
+      <div className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Search input */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <Search size={16} className="text-gray-400 shrink-0" />
+          <input
+            ref={inputRef}
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="Search habits, goals, expenses, places…"
+            className="flex-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 outline-none"
+          />
+          {loading && <Loader2 size={14} className="animate-spin text-blue-500 shrink-0" />}
+          <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5">
+            <X size={16} />
+          </button>
+        </div>
 
-          <Command.List className="max-h-[60vh] overflow-y-auto p-2">
-            {q.length < 2 && (
-              <Command.Empty className="py-8 text-center text-sm text-gray-400">
-                Type at least 2 characters to search
-              </Command.Empty>
-            )}
+        {/* Module pills */}
+        <div className="flex gap-2 px-4 py-2 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+          {[
+            { label: '💰 Finance', color: 'text-blue-600 dark:text-blue-400' },
+            { label: '🌿 Life',    color: 'text-indigo-600 dark:text-indigo-400' },
+            { label: '🍽 Food',   color: 'text-orange-600 dark:text-orange-400' },
+          ].map(m => (
+            <span key={m.label} className={cn('text-xs font-medium', m.color)}>{m.label}</span>
+          ))}
+          <span className="ml-auto text-xs text-gray-400">⌘K to toggle</span>
+        </div>
 
-            {q.length >= 2 && !loading && total === 0 && (
-              <Command.Empty className="py-8 text-center text-sm text-gray-400">
-                No results for "{q}"
-              </Command.Empty>
-            )}
+        <div className="max-h-[60vh] overflow-y-auto">
+          {q.length < 2 && (
+            <div className="py-10 text-center text-sm text-gray-400">
+              Type at least 2 characters to search across all modules
+            </div>
+          )}
 
-            {results && results.expenses.length > 0 && (
-              <Command.Group heading={<span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase px-2">Expenses</span>}>
-                {results.expenses.map((e: any) => (
-                  <Command.Item key={e.id} onSelect={() => go(`/expenses/${e.type}`)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 aria-selected:bg-gray-100 dark:aria-selected:bg-gray-800">
-                    <Receipt size={14} className="text-red-500 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{e.description || e.merchantName || e.category}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{formatDate(e.date)} · {e.category}</div>
-                    </div>
-                    <span className="text-sm font-semibold text-red-600 shrink-0">{e.amount.toLocaleString()} {e.currency}</span>
-                  </Command.Item>
-                ))}
-              </Command.Group>
-            )}
+          {q.length >= 2 && !loading && totalResults === 0 && (
+            <div className="py-10 text-center text-sm text-gray-400">
+              No results for &ldquo;{q}&rdquo;
+            </div>
+          )}
 
-            {results && results.income.length > 0 && (
-              <Command.Group heading={<span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase px-2">Income</span>}>
-                {results.income.map((inc: any) => (
-                  <Command.Item key={inc.id} onSelect={() => go('/income')}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 aria-selected:bg-gray-100 dark:aria-selected:bg-gray-800">
-                    <TrendingUp size={14} className="text-green-500 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{inc.client || inc.type}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{formatDate(inc.date)} · {inc.type}</div>
-                    </div>
-                    <span className="text-sm font-semibold text-green-600 shrink-0">{inc.netAmount.toLocaleString()} {inc.currency}</span>
-                  </Command.Item>
-                ))}
-              </Command.Group>
-            )}
+          {results && (
+            <div className="p-2 space-y-1">
+              {/* ── Finance ──────────────────────────────────────── */}
+              {results.finance.expenses.length > 0 && (
+                <Section label="Expenses">
+                  {results.finance.expenses.map((e: any) => (
+                    <ResultItem key={e.id} icon={<Receipt size={13} className="text-red-500" />}
+                      title={e.description || e.merchantName || e.category}
+                      sub={`${formatDate(e.date)} · ${e.category}`}
+                      right={`${e.amount.toLocaleString()} ${e.currency}`}
+                      rightColor="text-red-600 dark:text-red-400"
+                      onClick={() => go(`/finance/expenses/${e.type}`)} />
+                  ))}
+                </Section>
+              )}
 
-            {results && results.accounts.length > 0 && (
-              <Command.Group heading={<span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase px-2">Accounts</span>}>
-                {results.accounts.map((a: any) => (
-                  <Command.Item key={a.id} onSelect={() => go('/accounts')}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 aria-selected:bg-gray-100 dark:aria-selected:bg-gray-800">
-                    <Building2 size={14} className="text-teal-500 shrink-0" />
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{a.name}</div>
-                    <span className="ml-auto text-xs text-gray-500 dark:text-gray-400 shrink-0">{a.currency} · {a.type}</span>
-                  </Command.Item>
-                ))}
-              </Command.Group>
-            )}
+              {results.finance.income.length > 0 && (
+                <Section label="Income">
+                  {results.finance.income.map((inc: any) => (
+                    <ResultItem key={inc.id} icon={<TrendingUp size={13} className="text-green-500" />}
+                      title={inc.client || inc.type}
+                      sub={`${formatDate(inc.date)} · ${inc.type}`}
+                      right={`${inc.netAmount.toLocaleString()} ${inc.currency}`}
+                      rightColor="text-green-600 dark:text-green-400"
+                      onClick={() => go('/finance/income')} />
+                  ))}
+                </Section>
+              )}
 
-            {results && results.subscriptions.length > 0 && (
-              <Command.Group heading={<span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase px-2">Subscriptions</span>}>
-                {results.subscriptions.map((s: any) => (
-                  <Command.Item key={s.id} onSelect={() => go('/subscriptions')}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 aria-selected:bg-gray-100 dark:aria-selected:bg-gray-800">
-                    <CreditCard size={14} className="text-blue-500 shrink-0" />
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{s.name}</div>
-                    <span className="ml-auto text-sm font-semibold text-blue-600 shrink-0">{s.billingAmount} {s.billingCurrency}/mo</span>
-                  </Command.Item>
-                ))}
-              </Command.Group>
-            )}
+              {results.finance.subscriptions.length > 0 && (
+                <Section label="Subscriptions">
+                  {results.finance.subscriptions.map((s: any) => (
+                    <ResultItem key={s.id} icon={<CreditCard size={13} className="text-blue-500" />}
+                      title={s.name}
+                      sub={s.category ?? 'Subscription'}
+                      right={`${s.billingAmount} ${s.billingCurrency}/mo`}
+                      rightColor="text-blue-600 dark:text-blue-400"
+                      onClick={() => go('/finance/subscriptions')} />
+                  ))}
+                </Section>
+              )}
 
-            {results && results.bills.length > 0 && (
-              <Command.Group heading={<span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase px-2">Bills</span>}>
-                {results.bills.map((b: any) => (
-                  <Command.Item key={b.id} onSelect={() => go('/bills')}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 aria-selected:bg-gray-100 dark:aria-selected:bg-gray-800">
-                    <FileText size={14} className="text-teal-500 shrink-0" />
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{b.name}</div>
-                    <span className="ml-auto text-sm font-semibold text-teal-600 shrink-0">{b.amount.toLocaleString()} {b.currency}</span>
-                  </Command.Item>
-                ))}
-              </Command.Group>
-            )}
-          </Command.List>
-        </Command>
+              {results.finance.bills.length > 0 && (
+                <Section label="Bills">
+                  {results.finance.bills.map((b: any) => (
+                    <ResultItem key={b.id} icon={<FileText size={13} className="text-teal-500" />}
+                      title={b.name}
+                      sub={`Due day ${b.dayOfMonth}${b.category ? ` · ${b.category}` : ''}`}
+                      right={`${b.amount.toLocaleString()} ${b.currency}`}
+                      rightColor="text-teal-600 dark:text-teal-400"
+                      onClick={() => go('/finance/bills')} />
+                  ))}
+                </Section>
+              )}
+
+              {/* ── Life ─────────────────────────────────────────── */}
+              {results.life.habits.length > 0 && (
+                <Section label="Habits">
+                  {results.life.habits.map((h: any) => (
+                    <ResultItem key={h.id} icon={<Dumbbell size={13} className="text-indigo-500" />}
+                      title={h.name}
+                      sub={`${h.category} · ${h.frequency}`}
+                      badge={!h.active ? 'Inactive' : h.paused ? 'Paused' : undefined}
+                      onClick={() => go('/life/habits')} />
+                  ))}
+                </Section>
+              )}
+
+              {results.life.goals.length > 0 && (
+                <Section label="Goals">
+                  {results.life.goals.map((g: any) => (
+                    <ResultItem key={g.id} icon={<Target size={13} className="text-violet-500" />}
+                      title={`${g.emoji ?? ''} ${g.name}`.trim()}
+                      sub={g.type.replace('_', ' ')}
+                      badge={g.completed ? 'Done' : undefined}
+                      badgeColor={g.completed ? 'bg-green-100 text-green-700' : undefined}
+                      onClick={() => go('/life/goals')} />
+                  ))}
+                </Section>
+              )}
+
+              {results.life.contacts.length > 0 && (
+                <Section label="People">
+                  {results.life.contacts.map((c: any) => (
+                    <ResultItem key={c.id} icon={<Users size={13} className="text-pink-500" />}
+                      title={`${c.emoji ?? ''} ${c.name}`.trim()}
+                      sub={`Reach out ${c.reachOutFrequency}`}
+                      onClick={() => go('/life/contacts')} />
+                  ))}
+                </Section>
+              )}
+
+              {/* ── Watchlist ────────────────────────────────────── */}
+              {(results.life.watchlist ?? []).length > 0 && (
+                <Section label="Watchlist">
+                  {results.life.watchlist.map((w: any) => (
+                    <ResultItem key={w.id} icon={<Clapperboard size={13} className="text-violet-500" />}
+                      title={w.title}
+                      sub={[
+                        w.type === 'book' ? w.author : (w.type === 'tv' ? 'TV' : 'Movie'),
+                        w.year,
+                        w.status.replace('_', ' '),
+                      ].filter(Boolean).join(' · ')}
+                      right={w.myRating != null ? `★ ${w.myRating}/10` : undefined}
+                      rightColor="text-amber-600 dark:text-amber-400"
+                      onClick={() => go('/life/watchlist')} />
+                  ))}
+                </Section>
+              )}
+
+              {/* ── Food ─────────────────────────────────────────── */}
+              {results.food.places.length > 0 && (
+                <Section label="Places">
+                  {results.food.places.map((p: any) => (
+                    <ResultItem key={p.id}
+                      icon={
+                        <span className="w-3.5 h-3.5 rounded-full shrink-0 mt-0.5"
+                          style={{ background: CATEGORY_DOT[p.category] ?? '#6b7280', display: 'inline-block' }} />
+                      }
+                      title={p.name}
+                      sub={[p.city, p.cuisine].filter(Boolean).join(' · ')}
+                      right={p.myRating != null ? `${p.myRating}/10` : undefined}
+                      rightColor="text-orange-600 dark:text-orange-400"
+                      onClick={() => go('/food/list')} />
+                  ))}
+                </Section>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
+  )
+}
+
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2 py-1.5">{label}</p>
+      {children}
+    </div>
+  )
+}
+
+function ResultItem({
+  icon, title, sub, right, rightColor, badge, badgeColor, onClick,
+}: {
+  icon: React.ReactNode
+  title: string
+  sub?: string
+  right?: string
+  rightColor?: string
+  badge?: string
+  badgeColor?: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+    >
+      <span className="shrink-0 mt-0.5">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{title}</p>
+        {sub && <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{sub}</p>}
+      </div>
+      {badge && (
+        <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0', badgeColor ?? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400')}>
+          {badge}
+        </span>
+      )}
+      {right && <span className={cn('text-xs font-semibold shrink-0', rightColor ?? 'text-gray-500')}>{right}</span>}
+    </button>
   )
 }

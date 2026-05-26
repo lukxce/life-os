@@ -1,6 +1,6 @@
 'use client'
 import { useState, useRef } from 'react'
-import { X } from 'lucide-react'
+import { X, Camera, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CATEGORY_CONFIG, CUISINES, Place, SearchResult } from './constants'
 
@@ -38,7 +38,25 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
     googlePlaceId: place.googlePlaceId ?? '',
   } : { ...defaultForm })
   const [saving, setSaving] = useState(false)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(place?.photoUrl ?? null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const photoInputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  async function handlePhotoUpload(file: File) {
+    setUploadingPhoto(true)
+    try {
+      const res = await fetch('/api/food/upload', {
+        method: 'POST',
+        headers: { 'x-filename': file.name, 'Content-Type': file.type },
+        body: file,
+      })
+      const data = await res.json()
+      setPhotoUrl(data.url)
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
 
   function handleSearch(val: string) {
     setSearch(val)
@@ -76,6 +94,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
       latitude: Number(form.latitude),
       longitude: Number(form.longitude),
       visitedAt: form.visitedAt || null,
+      photoUrl: photoUrl ?? null,
     }
     if (place) {
       await fetch(`/api/food/places/${place.id}`, {
@@ -217,6 +236,37 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
               value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
               placeholder="e.g. Niš"
               className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none" />
+          </div>
+
+          {/* Photo */}
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Photo</label>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={e => e.target.files?.[0] && handlePhotoUpload(e.target.files[0])}
+            />
+            {photoUrl ? (
+              <div className="relative rounded-xl overflow-hidden aspect-video bg-gray-100 dark:bg-gray-800">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photoUrl} alt="Place photo" className="w-full h-full object-cover" />
+                <button
+                  onClick={() => setPhotoUrl(null)}
+                  className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70">
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => photoInputRef.current?.click()}
+                disabled={uploadingPhoto}
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl py-4 text-sm text-gray-400 hover:border-orange-400 hover:text-orange-400 transition-colors disabled:opacity-50">
+                {uploadingPhoto ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+                {uploadingPhoto ? 'Uploading…' : 'Add a photo'}
+              </button>
+            )}
           </div>
 
           <button onClick={save} disabled={saving || !form.name.trim() || !form.latitude}

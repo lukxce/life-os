@@ -15,3 +15,18 @@ body {
 }
 
 /* force tailwind rebuild */
+
+/* ── html5-qrcode: hide injected chrome we don't want ── */
+#qr-reader__header_message,
+#qr-reader__filescan_input,
+#qr-reader__status_span,
+#qr-reader__camera_permission_button,
+#qr-reader__dashboard_section_csr > span:first-child,
+#qr-reader__dashboard_section_csr > button:not(:last-child) {
+  display: none !important;
+}
+#qr-reader video {
+  border-radius: 0.75rem;
+  width: 100% !important;
+  height: auto !important;
+}

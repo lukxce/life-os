@@ -4,7 +4,39 @@ import { HabitCard } from '@/components/habits/HabitCard'
 import { ReentryModal } from '@/components/habits/ReentryModal'
 import { calcStreak, startOfDay } from '@/lib/utils'
 import { cn } from '@/lib/utils'
-import { ChevronLeft, ChevronRight, Pencil, TrendingUp, TrendingDown, Minus, Plane } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, TrendingUp, TrendingDown, Minus, Plane, Heart, Cake } from 'lucide-react'
+import Link from 'next/link'
+
+interface Contact {
+  id: string; name: string; emoji?: string | null; birthday?: string | null
+  reachOutFrequency: string; lastContactDate?: string | null
+}
+
+const FREQ_DAYS: Record<string, number> = { weekly: 7, monthly: 30, quarterly: 90, yearly: 365 }
+
+function getContactAlerts(contacts: Contact[], today: Date): { birthdays: Contact[]; overdue: Contact[] } {
+  const mm = String(today.getMonth() + 1).padStart(2, '0')
+  const dd = String(today.getDate()).padStart(2, '0')
+  const nextWeek = new Date(today); nextWeek.setDate(today.getDate() + 7)
+  const nwMm = String(nextWeek.getMonth() + 1).padStart(2, '0')
+  const nwDd = String(nextWeek.getDate()).padStart(2, '0')
+
+  const birthdays = contacts.filter(c => {
+    if (!c.birthday) return false
+    const [bm, bd] = c.birthday.split('-')
+    const bKey = `${bm}-${bd}`
+    return bKey >= `${mm}-${dd}` && bKey <= `${nwMm}-${nwDd}`
+  })
+
+  const overdue = contacts.filter(c => {
+    const days = FREQ_DAYS[c.reachOutFrequency] ?? 30
+    if (!c.lastContactDate) return true
+    const last = new Date(c.lastContactDate)
+    return (today.getTime() - last.getTime()) / 86400000 > days
+  })
+
+  return { birthdays, overdue: overdue.slice(0, 3) }
+}
 
 interface SubTask { id: string; name: string; order: number }
 interface Habit {
@@ -75,6 +107,7 @@ export default function TodayPage() {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [holidays, setHolidays] = useState<Set<string>>(new Set())
+  const [contacts, setContacts] = useState<Contact[]>([])
 
   const today = startOfDay(new Date())
   const isToday = isSameDay(selectedDate, today)
@@ -94,6 +127,7 @@ export default function TodayPage() {
     const saved = localStorage.getItem('userName')
     if (saved) setName(saved)
     fetch('/api/life/weekly-score').then(r => r.json()).then(setWeekScore).catch(() => {})
+    fetch('/api/life/contacts').then(r => r.json()).then(setContacts).catch(() => {})
     try {
       const h = JSON.parse(localStorage.getItem('holidays') ?? '[]')
       setHolidays(new Set(h))
@@ -161,6 +195,8 @@ export default function TodayPage() {
         onSubTask={(id, checked) => handleSubTask(item, id, checked)} />
     )
   }
+
+  const { birthdays, overdue } = getContactAlerts(contacts, today)
 
   return (
     <div className="-mx-4 -mt-6 md:-mt-8">
@@ -282,6 +318,51 @@ export default function TodayPage() {
           </button>
         ))}
       </div>
+
+      {/* ── Contact alerts ── */}
+      {(birthdays.length > 0 || overdue.length > 0) && (
+        <div className="px-4 pt-3 space-y-2 bg-gray-50 dark:bg-gray-950">
+          {birthdays.map(c => {
+            const [bm, bd] = (c.birthday ?? '').split('-')
+            const isTodayBday = bm === String(today.getMonth() + 1).padStart(2, '0') && bd === String(today.getDate()).padStart(2, '0')
+            return (
+              <Link key={c.id} href="/life/contacts"
+                className="flex items-center gap-3 bg-pink-50 dark:bg-pink-950/30 border border-pink-100 dark:border-pink-900/50 rounded-2xl px-4 py-3">
+                <span className="text-xl">{c.emoji ?? '👤'}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-pink-700 dark:text-pink-300 truncate">
+                    {isTodayBday ? `🎂 It's ${c.name}'s birthday today!` : `🎂 ${c.name}'s birthday is coming up`}
+                  </p>
+                  <p className="text-xs text-pink-500 dark:text-pink-400">{isTodayBday ? 'Don\'t forget to send wishes' : 'Within the next 7 days'}</p>
+                </div>
+                <Cake size={16} className="text-pink-400 shrink-0" />
+              </Link>
+            )
+          })}
+
+          {overdue.map(c => {
+            const days = FREQ_DAYS[c.reachOutFrequency] ?? 30
+            const daysSince = c.lastContactDate
+              ? Math.floor((today.getTime() - new Date(c.lastContactDate).getTime()) / 86400000)
+              : null
+            return (
+              <Link key={c.id} href="/life/contacts"
+                className="flex items-center gap-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 rounded-2xl px-4 py-3">
+                <span className="text-xl">{c.emoji ?? '👤'}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-300 truncate">
+                    Reach out to {c.name}
+                  </p>
+                  <p className="text-xs text-amber-500 dark:text-amber-400">
+                    {daysSince != null ? `Last contact ${daysSince}d ago · every ${days}d` : 'Never contacted'}
+                  </p>
+                </div>
+                <Heart size={16} className="text-amber-400 shrink-0" />
+              </Link>
+            )
+          })}
+        </div>
+      )}
 
       {/* ── Habit list ── */}
       <div className="px-4 pb-6 bg-gray-50 dark:bg-gray-950 min-h-screen">

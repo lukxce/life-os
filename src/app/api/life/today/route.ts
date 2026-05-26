@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   tomorrow.setDate(tomorrow.getDate() + 1)
 
   const habits = await prisma.habit.findMany({
-    where: { active: true },
+    where: { active: true, paused: false },
     orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
     include: {
       logs: {

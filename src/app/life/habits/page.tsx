@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { Pencil, Trash2, ChevronUp, ChevronDown, X, Check, Plus } from 'lucide-react'
+import { Pencil, Trash2, ChevronUp, ChevronDown, X, Check, Plus, PauseCircle, PlayCircle, Search } from 'lucide-react'
 
 interface SubTask { id: string; name: string; order: number }
 
@@ -20,6 +20,7 @@ interface Habit {
   timeOfDay: string
   order: number
   active: boolean
+  paused: boolean
   createdAt: string
 }
 
@@ -189,7 +190,16 @@ function HabitsPage() {
     await load()
   }
 
-  const grouped = habits.reduce<Record<string, Habit[]>>((acc, h) => {
+  const [searchText, setSearchText] = useState('')
+
+  const filteredHabits = searchText
+    ? habits.filter(h =>
+        h.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        h.category.toLowerCase().includes(searchText.toLowerCase())
+      )
+    : habits
+
+  const grouped = filteredHabits.reduce<Record<string, Habit[]>>((acc, h) => {
     if (!acc[h.category]) acc[h.category] = []
     acc[h.category].push(h)
     return acc
@@ -218,6 +228,24 @@ function HabitsPage() {
         </button>
       </div>
 
+      {habits.length > 3 && (
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search habits…"
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-blue-500"
+          />
+          {searchText && (
+            <button onClick={() => setSearchText('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X size={13} />
+            </button>
+          )}
+        </div>
+      )}
+
       {habits.length === 0 && !showForm && (
         <div className="text-center py-16 text-gray-400">
           <div className="text-5xl mb-3">📋</div>
@@ -242,9 +270,10 @@ function HabitsPage() {
                   <span className="text-xl">{h.icon ?? '📋'}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={cn('font-medium text-sm', !h.active && 'text-gray-400 line-through')}>
+                      <span className={cn('font-medium text-sm', !h.active && 'text-gray-400 line-through', h.paused && 'text-amber-600 dark:text-amber-400')}>
                         {h.name}
                       </span>
+                      {h.paused && <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-medium">Paused</span>}
                       <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
                         {h.type}
                       </span>
@@ -274,13 +303,27 @@ function HabitsPage() {
                       title={h.active ? 'Deactivate' : 'Activate'}
                       className={cn(
                         'px-2 py-1 text-xs rounded-full font-medium min-h-[36px] transition-colors',
-                        h.active
+                        h.active && !h.paused
                           ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                           : 'bg-gray-100 text-gray-500 dark:bg-gray-800'
                       )}
                     >
                       {h.active ? 'Active' : 'Inactive'}
                     </button>
+                    {h.active && (
+                      <button
+                        onClick={() => fetch('/api/life/habits', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: h.id, paused: !h.paused }) }).then(load)}
+                        title={h.paused ? 'Resume habit' : 'Pause habit'}
+                        className={cn(
+                          'p-1.5 rounded-full min-h-[36px] min-w-[36px] flex items-center justify-center transition-colors',
+                          h.paused
+                            ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100'
+                            : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        )}
+                      >
+                        {h.paused ? <PlayCircle size={16} /> : <PauseCircle size={16} />}
+                      </button>
+                    )}
                     <button
                       onClick={() => startEdit(h)}
                       className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 min-h-[36px] min-w-[36px] flex items-center justify-center"

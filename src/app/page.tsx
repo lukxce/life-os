@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { formatEUR, formatRSD } from '@/lib/utils'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
+import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import {
   TrendingUp, TrendingDown, CheckCircle2, Circle, FileText,
   ArrowRight, Wallet, Sparkles
@@ -82,7 +83,10 @@ export default function HomePage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Life OS</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{dateStr}</p>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <GlobalSearch mobileIconOnly />
+          <ThemeToggle />
+        </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">

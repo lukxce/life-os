@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       address: body.address ?? null,
       visitedAt: body.visitedAt ? new Date(body.visitedAt) : null,
       googlePlaceId: body.googlePlaceId ?? null,
+      photoUrl: body.photoUrl ?? null,
     },
   })
   return NextResponse.json(place)

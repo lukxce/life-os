@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { LifeNav } from '@/components/layout/LifeNav'
-import { Check, Plus, Trash2, ChevronDown, Target, X } from 'lucide-react'
+import { Check, Plus, Trash2, ChevronDown, Target, X, Search } from 'lucide-react'
 
 interface Milestone { id: string; name: string; completed: boolean; order: number }
 interface Goal {
@@ -203,6 +203,7 @@ export default function GoalsPage() {
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [activeTab, setActiveTab] = useState<GoalType>('short_term')
+  const [searchText, setSearchText] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -238,7 +239,8 @@ export default function GoalsPage() {
     load()
   }
 
-  const tabGoals = goals.filter(g => g.type === activeTab)
+  const q = searchText.toLowerCase()
+  const tabGoals = goals.filter(g => g.type === activeTab && (!q || g.name.toLowerCase().includes(q)))
   const active = tabGoals.filter(g => !g.completed)
   const completed = tabGoals.filter(g => g.completed)
   const isBucket = activeTab === 'bucket_list'
@@ -272,6 +274,24 @@ export default function GoalsPage() {
           )
         })}
       </div>
+
+      {goals.length > 5 && (
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search goals…"
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-indigo-500"
+          />
+          {searchText && (
+            <button onClick={() => setSearchText('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X size={13} />
+            </button>
+          )}
+        </div>
+      )}
 
       {tabGoals.length === 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">

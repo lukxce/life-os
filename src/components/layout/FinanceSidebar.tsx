@@ -6,7 +6,7 @@ import {
   LayoutDashboard, TrendingUp, ShoppingCart, Briefcase,
   Building2, ArrowLeftRight, RefreshCw, BarChart3, Tag, X, ScanLine,
   ChevronDown, ChevronRight, Wallet, Banknote, LineChart, Settings, Shield, SlidersHorizontal, Store,
-  Bitcoin, FileText, CreditCard, Search, PiggyBank, Target, Sparkles, Home
+  Bitcoin, FileText, CreditCard, Search, PiggyBank, Target, Sparkles, Home, Lightbulb
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -58,6 +58,7 @@ const nav: NavEntry[] = [
     icon: BarChart3,
     items: [
       { href: '/finance/summaries',  label: 'Summaries',  icon: LineChart },
+      { href: '/finance/insights',   label: 'Insights',   icon: Lightbulb },
       { href: '/finance/warranties', label: 'Warranties', icon: Shield },
       { href: '/finance/merchants',  label: 'Merchants',  icon: Store },
     ],

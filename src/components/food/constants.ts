@@ -27,6 +27,7 @@ export interface Place {
   address: string | null
   visitedAt: string | null
   googlePlaceId: string | null
+  photoUrl: string | null
   createdAt: string
 }
 

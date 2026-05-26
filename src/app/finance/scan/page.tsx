@@ -1,27 +1,59 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Camera, X, Zap, ZapOff, ZoomIn, ZoomOut } from 'lucide-react'
+import { Camera, X, Zap, ZapOff, Hash } from 'lucide-react'
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+/**
+ * PFR broj: alphanumeric string with a single dash, e.g. "ABC123XY-12345678"
+ */
+function isPfrBroj(text: string): boolean {
+  return /^[A-Z0-9]+-[A-Z0-9]+$/i.test(text.trim())
+}
+
+/**
+ * Construct the PURS receipt URL from a PFR broj.
+ * The `vl` parameter is the PFR broj base64-encoded (standard, not URL-safe).
+ */
+function pfrToUrl(pfr: string): string {
+  const encoded = typeof window !== 'undefined'
+    ? btoa(pfr.trim())                                   // browser
+    : Buffer.from(pfr.trim()).toString('base64')         // SSR (shouldn't run but safe)
+  return `https://suf.purs.gov.rs/v/?vl=${encoded}`
+}
+
+/**
+ * Accept either:
+ *   - a full suf.purs.gov.rs URL  (QR code new-style, or manual paste)
+ *   - a PFR broj string           (QR code old-style printers, or typed manually)
+ *   - a partial URL / bare path
+ */
+function normaliseReceiptInput(raw: string): string | null {
+  const t = raw.trim()
+  if (!t) return null
+  if (t.startsWith('http')) return t          // already a URL
+  if (isPfrBroj(t))         return pfrToUrl(t) // PFR → construct URL
+  return null
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
 
 export default function ScanPage() {
   const router = useRouter()
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const rafRef = useRef<number>(0)
-  const detectorRef = useRef<any>(null)
 
-  const [scanning, setScanning] = useState(false)
-  const [manualUrl, setManualUrl] = useState('')
-  const [parsed, setParsed] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [expenseType, setExpenseType] = useState<'personal' | 'business'>('personal')
-  const [torchOn, setTorchOn] = useState(false)
-  const [torchSupported, setTorchSupported] = useState(false)
-  const [zoom, setZoom] = useState(1)
-  const [zoomSupported, setZoomSupported] = useState(false)
-  const [zoomMin, setZoomMin] = useState(1)
-  const [zoomMax, setZoomMax] = useState(3)
+  const scannerRef  = useRef<any>(null)
+  const trackRef    = useRef<MediaStreamTrack | null>(null)
+
+  const [scanning,        setScanning]        = useState(false)
+  const [manualUrl,       setManualUrl]        = useState('')
+  const [manualPfr,       setManualPfr]        = useState('')
+  const [parsed,          setParsed]           = useState<any>(null)
+  const [loading,         setLoading]          = useState(false)
+  const [error,           setError]            = useState('')
+  const [expenseType,     setExpenseType]      = useState<'personal' | 'business'>('personal')
+  const [torchOn,         setTorchOn]          = useState(false)
+  const [torchSupported,  setTorchSupported]   = useState(false)
 
   const handleSufUrl = async (url: string) => {
     setLoading(true)
@@ -41,138 +73,101 @@ export default function ScanPage() {
     setLoading(false)
   }
 
-  const stopScanner = useCallback(() => {
-    cancelAnimationFrame(rafRef.current)
-    streamRef.current?.getTracks().forEach(t => t.stop())
-    streamRef.current = null
-    detectorRef.current = null
+  /** Called with whatever text the QR scanner decoded */
+  const handleQrResult = useCallback((text: string) => {
+    const url = normaliseReceiptInput(text)
+    if (url) {
+      handleSufUrl(url)
+    } else {
+      setError(`Unrecognised QR code: ${text.slice(0, 60)}`)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handlePfrSubmit = () => {
+    const url = pfrToUrl(manualPfr)
+    handleSufUrl(url)
+  }
+
+  const stopScanner = useCallback(async () => {
+    try {
+      if (scannerRef.current) {
+        await scannerRef.current.stop()
+        scannerRef.current.clear()
+        scannerRef.current = null
+      }
+    } catch {}
+    trackRef.current = null
     setScanning(false)
     setTorchOn(false)
     setTorchSupported(false)
-    setZoomSupported(false)
   }, [])
 
   const startScanner = async () => {
     setError('')
     setScanning(true)
-    setTorchOn(false)
-    setZoom(1)
 
-    // Build detector: native BarcodeDetector first, ZXing fallback
-    let detector: any
-    if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
-      try {
-        detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] })
-      } catch {}
-    }
-    if (!detector) {
-      const { BrowserQRCodeReader } = await import('@zxing/browser')
-      detector = { _zxing: new BrowserQRCodeReader(), _isZxing: true }
-    }
-    detectorRef.current = detector
+    // html5-qrcode must be imported client-side only
+    const { Html5Qrcode } = await import('html5-qrcode')
 
-    // Start camera
-    let stream: MediaStream
+    const scanner = new Html5Qrcode('qr-reader', { verbose: false })
+    scannerRef.current = scanner
+
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { exact: 'environment' },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-          // @ts-ignore
-          focusMode: 'continuous',
+      await scanner.start(
+        { facingMode: 'environment' },
+        {
+          fps: 15,
+          // qrbox as a function keeps the scan region centred and appropriately sized
+          qrbox: (w: number, h: number) => {
+            const side = Math.floor(Math.min(w, h) * 0.72)
+            return { width: side, height: side }
+          },
+          aspectRatio: 1,
+          disableFlip: false,
         },
-        audio: false,
-      })
-    } catch {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
-          audio: false,
-        })
-      } catch {
-        setError('Camera access denied. Try pasting the URL below.')
-        setScanning(false)
-        return
+        (decodedText: string) => {
+          stopScanner()
+          handleQrResult(decodedText)
+        },
+        // Per-frame error: suppress (fires constantly when no QR is visible)
+        () => {},
+      )
+
+      // After the stream is running, grab the video track for torch control
+      await new Promise(r => setTimeout(r, 500)) // brief settle
+      const videoEl = document.querySelector('#qr-reader video') as HTMLVideoElement | null
+      if (videoEl?.srcObject) {
+        const track = (videoEl.srcObject as MediaStream).getVideoTracks()[0]
+        if (track) {
+          trackRef.current = track
+          const caps = track.getCapabilities() as any
+          if (caps?.torch) setTorchSupported(true)
+        }
+      }
+    } catch (err: any) {
+      scannerRef.current = null
+      setScanning(false)
+      if (/permission|denied/i.test(String(err))) {
+        setError('Camera access denied. Enter the URL or PFR broj below.')
+      } else {
+        setError('Could not start camera. Enter the URL or PFR broj below.')
       }
     }
-
-    streamRef.current = stream
-    const video = videoRef.current!
-    video.srcObject = stream
-    await video.play()
-
-    // Expose torch + zoom controls
-    const track = stream.getVideoTracks()[0]
-    const caps = track.getCapabilities() as any
-    if (caps?.torch) setTorchSupported(true)
-    if (caps?.zoom) {
-      setZoomSupported(true)
-      setZoomMin(caps.zoom.min ?? 1)
-      setZoomMax(caps.zoom.max ?? 3)
-    }
-
-    // Detection loop via rAF — runs every frame the browser paints
-    let lastDetect = 0
-    const INTERVAL_MS = 80 // ~12 fps detection, smooth preview
-
-    const tick = async (now: number) => {
-      if (!streamRef.current) return
-      if (now - lastDetect >= INTERVAL_MS) {
-        lastDetect = now
-        try {
-          let result: string | null = null
-
-          if (detector._isZxing) {
-            // ZXing path
-            const canvas = document.createElement('canvas')
-            canvas.width = video.videoWidth
-            canvas.height = video.videoHeight
-            canvas.getContext('2d')!.drawImage(video, 0, 0)
-            try {
-              const r = await detector._zxing.decodeFromCanvas(canvas)
-              result = r?.getText() ?? null
-            } catch {}
-          } else {
-            // Native BarcodeDetector path
-            const barcodes = await detector.detect(video)
-            result = barcodes[0]?.rawValue ?? null
-          }
-
-          if (result) {
-            stopScanner()
-            handleSufUrl(result)
-            return
-          }
-        } catch {}
-      }
-      rafRef.current = requestAnimationFrame(tick)
-    }
-
-    rafRef.current = requestAnimationFrame(tick)
   }
 
   const toggleTorch = async () => {
-    const track = streamRef.current?.getVideoTracks()[0]
+    const track = trackRef.current
     if (!track) return
     try {
       await track.applyConstraints({ advanced: [{ torch: !torchOn } as any] })
       setTorchOn(v => !v)
     } catch {
-      setError('Flash not available on this camera')
+      setError('Flash not available on this device')
     }
   }
 
-  const applyZoom = async (newZoom: number) => {
-    const track = streamRef.current?.getVideoTracks()[0]
-    if (!track) return
-    try {
-      await track.applyConstraints({ advanced: [{ zoom: newZoom } as any] })
-      setZoom(newZoom)
-    } catch {}
-  }
-
-  useEffect(() => () => stopScanner(), [stopScanner])
+  // Clean up on unmount
+  useEffect(() => () => { stopScanner() }, [stopScanner])
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
@@ -182,74 +177,90 @@ export default function ScanPage() {
         <>
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
             {!scanning ? (
-              <button onClick={startScanner}
+              <button
+                onClick={startScanner}
                 className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700">
                 <Camera size={18} /> Open Camera
               </button>
             ) : (
               <div className="space-y-3">
-                <div className="relative rounded-lg overflow-hidden bg-black aspect-square">
-                  <video
-                    ref={videoRef}
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Targeting overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-3/4 h-3/4 relative">
-                      {/* Corner brackets */}
-                      {[
-                        'top-0 left-0 border-t-2 border-l-2 rounded-tl-md',
-                        'top-0 right-0 border-t-2 border-r-2 rounded-tr-md',
-                        'bottom-0 left-0 border-b-2 border-l-2 rounded-bl-md',
-                        'bottom-0 right-0 border-b-2 border-r-2 rounded-br-md',
-                      ].map((cls, i) => (
-                        <div key={i} className={`absolute w-8 h-8 border-white ${cls}`} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                {/* html5-qrcode renders its own video into this div */}
+                <div
+                  id="qr-reader"
+                  className="w-full overflow-hidden rounded-xl [&_video]:w-full [&_video]:rounded-xl [&_img]:hidden [&_select]:hidden [&_#qr-reader__header_text]:hidden [&_#qr-reader__status_span]:hidden"
+                />
 
                 <div className="flex gap-2">
                   {torchSupported && (
-                    <button onClick={toggleTorch}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${torchOn ? 'bg-yellow-500 text-white' : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'}`}>
+                    <button
+                      onClick={toggleTorch}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors
+                        ${torchOn
+                          ? 'bg-yellow-500 text-white'
+                          : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
+                        }`}>
                       {torchOn ? <Zap size={16} /> : <ZapOff size={16} />}
                       {torchOn ? 'Flash on' : 'Flash off'}
                     </button>
                   )}
-                  <button onClick={stopScanner}
+                  <button
+                    onClick={stopScanner}
                     className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2 rounded-lg text-sm font-medium">
                     <X size={16} /> Stop
                   </button>
                 </div>
 
-                {zoomSupported && (
-                  <div className="flex items-center gap-2">
-                    <ZoomOut size={16} className="text-gray-500" />
-                    <input type="range" min={zoomMin} max={zoomMax} step={0.1} value={zoom}
-                      onChange={e => applyZoom(+e.target.value)} className="flex-1" />
-                    <ZoomIn size={16} className="text-gray-500" />
-                    <span className="text-xs text-gray-500 w-10 text-right">{zoom.toFixed(1)}×</span>
-                  </div>
-                )}
-
                 <p className="text-xs text-gray-400 text-center">
-                  Aim at the QR code — detected instantly
+                  Point camera at the QR code on the receipt
                 </p>
               </div>
             )}
           </div>
 
+          {/* ── PFR Broj fallback ── */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-2">
-            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Or paste the receipt URL manually</label>
-            <input value={manualUrl} onChange={e => setManualUrl(e.target.value)}
-              placeholder="https://suf.purs.gov.rs/v/?vl=..."
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100" />
-            <button onClick={() => handleSufUrl(manualUrl)} disabled={!manualUrl || loading}
+            <div className="flex items-center gap-1.5">
+              <Hash size={13} className="text-gray-400" />
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                Enter PFR broj from the receipt
+              </label>
+            </div>
+            <input
+              value={manualPfr}
+              onChange={e => setManualPfr(e.target.value.toUpperCase())}
+              placeholder="ABC123XY-12345678"
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="characters"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm font-mono bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 tracking-wider"
+            />
+            <button
+              onClick={handlePfrSubmit}
+              disabled={!isPfrBroj(manualPfr) || loading}
               className="w-full bg-gray-800 dark:bg-gray-700 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50">
-              {loading ? 'Parsing...' : 'Parse Receipt'}
+              {loading ? 'Looking up…' : 'Look Up Receipt'}
+            </button>
+            <p className="text-[10px] text-gray-400 text-center">
+              Printed above the QR code — e.g. <span className="font-mono">ABC123XY-12345678</span>
+            </p>
+          </div>
+
+          {/* ── Full URL fallback ── */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-2">
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              Or paste the receipt URL manually
+            </label>
+            <input
+              value={manualUrl}
+              onChange={e => setManualUrl(e.target.value)}
+              placeholder="https://suf.purs.gov.rs/v/?vl=..."
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+            />
+            <button
+              onClick={() => handleSufUrl(manualUrl)}
+              disabled={!manualUrl || loading}
+              className="w-full bg-gray-800 dark:bg-gray-700 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50">
+              {loading ? 'Parsing…' : 'Parse Receipt'}
             </button>
           </div>
         </>
@@ -281,41 +292,60 @@ export default function ScanPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Date</span>
-              <span className="text-gray-700 dark:text-gray-300">{parsed.date ? new Date(parsed.date).toLocaleString('sr-RS') : '—'}</span>
+              <span className="text-gray-700 dark:text-gray-300">
+                {parsed.date ? new Date(parsed.date).toLocaleString('sr-RS') : '—'}
+              </span>
             </div>
             <div className="flex justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
               <span className="text-gray-700 dark:text-gray-300 font-medium">Total</span>
-              <span className="font-bold text-gray-900 dark:text-gray-100">{parsed.total?.toLocaleString('sr-RS')} RSD</span>
+              <span className="font-bold text-gray-900 dark:text-gray-100">
+                {parsed.total?.toLocaleString('sr-RS')} RSD
+              </span>
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 block">Expense type</label>
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 block">
+              Expense type
+            </label>
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => setExpenseType('personal')}
-                className={`py-2 rounded-lg text-sm font-medium border transition-colors ${expenseType === 'personal' ? 'bg-red-600 text-white border-red-600' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+              <button
+                onClick={() => setExpenseType('personal')}
+                className={`py-2 rounded-lg text-sm font-medium border transition-colors
+                  ${expenseType === 'personal'
+                    ? 'bg-red-600 text-white border-red-600'
+                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}>
                 Personal
               </button>
-              <button onClick={() => setExpenseType('business')}
-                className={`py-2 rounded-lg text-sm font-medium border transition-colors ${expenseType === 'business' ? 'bg-purple-600 text-white border-purple-600' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+              <button
+                onClick={() => setExpenseType('business')}
+                className={`py-2 rounded-lg text-sm font-medium border transition-colors
+                  ${expenseType === 'business'
+                    ? 'bg-purple-600 text-white border-purple-600'
+                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}>
                 Business
               </button>
             </div>
           </div>
 
-          <button onClick={() => {
-            const params = new URLSearchParams({
-              merchantName: parsed.merchantName || '',
-              merchantPib: parsed.merchantPib || '',
-              sufUrl: parsed.sufUrl || '',
-              amount: String(parsed.total || ''),
-              date: parsed.date ? new Date(parsed.date).toISOString().split('T')[0] : '',
-            })
-            router.push(`/finance/expenses/${expenseType}?${params.toString()}`)
-          }} className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700">
+          <button
+            onClick={() => {
+              const params = new URLSearchParams({
+                merchantName: parsed.merchantName || '',
+                merchantPib:  parsed.merchantPib  || '',
+                sufUrl:       parsed.sufUrl        || '',
+                amount:       String(parsed.total  || ''),
+                date:         parsed.date ? new Date(parsed.date).toISOString().split('T')[0] : '',
+              })
+              router.push(`/finance/expenses/${expenseType}?${params.toString()}`)
+            }}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700">
             Continue → Categorize
           </button>
-          <button onClick={() => { setParsed(null); setManualUrl('') }}
+          <button
+            onClick={() => { setParsed(null); setManualUrl('') }}
             className="w-full border border-gray-300 dark:border-gray-600 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
             Scan Another
           </button>

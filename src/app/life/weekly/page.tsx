@@ -1,9 +1,10 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { startOfDay } from '@/lib/utils'
-import { Check, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { Check, TrendingUp, TrendingDown, Minus, ChevronRight } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
 interface SubTask { id: string; name: string; order: number }
 interface Habit {
@@ -16,8 +17,27 @@ interface Log { date: string; completed: boolean; value?: number | null }
 interface WeekItem { habit: Habit; completedThisWeek: boolean; thisWeekLog: Log | null; recentLogs: Log[] }
 interface WeekScore { score: number; completed: number; total: number }
 interface ScoreData { thisWeek: WeekScore; lastWeek: WeekScore; delta: number; direction: 'up' | 'down' | 'same' }
+interface BodyRow { id: string; date: string; metric: string; value: number }
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+// ── Metric config ──────────────────────────────────────────────────────────────
+
+const WEEKLY_METRICS = [
+  { key: 'weight',    label: 'Weight',    unit: 'kg',  icon: '⚖️',  color: '#8b5cf6' },
+  { key: 'waist',     label: 'Waist',     unit: 'cm',  icon: '📏',  color: '#3b82f6' },
+] as const
+
+const MONTHLY_METRICS = [
+  { key: 'chest',     label: 'Chest',     unit: 'cm',  icon: '💪',  color: '#10b981' },
+  { key: 'bicep',     label: 'Bicep',     unit: 'cm',  icon: '💪',  color: '#f59e0b' },
+  { key: 'shoulders', label: 'Shoulders', unit: 'cm',  icon: '🏋️', color: '#ef4444' },
+  { key: 'thigh',     label: 'Thigh',     unit: 'cm',  icon: '🦵',  color: '#ec4899' },
+] as const
+
+const ALL_METRICS = [...WEEKLY_METRICS, ...MONTHLY_METRICS]
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function toLocalISODate(d: Date): string {
   const y = d.getFullYear()
@@ -39,6 +59,134 @@ function formatWeekRange(monday: Date): string {
   const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   return `${fmt(monday)} – ${fmt(sunday)}`
 }
+
+function isFirstSundayOfMonth(date: Date): boolean {
+  if (date.getDay() !== 0) return false
+  return date.getDate() <= 7
+}
+
+function daysSince(rows: BodyRow[], metric: string): number | null {
+  const last = [...rows].filter(r => r.metric === metric).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+  if (!last) return null
+  return Math.floor((Date.now() - new Date(last.date).getTime()) / 86400000)
+}
+
+// ── Sparkline ─────────────────────────────────────────────────────────────────
+
+function Sparkline({ data, color, unit }: { data: BodyRow[]; color: string; unit: string }) {
+  if (data.length < 2) return null
+  const pts = data.slice(-10).map(r => ({
+    v: r.value,
+    label: new Date(r.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+  }))
+  const min = Math.min(...pts.map(p => p.v)) * 0.995
+  const max = Math.max(...pts.map(p => p.v)) * 1.005
+  return (
+    <ResponsiveContainer width="100%" height={52}>
+      <LineChart data={pts} margin={{ top: 2, right: 4, bottom: 0, left: -32 }}>
+        <YAxis domain={[min, max]} hide />
+        <XAxis dataKey="label" hide />
+        <Tooltip
+          contentStyle={{ fontSize: 10, borderRadius: 6, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+          formatter={(v: number) => [`${v} ${unit}`, '']}
+          labelFormatter={(l) => l}
+        />
+        <Line type="monotone" dataKey="v" stroke={color} strokeWidth={2}
+          dot={{ r: 2.5, fill: color, strokeWidth: 0 }}
+          activeDot={{ r: 4 }} />
+      </LineChart>
+    </ResponsiveContainer>
+  )
+}
+
+// ── Metric input row ──────────────────────────────────────────────────────────
+
+function MetricRow({
+  metricKey, label, unit, icon, color,
+  todayValue, history,
+  onSave,
+}: {
+  metricKey: string; label: string; unit: string; icon: string; color: string
+  todayValue: number | null
+  history: BodyRow[]
+  onSave: (metric: string, value: number) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [input, setInput]     = useState(todayValue != null ? String(todayValue) : '')
+
+  // keep input in sync when todayValue arrives from parent
+  useEffect(() => {
+    if (!editing) setInput(todayValue != null ? String(todayValue) : '')
+  }, [todayValue, editing])
+
+  // Trend vs previous entry
+  const prev = history.filter(r => r.metric === metricKey).at(-2)?.value ?? null
+  const curr = history.filter(r => r.metric === metricKey).at(-1)?.value ?? null
+  const delta = prev != null && curr != null ? Math.round((curr - prev) * 10) / 10 : null
+
+  function commit() {
+    const v = parseFloat(input.replace(',', '.'))
+    if (!isNaN(v) && v > 0) onSave(metricKey, v)
+    setEditing(false)
+  }
+
+  return (
+    <div className="px-4 py-3">
+      <div className="flex items-center gap-3">
+        <span className="text-xl w-8 text-center shrink-0">{icon}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{label}</span>
+            {delta != null && (
+              <span className={cn('text-[10px] font-semibold px-1.5 py-0.5 rounded-full',
+                delta < 0 && metricKey === 'weight'
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                  : delta > 0 && metricKey === 'weight'
+                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                    : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400')}>
+                {delta > 0 ? '+' : ''}{delta} {unit}
+              </span>
+            )}
+          </div>
+          <div className="mt-1.5">
+            <Sparkline data={history.filter(r => r.metric === metricKey)} color={color} unit={unit} />
+          </div>
+        </div>
+        <div className="shrink-0">
+          {editing ? (
+            <input
+              autoFocus
+              type="number"
+              inputMode="decimal"
+              step="0.1"
+              placeholder={`0 ${unit}`}
+              className="w-24 text-sm font-semibold text-center bg-gray-100 dark:bg-gray-800 rounded-xl px-2 py-1.5 outline-none"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onBlur={commit}
+              onKeyDown={e => { if (e.key === 'Enter') commit() }}
+            />
+          ) : (
+            <button
+              onClick={() => { setInput(todayValue != null ? String(todayValue) : ''); setEditing(true) }}
+              className={cn(
+                'text-sm font-semibold px-3 py-1.5 rounded-xl transition-colors',
+                todayValue != null
+                  ? 'text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              )}
+              style={todayValue != null ? { background: color } : undefined}
+            >
+              {todayValue != null ? `${todayValue} ${unit}` : `Log ${unit}`}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Weekly habit row (unchanged) ──────────────────────────────────────────────
 
 function WeightGraph({ logs }: { logs: Log[] }) {
   const data = logs
@@ -124,7 +272,6 @@ function WeeklyHabitRow({ item, onToggle, onValue }: {
     )
   }
 
-  // Quantity (e.g. weight)
   return (
     <div className="px-4 py-3.5">
       <div className="flex items-center gap-4">
@@ -147,9 +294,7 @@ function WeeklyHabitRow({ item, onToggle, onValue }: {
         <div className="shrink-0">
           {editing ? (
             <input
-              autoFocus
-              type="number"
-              step="0.1"
+              autoFocus type="number" step="0.1"
               className="w-20 text-sm font-semibold bg-gray-100 dark:bg-gray-800 rounded-lg px-2 py-1 outline-none text-center"
               value={inputVal}
               onChange={e => setInputVal(e.target.value)}
@@ -171,24 +316,42 @@ function WeeklyHabitRow({ item, onToggle, onValue }: {
   )
 }
 
-export default function WeeklyPage() {
-  const [items, setItems] = useState<WeekItem[]>([])
-  const [scoreData, setScoreData] = useState<ScoreData | null>(null)
-  const [loading, setLoading] = useState(true)
+// ── Page ──────────────────────────────────────────────────────────────────────
 
-  const monday = mondayOf(new Date())
+export default function WeeklyPage() {
+  const [items, setItems]           = useState<WeekItem[]>([])
+  const [scoreData, setScoreData]   = useState<ScoreData | null>(null)
+  const [loading, setLoading]       = useState(true)
+  const [bodyHistory, setBodyHistory] = useState<BodyRow[]>([])
+  const [todayBody, setTodayBody]   = useState<Record<string, number | null>>({})
+
+  const monday    = mondayOf(new Date())
   const weekRange = formatWeekRange(monday)
+  const today     = new Date()
+  const todayKey  = toLocalISODate(today)
+  const isFirstSundayOfMonth_ = isFirstSundayOfMonth(today)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [habitsRes, scoreRes] = await Promise.all([
+    const metricKeys = ALL_METRICS.map(m => m.key).join(',')
+    const [habitsRes, scoreRes, historyRes] = await Promise.all([
       fetch('/api/life/weekly-habits'),
       fetch('/api/life/weekly-score'),
+      fetch(`/api/life/body-metrics?metrics=${metricKeys}`),
     ])
     setItems(await habitsRes.json())
     setScoreData(await scoreRes.json())
+    const hist: BodyRow[] = await historyRes.json()
+    setBodyHistory(hist)
+    // Derive today's logged values
+    const todayMap: Record<string, number | null> = {}
+    ALL_METRICS.forEach(m => {
+      const row = hist.find(r => r.metric === m.key && r.date.startsWith(todayKey))
+      todayMap[m.key] = row?.value ?? null
+    })
+    setTodayBody(todayMap)
     setLoading(false)
-  }, [])
+  }, [todayKey])
 
   useEffect(() => { load() }, [load])
 
@@ -202,8 +365,33 @@ export default function WeeklyPage() {
     load()
   }
 
-  const DirIcon = scoreData?.direction === 'up' ? TrendingUp : scoreData?.direction === 'down' ? TrendingDown : Minus
+  async function saveMetric(metric: string, value: number) {
+    await fetch('/api/life/body-metrics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ metric, value, date: todayKey }),
+    })
+    setTodayBody(prev => ({ ...prev, [metric]: value }))
+    // Optimistically update history
+    setBodyHistory(prev => {
+      const without = prev.filter(r => !(r.metric === metric && r.date.startsWith(todayKey)))
+      return [...without, { id: 'temp', date: todayKey + 'T00:00:00.000Z', metric, value }]
+    })
+  }
+
+  const DirIcon  = scoreData?.direction === 'up' ? TrendingUp : scoreData?.direction === 'down' ? TrendingDown : Minus
   const dirColor = scoreData?.direction === 'up' ? 'text-green-400' : scoreData?.direction === 'down' ? 'text-red-400' : 'text-gray-400'
+
+  // Monthly metrics: show if first Sunday OR overdue (> 28 days since last log)
+  const showMonthly = isFirstSundayOfMonth_ || MONTHLY_METRICS.some(m => {
+    const d = daysSince(bodyHistory, m.key)
+    return d === null || d > 28
+  })
+
+  const monthlyOverdue = MONTHLY_METRICS.map(m => {
+    const d = daysSince(bodyHistory, m.key)
+    return { ...m, overdue: d === null || d > 28, daysSince: d }
+  })
 
   if (loading) {
     return (
@@ -252,6 +440,68 @@ export default function WeeklyPage() {
           }
         </div>
       )}
+
+      {/* ── Body Metrics ─────────────────────────────────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+            📏 Body Metrics
+          </h2>
+          <Link href="/life/body"
+            className="flex items-center gap-0.5 text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
+            All charts <ChevronRight size={13} />
+          </Link>
+        </div>
+
+        {/* Weekly: weight + waist */}
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden mb-3">
+          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800/50">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Weekly — every Sunday</p>
+          </div>
+          {WEEKLY_METRICS.map(m => (
+            <MetricRow
+              key={m.key}
+              metricKey={m.key}
+              label={m.label}
+              unit={m.unit}
+              icon={m.icon}
+              color={m.color}
+              todayValue={todayBody[m.key] ?? null}
+              history={bodyHistory}
+              onSave={saveMetric}
+            />
+          ))}
+        </div>
+
+        {/* Monthly: chest, bicep, shoulders, thigh */}
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden">
+          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Monthly measurements</p>
+            {!showMonthly && (
+              <p className="text-[10px] text-gray-400">Next due next month</p>
+            )}
+          </div>
+          {monthlyOverdue.map(m => (
+            <div key={m.key} className={cn(!showMonthly && 'opacity-40 pointer-events-none')}>
+              <MetricRow
+                metricKey={m.key}
+                label={m.label}
+                unit={m.unit}
+                icon={m.icon}
+                color={m.color}
+                todayValue={todayBody[m.key] ?? null}
+                history={bodyHistory}
+                onSave={saveMetric}
+              />
+              {m.daysSince != null && !m.overdue && (
+                <p className="text-[10px] text-gray-400 px-4 pb-2 -mt-1">
+                  Last logged {m.daysSince}d ago
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Weekly habits by category */}
       {items.length === 0 ? (

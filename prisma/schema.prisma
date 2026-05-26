@@ -223,6 +223,7 @@ model Habit {
   timeOfDay     String         @default("all_day")
   order         Int            @default(0)
   active        Boolean        @default(true)
+  paused        Boolean        @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   logs          HabitLog[]
@@ -249,6 +250,18 @@ model HabitLog {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   @@unique([habitId, date])
+}
+
+model BodyMetric {
+  id        String   @id @default(cuid())
+  date      DateTime
+  metric    String   // "weight" | "waist" | "chest" | "bicep" | "shoulders" | "thigh"
+  value     Float
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([date, metric])
+  @@index([metric, date])
 }
 
 model ScheduleBlock {
@@ -289,6 +302,7 @@ model Place {
   address       String?
   visitedAt     DateTime?
   googlePlaceId String?
+  photoUrl      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -357,6 +371,30 @@ model ICSCalendar {
 model AppConfig {
   key   String @id
   value String
+}
+
+// ─── Watchlist ────────────────────────────────────────────────────────────────
+
+model WatchlistItem {
+  id          String    @id @default(cuid())
+  userId      String    @default("default")
+  type        String    // "movie" | "tv" | "book"
+  status      String    // "want_to" | "currently" | "finished" | "loved_it"
+  title       String
+  externalId  String?   // TMDB numeric ID or Google Books volumeId
+  posterUrl   String?   // Full image URL (pre-resolved)
+  year        Int?
+  genres      String[]  @default([])
+  overview    String?
+  author      String?   // books only
+  tmdbRating  Float?    // TMDB vote_average (0-10)
+  streamingOn String[]  @default([]) // provider names for RS, e.g. ["Netflix", "Max"]
+  myRating    Int?      // personal 1-10
+  notes       String?
+  finishedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  @@index([userId, type, status])
 }
 
 // ─── Shared ───────────────────────────────────────────────────────────────────

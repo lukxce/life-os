@@ -7,6 +7,7 @@ import { LifeSidebar } from './LifeSidebar'
 import { LifeBottomNav } from './LifeBottomNav'
 import { QuickAddSheet } from './QuickAddSheet'
 import { ThemeToggle } from './ThemeToggle'
+import { GlobalSearch } from './GlobalSearch'
 
 export function LifeShell({ children }: { children: React.ReactNode }) {
   const [showAdd, setShowAdd] = useState(false)
@@ -20,6 +21,7 @@ export function LifeShell({ children }: { children: React.ReactNode }) {
         <header className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
           <span className="font-bold text-gray-900 dark:text-white text-lg">✅ Life</span>
           <div className="flex items-center gap-2">
+            <GlobalSearch mobileIconOnly />
             <Link href="/life/settings" className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               <SlidersHorizontal size={18} />
             </Link>
@@ -39,6 +41,7 @@ export function LifeShell({ children }: { children: React.ReactNode }) {
       {showAdd && (
         <QuickAddSheet onClose={() => setShowAdd(false)} onCreated={() => router.refresh()} />
       )}
+      <GlobalSearch keyboardOnly />
     </div>
   )
 }

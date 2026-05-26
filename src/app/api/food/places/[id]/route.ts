@@ -27,6 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       ...(body.longitude !== undefined ? { longitude: Number(body.longitude) } : {}),
       ...(body.address !== undefined ? { address: body.address || null } : {}),
       ...(body.visitedAt !== undefined ? { visitedAt: body.visitedAt ? new Date(body.visitedAt) : null } : {}),
+      ...(body.photoUrl !== undefined ? { photoUrl: body.photoUrl || null } : {}),
     },
   })
   return NextResponse.json(place)

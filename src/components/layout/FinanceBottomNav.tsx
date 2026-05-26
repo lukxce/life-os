@@ -7,7 +7,7 @@ import {
   TrendingUp, Briefcase, Building2, ArrowLeftRight, RefreshCw,
   Shield, Store, Tag, CreditCard, FileText,
   Bitcoin, ScanLine, X, Plus, Receipt, DollarSign, ChevronRight,
-  PiggyBank, Target, Sparkles
+  PiggyBank, Target, Sparkles, Lightbulb
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -32,6 +32,7 @@ const MORE_ITEMS = [
   ]},
   { group: 'Reports', items: [
     { href: '/finance/summaries',  label: 'Summaries',  icon: BarChart3 },
+    { href: '/finance/insights',   label: 'Insights',   icon: Lightbulb },
     { href: '/finance/warranties', label: 'Warranties', icon: Shield },
     { href: '/finance/merchants',  label: 'Merchants',  icon: Store },
   ]},

@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { Pencil, Trash2, X, Star } from 'lucide-react'
+import { Pencil, Trash2, X, Star, Share2, Check, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PlaceFormSheet } from '@/components/food/PlaceFormSheet'
 import { CATEGORY_CONFIG, Place } from '@/components/food/constants'
@@ -14,9 +14,21 @@ export default function FoodListPage() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Place | null>(null)
   const [editing, setEditing] = useState<Place | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  function shareCityGuide(city: string) {
+    const url = `${window.location.origin}/guide/${encodeURIComponent(city)}`
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {
+      window.prompt('Copy this link:', url)
+    })
+  }
   const [cats, setCats] = useState<string[]>(['been', 'want_to_go', 'regular'])
   const [filterCity, setFilterCity] = useState('')
   const [filterCuisine, setFilterCuisine] = useState('')
+  const [filterText, setFilterText] = useState('')
   const [sort, setSort] = useState<SortKey>('createdAt')
 
   const load = useCallback(async () => {
@@ -32,10 +44,12 @@ export default function FoodListPage() {
   const cuisines = useMemo(() => Array.from(new Set(places.map(p => p.cuisine).filter(Boolean))).sort(), [places])
 
   const filtered = useMemo(() => {
+    const q = filterText.toLowerCase()
     const f = places.filter(p =>
       cats.includes(p.category) &&
       (!filterCity || p.city === filterCity) &&
-      (!filterCuisine || p.cuisine === filterCuisine)
+      (!filterCuisine || p.cuisine === filterCuisine) &&
+      (!q || p.name.toLowerCase().includes(q) || p.cuisine?.toLowerCase().includes(q) || p.city.toLowerCase().includes(q) || p.notes?.toLowerCase().includes(q) || p.mustOrder?.toLowerCase().includes(q))
     )
     return [...f].sort((a, b) => {
       if (sort === 'rating') return (b.myRating ?? 0) - (a.myRating ?? 0)
@@ -61,6 +75,23 @@ export default function FoodListPage() {
     <div className="h-full overflow-auto pb-24 md:pb-6">
       {/* Filters + sort */}
       <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-gray-100 dark:border-gray-800 px-4 py-3 space-y-2">
+        {/* Text search */}
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search places, cuisine, notes…"
+            value={filterText}
+            onChange={e => setFilterText(e.target.value)}
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-orange-400"
+          />
+          {filterText && (
+            <button onClick={() => setFilterText('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X size={13} />
+            </button>
+          )}
+        </div>
+
         {/* Category toggles */}
         <div className="flex gap-1.5 flex-wrap">
           {(Object.entries(CATEGORY_CONFIG) as [string, { label: string; color: string }][]).map(([key, cfg]) => (
@@ -82,6 +113,17 @@ export default function FoodListPage() {
               <option value="">All cities</option>
               {cities.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
+          )}
+          {filterCity && (
+            <button
+              onClick={() => shareCityGuide(filterCity)}
+              className={cn('flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl font-medium transition-colors border',
+                copied
+                  ? 'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400'
+                  : 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400 hover:bg-orange-100')}>
+              {copied ? <Check size={11} /> : <Share2 size={11} />}
+              {copied ? 'Copied!' : `Share ${filterCity} guide`}
+            </button>
           )}
           {cuisines.length > 1 && (
             <select value={filterCuisine} onChange={e => setFilterCuisine(e.target.value)}
@@ -145,6 +187,10 @@ export default function FoodListPage() {
         <div className="fixed inset-x-0 bottom-0 z-30 md:inset-auto md:fixed md:bottom-6 md:right-6 md:w-80">
           <div className="bg-white dark:bg-gray-900 rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
             <div className="h-1 w-full" style={{ background: CATEGORY_CONFIG[selected.category as keyof typeof CATEGORY_CONFIG]?.color }} />
+            {selected.photoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={selected.photoUrl} alt={selected.name} className="w-full h-40 object-cover" />
+            )}
             <div className="p-5 pb-28 md:pb-5">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0">

@@ -1,8 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Pencil, CheckCircle } from 'lucide-react'
+import { Plus, Trash2, Pencil, CheckCircle, CalendarDays } from 'lucide-react'
 import { toast } from 'sonner'
 import { NumberInput } from '@/components/ui/NumberInput'
+import { cn } from '@/lib/utils'
 
 const defaultForm = { name: '', amount: '', currency: 'RSD', category: '', subcategory: '', accountId: '', dayOfMonth: '1', notes: '', isLoan: false, lender: '' }
 
@@ -44,7 +45,7 @@ export default function BillsPage() {
   const [payingBill, setPayingBill] = useState<any | null>(null)
   const [payAmount, setPayAmount] = useState('')
   const [form, setForm] = useState(defaultForm)
-  const [tab, setTab] = useState<'bills' | 'loans'>('bills')
+  const [tab, setTab] = useState<'bills' | 'loans' | 'calendar'>('bills')
 
   const load = async () => {
     const [b, a, c, s] = await Promise.all([
@@ -98,18 +99,18 @@ export default function BillsPage() {
 
   const allBills = [...bills].filter(b => !b.isLoan).sort((a, b) => daysUntil(a.dayOfMonth) - daysUntil(b.dayOfMonth))
   const allLoans = [...bills].filter(b => b.isLoan).sort((a, b) => daysUntil(a.dayOfMonth) - daysUntil(b.dayOfMonth))
-  const shown = tab === 'bills' ? allBills : allLoans
+  const shown = tab === 'calendar' ? [] : tab === 'bills' ? allBills : allLoans
 
   const totalMonthly = (tab === 'bills' ? allBills : allLoans).filter(b => b.active).reduce((s, b) => s + b.amount, 0)
-  const totalCurrency = shown[0]?.currency ?? 'RSD'
+  const totalCurrency = (tab === 'bills' ? allBills : allLoans)[0]?.currency ?? 'RSD'
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Bills & Loans</h2>
-        <button onClick={() => { setEditingId(null); setForm({ ...defaultForm, isLoan: tab === 'loans' }); setShowForm(s => !s) }}
+        <button onClick={() => { setEditingId(null); setForm({ ...defaultForm, isLoan: false }); if (tab === 'calendar') setTab('bills'); setShowForm(s => !s) }}
           className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-teal-700">
-          <Plus size={16} /> Add {tab === 'bills' ? 'Bill' : 'Loan'}
+          <Plus size={16} /> Add {tab === 'loans' ? 'Loan' : 'Bill'}
         </button>
       </div>
 
@@ -121,6 +122,11 @@ export default function BillsPage() {
             {t} <span className="ml-1 text-xs text-gray-400">({t === 'bills' ? allBills.length : allLoans.length})</span>
           </button>
         ))}
+        <button onClick={() => setTab('calendar')}
+          className={cn('flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
+            tab === 'calendar' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200')}>
+          <CalendarDays size={14} /> Calendar
+        </button>
       </div>
 
       {shown.length > 0 && (
@@ -202,6 +208,9 @@ export default function BillsPage() {
         </div>
       )}
 
+      {tab === 'calendar' ? (
+        <BillCalendar bills={bills} rate={rate} onMarkPaid={b => { setPayingBill(b); setPayAmount(String(b.amount)) }} />
+      ) : (
       <div className="space-y-3">
         {shown.length === 0 ? (
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500">
@@ -243,6 +252,119 @@ export default function BillsPage() {
             </div>
           )
         })}
+      </div>
+      )}
+    </div>
+  )
+}
+
+function BillCalendar({ bills, rate, onMarkPaid }: { bills: any[]; rate: number; onMarkPaid: (b: any) => void }) {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const monthName = now.toLocaleString('en-US', { month: 'long', year: 'numeric' })
+
+  const activeBills = bills.filter(b => b.active)
+
+  function isPaidThisMonth(payments: any[]): boolean {
+    if (!payments?.length) return false
+    const last = new Date(payments[0].paidDate)
+    return last.getMonth() === month && last.getFullYear() === year
+  }
+
+  // Build day → bills map
+  const dayMap: Record<number, any[]> = {}
+  for (const b of activeBills) {
+    const d = Math.min(b.dayOfMonth, daysInMonth)
+    if (!dayMap[d]) dayMap[d] = []
+    dayMap[d].push(b)
+  }
+
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+
+  // Total for the month
+  const totalRSD = activeBills.filter(b => b.currency === 'RSD').reduce((s, b) => s + b.amount, 0)
+  const totalEUR = activeBills.filter(b => b.currency === 'EUR').reduce((s, b) => s + b.amount, 0)
+  const totalRSDEq = totalRSD + totalEUR * rate
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{monthName}</h3>
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          Total: <span className="font-semibold text-gray-900 dark:text-gray-100">
+            {Math.round(totalRSDEq).toLocaleString()} RSD
+          </span>
+          {totalEUR > 0 && <span className="ml-1">+ {totalEUR.toLocaleString()} EUR</span>}
+        </div>
+      </div>
+
+      {/* Calendar grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {['M','T','W','T','F','S','S'].map((d, i) => (
+          <div key={i} className="text-center text-[10px] font-semibold text-gray-400 py-1">{d}</div>
+        ))}
+
+        {/* Offset for first day of month */}
+        {(() => {
+          const firstDay = new Date(year, month, 1).getDay()
+          const offset = firstDay === 0 ? 6 : firstDay - 1 // Mon-start
+          return Array.from({ length: offset }, (_, i) => <div key={`off-${i}`} />)
+        })()}
+
+        {days.map(day => {
+          const billsOnDay = dayMap[day] ?? []
+          const isToday = day === now.getDate()
+          const hasBills = billsOnDay.length > 0
+          const allPaid = hasBills && billsOnDay.every(b => isPaidThisMonth(b.payments))
+          const hasOverdue = hasBills && !allPaid && day < now.getDate()
+
+          return (
+            <div key={day}
+              className={cn(
+                'min-h-[60px] rounded-lg border p-1 transition-colors',
+                isToday ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30' : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900',
+                hasBills && !allPaid && !hasOverdue && 'border-amber-200 dark:border-amber-800',
+                hasOverdue && 'border-red-200 dark:border-red-800'
+              )}>
+              <div className={cn('text-xs font-bold mb-0.5 text-right',
+                isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400')}>
+                {day}
+              </div>
+              <div className="space-y-0.5">
+                {billsOnDay.map(b => {
+                  const paid = isPaidThisMonth(b.payments)
+                  return (
+                    <button
+                      key={b.id}
+                      onClick={() => !paid && onMarkPaid(b)}
+                      title={`${b.name} — ${b.amount.toLocaleString()} ${b.currency}${paid ? ' (paid)' : ''}`}
+                      className={cn(
+                        'w-full text-left text-[9px] leading-tight px-1 py-0.5 rounded truncate font-medium transition-opacity',
+                        paid
+                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 line-through'
+                          : hasOverdue
+                            ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 hover:bg-red-200'
+                            : 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 hover:bg-amber-200'
+                      )}>
+                      {b.name}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-100 dark:bg-amber-900/50 inline-block" />Upcoming</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-100 dark:bg-red-900/50 inline-block" />Overdue</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-100 dark:bg-gray-700 inline-block" />Paid</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-indigo-400 inline-block" />Today</span>
+        <span className="ml-auto text-gray-400">Click a bill to mark paid</span>
       </div>
     </div>
   )

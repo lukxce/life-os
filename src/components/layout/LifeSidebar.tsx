@@ -1,12 +1,14 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarDays, BarChart2, Settings, History, Plus, CalendarCheck, CalendarRange, Home, Target, Users, BookOpen, Calendar, SlidersHorizontal } from 'lucide-react'
+import { CalendarDays, BarChart2, Settings, History, Plus, CalendarCheck, CalendarRange, Home, Target, Users, BookOpen, Calendar, SlidersHorizontal, Activity, Clapperboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const links = [
   { href: '/life',           label: 'Today',         icon: CalendarDays  },
   { href: '/life/weekly',    label: 'Weekly',        icon: CalendarCheck },
+  { href: '/life/body',       label: 'Body',          icon: Activity      },
+  { href: '/life/watchlist', label: 'Watchlist',     icon: Clapperboard  },
   { href: '/life/schedule',  label: 'Schedule',      icon: CalendarRange },
   { href: '/life/goals',     label: 'Goals',         icon: Target        },
   { href: '/life/contacts',  label: 'People',        icon: Users         },

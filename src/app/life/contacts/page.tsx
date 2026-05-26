@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { LifeNav } from '@/components/layout/LifeNav'
-import { Plus, Pencil, Trash2, X, Phone } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Phone, Search } from 'lucide-react'
 
 interface Contact {
   id: string; name: string; emoji?: string | null; color?: string | null
@@ -183,6 +183,7 @@ export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState<{ mode: 'add' } | { mode: 'edit'; contact: Contact } | null>(null)
+  const [searchText, setSearchText] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -221,8 +222,13 @@ export default function ContactsPage() {
     return 0
   })
 
-  const overdue = sorted.filter(c => statusInfo(c).urgent)
-  const ok = sorted.filter(c => !statusInfo(c).urgent)
+  const q = searchText.toLowerCase()
+  const displayContacts = q
+    ? sorted.filter(c => c.name.toLowerCase().includes(q) || c.note?.toLowerCase().includes(q))
+    : sorted
+
+  const overdue = displayContacts.filter(c => statusInfo(c).urgent)
+  const ok = displayContacts.filter(c => !statusInfo(c).urgent)
 
   if (loading) return (
     <div className="space-y-4">
@@ -240,8 +246,27 @@ export default function ContactsPage() {
         </div>
         <button onClick={() => setModal({ mode: 'add' })} className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold">
           <Plus size={16} /> Add
+
         </button>
       </div>
+
+      {contacts.length > 3 && (
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search people…"
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl pl-8 pr-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+          />
+          {searchText && (
+            <button onClick={() => setSearchText('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X size={13} />
+            </button>
+          )}
+        </div>
+      )}
 
       {contacts.length === 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">

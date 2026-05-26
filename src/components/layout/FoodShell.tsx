@@ -5,6 +5,7 @@ import { FoodSidebar } from './FoodSidebar'
 import { FoodBottomNav } from './FoodBottomNav'
 import { ThemeToggle } from './ThemeToggle'
 import { PlaceFormSheet } from '@/components/food/PlaceFormSheet'
+import { GlobalSearch } from './GlobalSearch'
 
 export function FoodShell({ children }: { children: React.ReactNode }) {
   const [showAdd, setShowAdd] = useState(false)
@@ -17,7 +18,10 @@ export function FoodShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-between shrink-0">
           <span className="font-bold text-gray-900 dark:text-white text-lg">🗺️ Food Map</span>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <GlobalSearch mobileIconOnly />
+            <ThemeToggle />
+          </div>
         </header>
 
         <main className="flex-1 overflow-hidden relative">
@@ -33,6 +37,7 @@ export function FoodShell({ children }: { children: React.ReactNode }) {
           onSaved={() => { setShowAdd(false); router.refresh() }}
         />
       )}
+      <GlobalSearch keyboardOnly />
     </div>
   )
 }
