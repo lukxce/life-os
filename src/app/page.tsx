@@ -58,6 +58,15 @@ const MODULES = [
     border: 'border-orange-100 dark:border-orange-900',
     bg: 'bg-orange-50 dark:bg-orange-950/40',
   },
+  {
+    href: '/watchlist',
+    emoji: '🎬',
+    title: 'Watchlist',
+    description: 'Movies, TV shows & books',
+    color: 'from-violet-500 to-violet-600',
+    border: 'border-violet-100 dark:border-violet-900',
+    bg: 'bg-violet-50 dark:bg-violet-950/40',
+  },
 ]
 
 export default function HomePage() {

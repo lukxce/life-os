@@ -249,7 +249,7 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
                       ].filter(Boolean).join(' · ')}
                       right={w.myRating != null ? `★ ${w.myRating}/10` : undefined}
                       rightColor="text-amber-600 dark:text-amber-400"
-                      onClick={() => go('/life/watchlist')} />
+                      onClick={() => go('/watchlist')} />
                   ))}
                 </Section>
               )}
