@@ -18,35 +18,6 @@ function pick($: ReturnType<typeof cheerio.load>, ...selectors: string[]): strin
 }
 
 /**
- * Visit the portal base URL to collect any session/CSRF cookies,
- * then return them as a Cookie header string.
- */
-async function getPortalCookies(): Promise<string> {
-  try {
-    const res = await fetch('https://suf.purs.gov.rs/', {
-      headers: {
-        'User-Agent': UA,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'sr-RS,sr;q=0.9,en;q=0.8',
-      },
-      redirect: 'follow',
-      // @ts-ignore — Node 18 fetch supports this
-      next: { revalidate: 0 },
-    })
-    const raw = res.headers.get('set-cookie') ?? ''
-    if (!raw) return ''
-    // Parse out name=value from each Set-Cookie directive
-    return raw
-      .split(/,(?=[^ ].*?=)/)           // split on comma-separated directives
-      .map(c => c.split(';')[0].trim())  // keep only name=value
-      .filter(Boolean)
-      .join('; ')
-  } catch {
-    return ''
-  }
-}
-
-/**
  * Parse a receipt date string. Handles:
  *   - ISO 8601 / RFC 2822 (new Date handles these)
  *   - Serbian DD.MM.YYYY HH:MM:SS
@@ -102,35 +73,24 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Grab session cookie first — portal returns 400 without it
-    const cookies = await getPortalCookies()
-
-    const headers: Record<string, string> = {
-      'User-Agent': UA,
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'sr-RS,sr;q=0.9,en-US;q=0.8,en;q=0.7',
-      'Referer': 'https://suf.purs.gov.rs/',
-      'Cache-Control': 'no-cache',
-    }
-    if (cookies) headers['Cookie'] = cookies
-
     const res = await fetch(sufUrl, {
-      headers,
+      headers: {
+        'User-Agent': UA,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'sr-RS,sr;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Referer': 'https://suf.purs.gov.rs/',
+      },
       redirect: 'follow',
       // @ts-ignore
       next: { revalidate: 0 },
     })
 
-    if (!res.ok) {
-      console.error('[scan] Portal responded', res.status, 'for', sufUrl)
-      return NextResponse.json(
-        { error: `Receipt portal returned ${res.status}` },
-        { status: 502 },
-      )
-    }
-
+    // Always read the body — the PURS portal sometimes returns non-200
+    // status codes even when the receipt HTML is present in the body.
     const html = await res.text()
     const $    = cheerio.load(html)
+
+    console.log('[scan] Portal status:', res.status, '| body length:', html.length)
 
     // Merchant name — try several selector variants the PURS portal has used
     const merchantName = pick($,
