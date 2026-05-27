@@ -149,13 +149,10 @@ export default function ScanPage() {
       await scanner.start(
         { facingMode: 'environment' },
         {
-          fps: 25,
-          qrbox: (w: number, h: number) => {
-            const s = Math.floor(Math.min(w, h) * 0.85)
-            return { width: s, height: s }
-          },
+          fps: 30,
+          // No qrbox — scan the full frame so user doesn't need to align precisely
           disableFlip: false,
-          // Use native BarcodeDetector on iOS 17+ / Chrome for better accuracy
+          // Native BarcodeDetector on iOS 17+ / Chrome — much faster than ZXing
           experimentalFeatures: { useBarCodeDetectorIfSupported: true },
         } as any,
         (text: string) => { stopQr(); handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text)) },
