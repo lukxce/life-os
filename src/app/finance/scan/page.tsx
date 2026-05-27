@@ -9,7 +9,6 @@ import {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-// Last segment varies — some receipts have 4, some 6, possibly more
 function isPfrBroj(text: string): boolean {
   return /^[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{2,12}$/i.test(text.trim())
 }
@@ -18,17 +17,12 @@ function pfrToUrl(pfr: string): string {
 }
 function extractPfr(rawText: string): string | null {
   const text = rawText.toUpperCase()
-
-  // Direct match — 8-8-N where N is 2-12 chars
   const direct = text.match(/[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{2,12}/)
   if (direct) return direct[0]
-
-  // OCR sometimes inserts spaces inside the token — collapse them and retry
+  // OCR sometimes inserts spaces inside tokens — collapse and retry
   const collapsed = text.replace(/([A-Z0-9]) ([A-Z0-9])/g, '$1$2')
   const retry = collapsed.match(/[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{2,12}/)
-  if (retry) return retry[0]
-
-  return null
+  return retry ? retry[0] : null
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -36,16 +30,24 @@ function extractPfr(rawText: string): string | null {
 export default function ScanPage() {
   const router = useRouter()
 
-  const qrScannerRef       = useRef<any>(null)
+  // QR — native BarcodeDetector path
+  const qrVideoRef     = useRef<HTMLVideoElement>(null)
+  const qrStreamRef    = useRef<MediaStream | null>(null)
+  const qrActiveRef    = useRef(false)
+  // QR — html5-qrcode fallback (older browsers)
+  const qrScannerRef   = useRef<any>(null)
+  // PFR
   const pfrVideoRef        = useRef<HTMLVideoElement>(null)
   const pfrCanvasRef       = useRef<HTMLCanvasElement>(null)
   const pfrStreamRef       = useRef<MediaStream | null>(null)
   const tesseractWorkerRef = useRef<any>(null)
   const ocrActiveRef       = useRef(false)
+  // shared
   const trackRef           = useRef<MediaStreamTrack | null>(null)
 
   type Mode = 'idle' | 'qr' | 'pfr'
   const [mode,           setMode]          = useState<Mode>('idle')
+  const [qrEngine,       setQrEngine]      = useState<'native' | 'html5'>('native')
   const [manualUrl,      setManualUrl]     = useState('')
   const [manualPfr,      setManualPfr]     = useState('')
   const [parsed,         setParsed]        = useState<any>(null)
@@ -124,6 +126,11 @@ export default function ScanPage() {
   // ── QR scanner ─────────────────────────────────────────────────────────────
 
   const stopQr = useCallback(async () => {
+    qrActiveRef.current = false
+    // native path
+    qrStreamRef.current?.getTracks().forEach(t => t.stop())
+    qrStreamRef.current = null
+    // html5-qrcode fallback path
     try {
       if (qrScannerRef.current) {
         await qrScannerRef.current.stop()
@@ -137,24 +144,65 @@ export default function ScanPage() {
 
   const startQr = () => {
     setError('')
-    flushSync(() => setMode('qr'))
-    void initQr()
+    const hasNative = typeof window !== 'undefined' && 'BarcodeDetector' in window
+    flushSync(() => {
+      setMode('qr')
+      setQrEngine(hasNative ? 'native' : 'html5')
+    })
+    void (hasNative ? initQrNative() : initQrHtml5())
   }
 
-  const initQr = async () => {
+  /** Direct BarcodeDetector path — fastest on iOS 17+ and Chrome */
+  const initQrNative = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      })
+      qrStreamRef.current = stream
+      const vid = qrVideoRef.current!
+      vid.srcObject = stream
+      await vid.play()
+      applyTrackCaps(stream.getVideoTracks()[0])
+    } catch (e: any) {
+      setMode('idle')
+      setError(/permission|denied/i.test(String(e))
+        ? 'Camera access denied — enter PFR or URL below.'
+        : 'Could not start camera.')
+      return
+    }
+
+    const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] })
+    qrActiveRef.current = true
+
+    const tick = async () => {
+      if (!qrActiveRef.current) return
+      const vid = qrVideoRef.current
+      try {
+        if (vid && vid.videoWidth > 0 && !vid.paused) {
+          const barcodes = await detector.detect(vid)
+          if (barcodes.length > 0) {
+            const text: string = barcodes[0].rawValue
+            stopQr()
+            handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
+            return
+          }
+        }
+      } catch {}
+      requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  }
+
+  /** html5-qrcode fallback for browsers without BarcodeDetector */
+  const initQrHtml5 = async () => {
     const { Html5Qrcode } = await import('html5-qrcode')
     const scanner = new Html5Qrcode('qr-reader', { verbose: false })
     qrScannerRef.current = scanner
     try {
       await scanner.start(
         { facingMode: 'environment' },
-        {
-          fps: 30,
-          // No qrbox — scan the full frame so user doesn't need to align precisely
-          disableFlip: false,
-          // Native BarcodeDetector on iOS 17+ / Chrome — much faster than ZXing
-          experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-        } as any,
+        { fps: 30, disableFlip: false } as any,
         (text: string) => { stopQr(); handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text)) },
         () => {},
       )
@@ -213,10 +261,7 @@ export default function ScanPage() {
       const { createWorker } = await import('tesseract.js')
       const worker = await createWorker('eng', 1, { logger: () => {} })
       await worker.setParameters({
-        // PSM 11 = sparse text — finds characters scattered across the full frame
-        // (PSM 7 was wrong: it treats the whole image as ONE line, producing garbage)
-        // No whitelist: forcing every character into A-Z0-9 turns spaces/punctuation
-        // into noise that breaks the pattern match. Let Tesseract read naturally.
+        // PSM 11 = sparse text — finds characters scattered anywhere in the frame
         tessedit_pageseg_mode: '11' as any,
       })
       tesseractWorkerRef.current = worker
@@ -242,25 +287,33 @@ export default function ScanPage() {
 
       setOcrBusy(true)
       try {
-        canvas.width  = video.videoWidth
-        canvas.height = video.videoHeight
+        const vw = video.videoWidth
+        const vh = video.videoHeight
+
+        // Crop to center 50% vertically — PFR text should be in the guide box.
+        // This halves the image area, making OCR roughly 2× faster.
+        const cropY = Math.floor(vh * 0.25)
+        const cropH = Math.floor(vh * 0.50)
+
+        canvas.width  = vw
+        canvas.height = cropH
         const ctx = canvas.getContext('2d')!
-        ctx.filter = 'contrast(2) brightness(1.1)'
-        ctx.drawImage(video, 0, 0)
+        ctx.filter = 'contrast(1.8) brightness(1.05)'
+        ctx.drawImage(video, 0, cropY, vw, cropH, 0, 0, vw, cropH)
         ctx.filter = 'none'
 
         const { data: { text } } = await worker.recognize(canvas)
         const pfr = extractPfr(text)
         if (pfr) {
           setPfrInput(pfr)
-          ocrActiveRef.current = false  // stop looping — we got a hit
+          ocrActiveRef.current = false
           setOcrBusy(false)
           break
         }
       } catch {}
       setOcrBusy(false)
 
-      await new Promise(r => setTimeout(r, 400))
+      await new Promise(r => setTimeout(r, 300))
     }
     setOcrLoopRunning(false)
   }
@@ -334,8 +387,20 @@ export default function ScanPage() {
             {/* ── QR mode ── */}
             {mode === 'qr' && (
               <div className="space-y-3">
-                <div id="qr-reader"
-                  className="w-full overflow-hidden rounded-xl [&_video]:w-full [&_video]:rounded-xl [&_img]:hidden [&_select]:hidden" />
+                {qrEngine === 'native'
+                  ? (
+                    <video
+                      ref={qrVideoRef}
+                      playsInline muted
+                      className="w-full rounded-xl bg-black"
+                    />
+                  ) : (
+                    <div
+                      id="qr-reader"
+                      className="w-full overflow-hidden rounded-xl [&_video]:w-full [&_video]:rounded-xl [&_img]:hidden [&_select]:hidden"
+                    />
+                  )
+                }
                 <CameraControls />
                 <p className="text-xs text-gray-400 text-center">Point at the QR code on the receipt</p>
               </div>
@@ -344,15 +409,12 @@ export default function ScanPage() {
             {/* ── PFR live OCR mode ── */}
             {mode === 'pfr' && (
               <div className="space-y-3">
-                {/* Viewfinder */}
                 <div className="relative rounded-xl overflow-hidden bg-black">
                   <video ref={pfrVideoRef} playsInline muted className="w-full rounded-xl" />
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <div className="w-11/12 border-2 border-white/70 rounded-lg py-4 bg-white/10 backdrop-blur-[1px] flex items-center justify-center gap-2">
                       {ocrLoopRunning
-                        ? ocrBusy
-                          ? <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-                          : <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        ? <span className={`w-2 h-2 rounded-full ${ocrBusy ? 'bg-yellow-400' : 'bg-emerald-400'} animate-pulse`} />
                         : <span className="w-2 h-2 rounded-full bg-white/50" />
                       }
                       <span className="text-white/80 text-xs font-medium tracking-widest uppercase">
@@ -363,7 +425,6 @@ export default function ScanPage() {
                 </div>
                 <canvas ref={pfrCanvasRef} className="hidden" />
 
-                {/* Live PFR input */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                     <Camera size={12} />
@@ -379,10 +440,8 @@ export default function ScanPage() {
                 </div>
 
                 <div className="flex gap-2">
-                  {/* Scan again — only shown after loop stopped with a result */}
                   {!ocrLoopRunning && (
-                    <button
-                      onClick={restartOcrLoop}
+                    <button onClick={restartOcrLoop}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium">
                       <RotateCcw size={14} /> Scan again
                     </button>
@@ -398,7 +457,7 @@ export default function ScanPage() {
                 <CameraControls />
                 <p className="text-xs text-gray-400 text-center">
                   {ocrLoopRunning
-                    ? 'Align the PFR broj text in the box · stops when recognised'
+                    ? 'Keep the PFR text inside the box · stops when recognised'
                     : 'Stopped · edit the box or tap Scan again'}
                 </p>
               </div>
