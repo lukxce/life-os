@@ -16,10 +16,19 @@ function isPfrBroj(text: string): boolean {
 function pfrToUrl(pfr: string): string {
   return `https://suf.purs.gov.rs/v/?vl=${btoa(pfr.trim())}`
 }
-function extractPfr(text: string): string | null {
-  // Match 8-8-N where N is 2-12 alphanumeric chars
-  const m = text.match(/\b[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{2,12}\b/i)
-  return m ? m[0].toUpperCase() : null
+function extractPfr(rawText: string): string | null {
+  const text = rawText.toUpperCase()
+
+  // Direct match — 8-8-N where N is 2-12 chars
+  const direct = text.match(/[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{2,12}/)
+  if (direct) return direct[0]
+
+  // OCR sometimes inserts spaces inside the token — collapse them and retry
+  const collapsed = text.replace(/([A-Z0-9]) ([A-Z0-9])/g, '$1$2')
+  const retry = collapsed.match(/[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{2,12}/)
+  if (retry) return retry[0]
+
+  return null
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -207,9 +216,11 @@ export default function ScanPage() {
       const { createWorker } = await import('tesseract.js')
       const worker = await createWorker('eng', 1, { logger: () => {} })
       await worker.setParameters({
-        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-',
-        // PSM 7 = single line of text — much better for a receipt number
-        tessedit_pageseg_mode: '7' as any,
+        // PSM 11 = sparse text — finds characters scattered across the full frame
+        // (PSM 7 was wrong: it treats the whole image as ONE line, producing garbage)
+        // No whitelist: forcing every character into A-Z0-9 turns spaces/punctuation
+        // into noise that breaks the pattern match. Let Tesseract read naturally.
+        tessedit_pageseg_mode: '11' as any,
       })
       tesseractWorkerRef.current = worker
     } catch {
