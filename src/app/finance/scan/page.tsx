@@ -4,19 +4,21 @@ import { flushSync } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import {
   Camera, X, Zap, ZapOff, ZoomIn, ZoomOut,
-  Hash, ScanText, QrCode, Check,
+  Hash, ScanText, QrCode, Check, RotateCcw,
 } from 'lucide-react'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
+// Last segment varies — some receipts have 4, some 6, possibly more
 function isPfrBroj(text: string): boolean {
-  return /^[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{4}$/i.test(text.trim())
+  return /^[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{2,12}$/i.test(text.trim())
 }
 function pfrToUrl(pfr: string): string {
   return `https://suf.purs.gov.rs/v/?vl=${btoa(pfr.trim())}`
 }
 function extractPfr(text: string): string | null {
-  const m = text.match(/[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{4}/i)
+  // Match 8-8-N where N is 2-12 alphanumeric chars
+  const m = text.match(/\b[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{2,12}\b/i)
   return m ? m[0].toUpperCase() : null
 }
 
@@ -25,15 +27,12 @@ function extractPfr(text: string): string | null {
 export default function ScanPage() {
   const router = useRouter()
 
-  // QR scanner
   const qrScannerRef       = useRef<any>(null)
-  // PFR text scanner
   const pfrVideoRef        = useRef<HTMLVideoElement>(null)
   const pfrCanvasRef       = useRef<HTMLCanvasElement>(null)
   const pfrStreamRef       = useRef<MediaStream | null>(null)
   const tesseractWorkerRef = useRef<any>(null)
   const ocrActiveRef       = useRef(false)
-  // shared camera track (for torch/zoom)
   const trackRef           = useRef<MediaStreamTrack | null>(null)
 
   type Mode = 'idle' | 'qr' | 'pfr'
@@ -50,9 +49,9 @@ export default function ScanPage() {
   const [zoomSupported,  setZoomSupported] = useState(false)
   const [zoomMin,        setZoomMin]       = useState(1)
   const [zoomMax,        setZoomMax]       = useState(5)
-  // Live OCR state
-  const [pfrInput,       setPfrInput]      = useState('')   // editable detected value
-  const [ocrBusy,        setOcrBusy]       = useState(false) // frame currently processing
+  const [pfrInput,       setPfrInput]      = useState('')
+  const [ocrBusy,        setOcrBusy]       = useState(false)
+  const [ocrLoopRunning, setOcrLoopRunning]= useState(false)
 
   // ── Parse receipt ──────────────────────────────────────────────────────────
 
@@ -141,14 +140,15 @@ export default function ScanPage() {
       await scanner.start(
         { facingMode: 'environment' },
         {
-          fps: 15,
+          fps: 25,
           qrbox: (w: number, h: number) => {
-            const s = Math.floor(Math.min(w, h) * 0.72)
+            const s = Math.floor(Math.min(w, h) * 0.85)
             return { width: s, height: s }
           },
-          aspectRatio: 1,
           disableFlip: false,
-        },
+          // Use native BarcodeDetector on iOS 17+ / Chrome for better accuracy
+          experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+        } as any,
         (text: string) => { stopQr(); handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text)) },
         () => {},
       )
@@ -168,7 +168,6 @@ export default function ScanPage() {
 
   const stopPfr = useCallback(async () => {
     ocrActiveRef.current = false
-    // terminate tesseract worker
     try { await tesseractWorkerRef.current?.terminate() } catch {}
     tesseractWorkerRef.current = null
     pfrStreamRef.current?.getTracks().forEach(t => t.stop())
@@ -176,6 +175,7 @@ export default function ScanPage() {
     resetCameraState()
     setMode('idle')
     setOcrBusy(false)
+    setOcrLoopRunning(false)
     setPfrInput('')
   }, [])
 
@@ -184,7 +184,6 @@ export default function ScanPage() {
     setPfrInput('')
     flushSync(() => setMode('pfr'))
 
-    // Start camera stream
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
@@ -204,12 +203,13 @@ export default function ScanPage() {
       return
     }
 
-    // Init Tesseract worker (once, reuse across frames)
     try {
       const { createWorker } = await import('tesseract.js')
       const worker = await createWorker('eng', 1, { logger: () => {} })
       await worker.setParameters({
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-',
+        // PSM 7 = single line of text — much better for a receipt number
+        tessedit_pageseg_mode: '7' as any,
       })
       tesseractWorkerRef.current = worker
     } catch {
@@ -217,12 +217,12 @@ export default function ScanPage() {
       return
     }
 
-    // Start continuous OCR loop
     ocrActiveRef.current = true
     runOcrLoop()
   }
 
   const runOcrLoop = async () => {
+    setOcrLoopRunning(true)
     while (ocrActiveRef.current) {
       const video  = pfrVideoRef.current
       const canvas = pfrCanvasRef.current
@@ -237,19 +237,30 @@ export default function ScanPage() {
         canvas.width  = video.videoWidth
         canvas.height = video.videoHeight
         const ctx = canvas.getContext('2d')!
-        ctx.filter = 'contrast(1.8) brightness(1.1)'
+        ctx.filter = 'contrast(2) brightness(1.1)'
         ctx.drawImage(video, 0, 0)
         ctx.filter = 'none'
 
         const { data: { text } } = await worker.recognize(canvas)
         const pfr = extractPfr(text)
-        if (pfr) setPfrInput(pfr)
+        if (pfr) {
+          setPfrInput(pfr)
+          ocrActiveRef.current = false  // stop looping — we got a hit
+          setOcrBusy(false)
+          break
+        }
       } catch {}
       setOcrBusy(false)
 
-      // Small gap between frames
       await new Promise(r => setTimeout(r, 400))
     }
+    setOcrLoopRunning(false)
+  }
+
+  const restartOcrLoop = () => {
+    setPfrInput('')
+    ocrActiveRef.current = true
+    runOcrLoop()
   }
 
   useEffect(() => () => { stopQr(); stopPfr() }, [stopQr, stopPfr])
@@ -295,7 +306,6 @@ export default function ScanPage() {
 
       {!parsed && (
         <>
-          {/* Camera card */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
 
             {mode === 'idle' && (
@@ -329,15 +339,16 @@ export default function ScanPage() {
                 {/* Viewfinder */}
                 <div className="relative rounded-xl overflow-hidden bg-black">
                   <video ref={pfrVideoRef} playsInline muted className="w-full rounded-xl" />
-                  {/* Guide overlay */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <div className="w-11/12 border-2 border-white/70 rounded-lg py-4 bg-white/10 backdrop-blur-[1px] flex items-center justify-center gap-2">
-                      {ocrBusy
-                        ? <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-                        : <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      {ocrLoopRunning
+                        ? ocrBusy
+                          ? <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                          : <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        : <span className="w-2 h-2 rounded-full bg-white/50" />
                       }
                       <span className="text-white/80 text-xs font-medium tracking-widest uppercase">
-                        {ocrBusy ? 'Reading…' : 'Scanning'}
+                        {!ocrLoopRunning && pfrInput ? 'Found — confirm below' : ocrBusy ? 'Reading…' : 'Scanning'}
                       </span>
                     </div>
                   </div>
@@ -348,7 +359,7 @@ export default function ScanPage() {
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                     <Camera size={12} />
-                    Detected PFR broj — edit if needed
+                    {ocrLoopRunning ? 'Auto-detecting — edit if needed' : 'Detected PFR broj — confirm or edit'}
                   </label>
                   <input
                     value={pfrInput}
@@ -359,16 +370,28 @@ export default function ScanPage() {
                   />
                 </div>
 
-                <button
-                  onClick={() => { stopPfr(); handleSufUrl(pfrToUrl(pfrInput)) }}
-                  disabled={!isPfrBroj(pfrInput)}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-semibold transition-colors">
-                  <Check size={16} /> Use this PFR
-                </button>
+                <div className="flex gap-2">
+                  {/* Scan again — only shown after loop stopped with a result */}
+                  {!ocrLoopRunning && (
+                    <button
+                      onClick={restartOcrLoop}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium">
+                      <RotateCcw size={14} /> Scan again
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { stopPfr(); handleSufUrl(pfrToUrl(pfrInput)) }}
+                    disabled={!isPfrBroj(pfrInput)}
+                    className={`flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-semibold transition-colors ${!ocrLoopRunning ? 'flex-1' : 'w-full'}`}>
+                    <Check size={16} /> Use this PFR
+                  </button>
+                </div>
 
                 <CameraControls />
                 <p className="text-xs text-gray-400 text-center">
-                  Align the PFR broj in the box · auto-detects every second
+                  {ocrLoopRunning
+                    ? 'Align the PFR broj text in the box · stops when recognised'
+                    : 'Stopped · edit the box or tap Scan again'}
                 </p>
               </div>
             )}
