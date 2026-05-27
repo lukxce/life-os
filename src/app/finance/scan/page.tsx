@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import {
   Camera, X, Zap, ZapOff, ZoomIn, ZoomOut,
-  Hash, ScanText, QrCode, RotateCcw, Check,
+  Hash, ScanText, QrCode, Check,
 } from 'lucide-react'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -26,33 +26,35 @@ export default function ScanPage() {
   const router = useRouter()
 
   // QR scanner
-  const qrScannerRef  = useRef<any>(null)
+  const qrScannerRef       = useRef<any>(null)
   // PFR text scanner
-  const pfrVideoRef   = useRef<HTMLVideoElement>(null)
-  const pfrCanvasRef  = useRef<HTMLCanvasElement>(null)
-  const pfrStreamRef  = useRef<MediaStream | null>(null)
+  const pfrVideoRef        = useRef<HTMLVideoElement>(null)
+  const pfrCanvasRef       = useRef<HTMLCanvasElement>(null)
+  const pfrStreamRef       = useRef<MediaStream | null>(null)
+  const tesseractWorkerRef = useRef<any>(null)
+  const ocrActiveRef       = useRef(false)
   // shared camera track (for torch/zoom)
-  const trackRef      = useRef<MediaStreamTrack | null>(null)
+  const trackRef           = useRef<MediaStreamTrack | null>(null)
 
   type Mode = 'idle' | 'qr' | 'pfr'
-  const [mode,          setMode]          = useState<Mode>('idle')
-  const [manualUrl,     setManualUrl]     = useState('')
-  const [manualPfr,     setManualPfr]     = useState('')
-  const [parsed,        setParsed]        = useState<any>(null)
-  const [loading,       setLoading]       = useState(false)
-  const [error,         setError]         = useState('')
-  const [expenseType,   setExpenseType]   = useState<'personal' | 'business'>('personal')
-  const [torchOn,       setTorchOn]       = useState(false)
-  const [torchSupported,setTorchSupported]= useState(false)
-  const [zoom,          setZoom]          = useState(1)
-  const [zoomSupported, setZoomSupported] = useState(false)
-  const [zoomMin,       setZoomMin]       = useState(1)
-  const [zoomMax,       setZoomMax]       = useState(5)
-  // OCR specific
-  const [ocrRunning,    setOcrRunning]    = useState(false)
-  const [pfrFound,      setPfrFound]      = useState<string | null>(null)
+  const [mode,           setMode]          = useState<Mode>('idle')
+  const [manualUrl,      setManualUrl]     = useState('')
+  const [manualPfr,      setManualPfr]     = useState('')
+  const [parsed,         setParsed]        = useState<any>(null)
+  const [loading,        setLoading]       = useState(false)
+  const [error,          setError]         = useState('')
+  const [expenseType,    setExpenseType]   = useState<'personal' | 'business'>('personal')
+  const [torchOn,        setTorchOn]       = useState(false)
+  const [torchSupported, setTorchSupported]= useState(false)
+  const [zoom,           setZoom]          = useState(1)
+  const [zoomSupported,  setZoomSupported] = useState(false)
+  const [zoomMin,        setZoomMin]       = useState(1)
+  const [zoomMax,        setZoomMax]       = useState(5)
+  // Live OCR state
+  const [pfrInput,       setPfrInput]      = useState('')   // editable detected value
+  const [ocrBusy,        setOcrBusy]       = useState(false) // frame currently processing
 
-  // ── Parse receipt ────────────────────────────────────────────────────────
+  // ── Parse receipt ──────────────────────────────────────────────────────────
 
   const handleSufUrl = async (url: string) => {
     setLoading(true)
@@ -72,7 +74,7 @@ export default function ScanPage() {
     setLoading(false)
   }
 
-  // ── Shared camera helpers ────────────────────────────────────────────────
+  // ── Shared camera helpers ──────────────────────────────────────────────────
 
   function applyTrackCaps(track: MediaStreamTrack) {
     trackRef.current = track
@@ -111,7 +113,7 @@ export default function ScanPage() {
     setZoom(1)
   }
 
-  // ── QR scanner ───────────────────────────────────────────────────────────
+  // ── QR scanner ─────────────────────────────────────────────────────────────
 
   const stopQr = useCallback(async () => {
     try {
@@ -162,28 +164,30 @@ export default function ScanPage() {
     }
   }
 
-  // ── PFR text (OCR) scanner ───────────────────────────────────────────────
+  // ── PFR live OCR scanner ───────────────────────────────────────────────────
 
-  const stopPfr = useCallback(() => {
+  const stopPfr = useCallback(async () => {
+    ocrActiveRef.current = false
+    // terminate tesseract worker
+    try { await tesseractWorkerRef.current?.terminate() } catch {}
+    tesseractWorkerRef.current = null
     pfrStreamRef.current?.getTracks().forEach(t => t.stop())
     pfrStreamRef.current = null
     resetCameraState()
     setMode('idle')
-    setOcrRunning(false)
-    setPfrFound(null)
+    setOcrBusy(false)
+    setPfrInput('')
   }, [])
 
   const startPfr = async () => {
     setError('')
-    setPfrFound(null)
+    setPfrInput('')
     flushSync(() => setMode('pfr'))
+
+    // Start camera stream
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
         audio: false,
       })
       pfrStreamRef.current = stream
@@ -197,54 +201,60 @@ export default function ScanPage() {
       setError(/permission|denied/i.test(String(e))
         ? 'Camera access denied — type the PFR broj below.'
         : 'Could not start camera.')
+      return
     }
-  }
 
-  const captureAndOcr = async () => {
-    const video  = pfrVideoRef.current
-    const canvas = pfrCanvasRef.current
-    if (!video || !canvas || video.videoWidth === 0) return
-
-    setOcrRunning(true)
-    setError('')
-
-    // Draw frame — boost contrast to help Tesseract on receipt paper
-    canvas.width  = video.videoWidth
-    canvas.height = video.videoHeight
-    const ctx = canvas.getContext('2d')!
-    ctx.filter = 'contrast(1.8) brightness(1.1)'
-    ctx.drawImage(video, 0, 0)
-    ctx.filter = 'none'
-
+    // Init Tesseract worker (once, reuse across frames)
     try {
       const { createWorker } = await import('tesseract.js')
-      const worker = await createWorker('eng', 1, {
-        // Suppress verbose Tesseract console output
-        logger: () => {},
-      })
+      const worker = await createWorker('eng', 1, { logger: () => {} })
       await worker.setParameters({
-        // Only look for chars that can appear in a PFR broj
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-',
       })
-      const { data: { text } } = await worker.recognize(canvas)
-      await worker.terminate()
-
-      const pfr = extractPfr(text)
-      if (pfr) {
-        setPfrFound(pfr)
-      } else {
-        setError('No PFR broj found — move closer or improve lighting, then try again.')
-      }
+      tesseractWorkerRef.current = worker
     } catch {
-      setError('OCR failed — try again or enter manually below.')
-    } finally {
-      setOcrRunning(false)
+      setError('Could not load OCR engine.')
+      return
+    }
+
+    // Start continuous OCR loop
+    ocrActiveRef.current = true
+    runOcrLoop()
+  }
+
+  const runOcrLoop = async () => {
+    while (ocrActiveRef.current) {
+      const video  = pfrVideoRef.current
+      const canvas = pfrCanvasRef.current
+      const worker = tesseractWorkerRef.current
+      if (!video || !canvas || !worker || video.videoWidth === 0) {
+        await new Promise(r => setTimeout(r, 300))
+        continue
+      }
+
+      setOcrBusy(true)
+      try {
+        canvas.width  = video.videoWidth
+        canvas.height = video.videoHeight
+        const ctx = canvas.getContext('2d')!
+        ctx.filter = 'contrast(1.8) brightness(1.1)'
+        ctx.drawImage(video, 0, 0)
+        ctx.filter = 'none'
+
+        const { data: { text } } = await worker.recognize(canvas)
+        const pfr = extractPfr(text)
+        if (pfr) setPfrInput(pfr)
+      } catch {}
+      setOcrBusy(false)
+
+      // Small gap between frames
+      await new Promise(r => setTimeout(r, 400))
     }
   }
 
   useEffect(() => () => { stopQr(); stopPfr() }, [stopQr, stopPfr])
 
-  // ── Controls shared by both camera modes ──────────────────────────────────
+  // ── Camera controls (shared) ───────────────────────────────────────────────
 
   const CameraControls = () => (
     <>
@@ -277,7 +287,7 @@ export default function ScanPage() {
     </>
   )
 
-  // ── Render ─────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
@@ -313,63 +323,52 @@ export default function ScanPage() {
               </div>
             )}
 
-            {/* ── PFR text mode ── */}
+            {/* ── PFR live OCR mode ── */}
             {mode === 'pfr' && (
               <div className="space-y-3">
-                {/* Video viewfinder */}
+                {/* Viewfinder */}
                 <div className="relative rounded-xl overflow-hidden bg-black">
-                  <video
-                    ref={pfrVideoRef}
-                    playsInline muted
-                    className="w-full rounded-xl"
-                  />
-                  {/* Guide overlay — highlight the strip where PFR text sits */}
+                  <video ref={pfrVideoRef} playsInline muted className="w-full rounded-xl" />
+                  {/* Guide overlay */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="w-11/12 border-2 border-white/70 rounded-lg py-4 bg-white/10 backdrop-blur-[1px] flex items-center justify-center">
+                    <div className="w-11/12 border-2 border-white/70 rounded-lg py-4 bg-white/10 backdrop-blur-[1px] flex items-center justify-center gap-2">
+                      {ocrBusy
+                        ? <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                        : <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      }
                       <span className="text-white/80 text-xs font-medium tracking-widest uppercase">
-                        PFR broj
+                        {ocrBusy ? 'Reading…' : 'Scanning'}
                       </span>
                     </div>
                   </div>
                 </div>
-                {/* Hidden canvas for OCR */}
                 <canvas ref={pfrCanvasRef} className="hidden" />
 
-                {/* OCR result */}
-                {pfrFound ? (
-                  <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-3 space-y-2">
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Found PFR broj:</p>
-                    <p className="font-mono text-lg font-bold text-gray-900 dark:text-white tracking-wider text-center">
-                      {pfrFound}
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setPfrFound(null)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-400">
-                        <RotateCcw size={13} /> Try again
-                      </button>
-                      <button
-                        onClick={() => { stopPfr(); handleSufUrl(pfrToUrl(pfrFound)) }}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">
-                        <Check size={13} /> Use this
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={captureAndOcr}
-                    disabled={ocrRunning}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold transition-colors">
-                    {ocrRunning
-                      ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Reading text…</>
-                      : <><Camera size={16} /> Capture &amp; Read PFR</>
-                    }
-                  </button>
-                )}
+                {/* Live PFR input */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                    <Camera size={12} />
+                    Detected PFR broj — edit if needed
+                  </label>
+                  <input
+                    value={pfrInput}
+                    onChange={e => setPfrInput(e.target.value.toUpperCase())}
+                    placeholder="Scanning… XXXXXXXX-XXXXXXXX-XXXX"
+                    spellCheck={false} autoCorrect="off" autoCapitalize="characters"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2.5 text-sm font-mono bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 tracking-wider focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <button
+                  onClick={() => { stopPfr(); handleSufUrl(pfrToUrl(pfrInput)) }}
+                  disabled={!isPfrBroj(pfrInput)}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-semibold transition-colors">
+                  <Check size={16} /> Use this PFR
+                </button>
 
                 <CameraControls />
                 <p className="text-xs text-gray-400 text-center">
-                  Align the PFR broj in the box, then tap Capture
+                  Align the PFR broj in the box · auto-detects every second
                 </p>
               </div>
             )}
