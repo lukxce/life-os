@@ -108,7 +108,7 @@ export default function BillsPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Bills & Loans</h2>
-        <button onClick={() => { setEditingId(null); setForm({ ...defaultForm, isLoan: false }); if (tab === 'calendar') setTab('bills'); setShowForm(s => !s) }}
+        <button onClick={() => { setEditingId(null); setForm({ ...defaultForm, isLoan: tab === 'loans' }); if (tab === 'calendar') setTab('bills'); setShowForm(s => !s) }}
           className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-teal-700">
           <Plus size={16} /> Add {tab === 'loans' ? 'Loan' : 'Bill'}
         </button>
