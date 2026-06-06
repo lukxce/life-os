@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { cn } from '@/lib/utils'
 
-const defaultForm = { name: '', amount: '', currency: 'RSD', category: '', subcategory: '', accountId: '', dayOfMonth: '1', notes: '', isLoan: false, lender: '' }
+const defaultForm = { name: '', amount: '', currency: 'RSD', category: '', subcategory: '', accountId: '', dayOfMonth: '1', notes: '', isLoan: false, lender: '', loanEndDate: '' }
 
 function daysUntil(dayOfMonth: number): number {
   const now = new Date()
@@ -82,7 +82,7 @@ export default function BillsPage() {
 
   const startEdit = (b: any) => {
     setEditingId(b.id)
-    setForm({ name: b.name, amount: String(b.amount), currency: b.currency, category: b.category || '', subcategory: b.subcategory || '', accountId: b.accountId || '', dayOfMonth: String(b.dayOfMonth), notes: b.notes || '', isLoan: b.isLoan ?? false, lender: b.lender || '' })
+    setForm({ name: b.name, amount: String(b.amount), currency: b.currency, category: b.category || '', subcategory: b.subcategory || '', accountId: b.accountId || '', dayOfMonth: String(b.dayOfMonth), notes: b.notes || '', isLoan: b.isLoan ?? false, lender: b.lender || '', loanEndDate: b.loanEndDate ? new Date(b.loanEndDate).toISOString().split('T')[0] : '' })
     setTab(b.isLoan ? 'loans' : 'bills')
     setShowForm(true)
   }
@@ -141,49 +141,82 @@ export default function BillsPage() {
       {showForm && (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-6">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{editingId ? `Edit ${form.isLoan ? 'Loan' : 'Bill'}` : `New ${tab === 'loans' ? 'Loan' : 'Bill'}`}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            {/* Row 1: Name + Lender (loans) or Monthly Amount (bills) */}
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Name</label>
               <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
             </div>
-            {(tab === 'loans' || form.isLoan) && (
+            {(tab === 'loans' || form.isLoan) ? (
               <div>
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Lender</label>
                 <input type="text" value={form.lender} onChange={e => setForm(p => ({ ...p, lender: e.target.value }))}
                   placeholder="e.g. Erste Bank"
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+              </div>
+            ) : (
+              <div>
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Monthly Amount</label>
+                <NumberInput value={form.amount} onChange={v => setForm(p => ({ ...p, amount: v }))}
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+              </div>
+            )}
+
+            {/* Row 2: Monthly Amount + Currency (loans) | Currency + Due Day (bills) */}
+            {(tab === 'loans' || form.isLoan) && (
+              <div>
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Monthly Amount</label>
+                <NumberInput value={form.amount} onChange={v => setForm(p => ({ ...p, amount: v }))}
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
               </div>
             )}
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Monthly Amount</label>
-              <NumberInput value={form.amount} onChange={v => setForm(p => ({ ...p, amount: v }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Currency</label>
               <select value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
                 <option>RSD</option><option>EUR</option>
               </select>
             </div>
+
+            {/* Row 3: Due Day + Loan End Date (loans) | Due Day + Category (bills) */}
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Due Day of Month</label>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Payment Day of Month</label>
               <input type="number" min="1" max="31" value={form.dayOfMonth} onChange={e => setForm(p => ({ ...p, dayOfMonth: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
             </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Category</label>
-              <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">None</option>
-                {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-              </select>
-            </div>
+            {(tab === 'loans' || form.isLoan) ? (
+              <div>
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Loan End Date</label>
+                <input type="date" value={form.loanEndDate} onChange={e => setForm(p => ({ ...p, loanEndDate: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+              </div>
+            ) : (
+              <div>
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Category</label>
+                <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                  <option value="">None</option>
+                  {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+            )}
+
+            {/* Row 4: Category + Account (loans) | Account alone (bills) */}
+            {(tab === 'loans' || form.isLoan) && (
+              <div>
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Category</label>
+                <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                  <option value="">None</option>
+                  {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+            )}
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Account</label>
               <select value={form.accountId} onChange={e => setForm(p => ({ ...p, accountId: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
                 <option value="">Select account</option>
                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>

@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
       notes: body.notes || null,
       isLoan: body.isLoan ?? false,
       lender: body.lender || null,
+      loanEndDate: body.loanEndDate ? new Date(body.loanEndDate) : null,
     }
   })
   return NextResponse.json(bill)

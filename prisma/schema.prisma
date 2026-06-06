@@ -145,9 +145,10 @@ model Bill {
   dayOfMonth  Int
   active      Boolean  @default(true)
   notes       String?
-  isLoan      Boolean  @default(false)
+  isLoan      Boolean   @default(false)
   lender      String?
-  createdAt   DateTime @default(now())
+  loanEndDate DateTime?
+  createdAt   DateTime  @default(now())
   updatedAt   DateTime @updatedAt
   payments    BillPayment[]
 }
