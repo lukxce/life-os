@@ -23,7 +23,7 @@ export const viewport = {
   themeColor: '#6366f1',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  // Do not lock maximumScale — iPad users should be able to pinch-zoom
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

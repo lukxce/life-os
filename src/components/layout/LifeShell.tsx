@@ -30,7 +30,7 @@ export function LifeShell({ children }: { children: React.ReactNode }) {
         </header>
 
         <main className="flex-1 overflow-auto">
-          <div className="max-w-2xl mx-auto px-4 py-6 md:py-8 pb-28 md:pb-8">
+          <div className="max-w-2xl md:max-w-3xl mx-auto px-4 py-6 md:py-8 pb-28 md:pb-8">
             {children}
           </div>
         </main>

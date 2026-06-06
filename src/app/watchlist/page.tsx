@@ -796,7 +796,7 @@ export default function WatchlistPage() {
 
       {/* Grid */}
       {loading ? (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
           {[1,2,3,4,5,6].map(i => (
             <div key={i} className="aspect-[2/3] bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse" />
           ))}
@@ -816,7 +816,7 @@ export default function WatchlistPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
           {filtered.map(item => (
             <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />
           ))}

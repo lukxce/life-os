@@ -92,13 +92,20 @@ export default function HomePage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Life OS</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{dateStr}</p>
         </div>
+        {/* Mobile: icon-only search · iPad/desktop: full search bar */}
         <div className="flex items-center gap-2">
-          <GlobalSearch mobileIconOnly />
-          <ThemeToggle />
+          <div className="md:hidden flex items-center gap-2">
+            <GlobalSearch mobileIconOnly />
+            <ThemeToggle />
+          </div>
+          <div className="hidden md:flex items-center gap-2">
+            <GlobalSearch />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
 
         {/* Snapshot row */}
         {data && (
@@ -181,7 +188,7 @@ export default function HomePage() {
         {/* Module cards */}
         <div>
           <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase mb-4">Modules</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {MODULES.map(m => (
               <Link key={m.href} href={m.href}
                 className={`group rounded-2xl p-6 border ${m.border} ${m.bg} hover:shadow-md transition-all duration-200 flex items-start justify-between`}>
@@ -224,6 +231,7 @@ export default function HomePage() {
         </div>
 
       </main>
+      <GlobalSearch keyboardOnly />
     </div>
   )
 }
