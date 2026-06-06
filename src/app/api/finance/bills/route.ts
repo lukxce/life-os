@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
       dayOfMonth: body.dayOfMonth,
       active: body.active ?? true,
       notes: body.notes || null,
+      isLoan: body.isLoan ?? false,
+      lender: body.lender || null,
     }
   })
   return NextResponse.json(bill)
