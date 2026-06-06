@@ -97,6 +97,9 @@ export default function BillsPage() {
     setPayingBill(null); setPayAmount(''); load()
   }
 
+  const selectedCat = categories.find((c: any) => c.name === form.category)
+  const subcats: string[] = selectedCat?.subcategories ?? []
+
   const allBills = [...bills].filter(b => !b.isLoan).sort((a, b) => daysUntil(a.dayOfMonth) - daysUntil(b.dayOfMonth))
   const allLoans = [...bills].filter(b => b.isLoan).sort((a, b) => daysUntil(a.dayOfMonth) - daysUntil(b.dayOfMonth))
   const shown = tab === 'calendar' ? [] : tab === 'bills' ? allBills : allLoans
@@ -221,6 +224,17 @@ export default function BillsPage() {
                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
+
+            {subcats.length > 0 && (
+              <div className="col-span-2">
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Subcategory</label>
+                <select value={form.subcategory} onChange={e => setForm(p => ({ ...p, subcategory: e.target.value }))}
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                  <option value="">None</option>
+                  {subcats.map((s: string) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            )}
           </div>
           <div className="flex gap-3 mt-4">
             <button onClick={submit} className="flex-1 sm:flex-initial bg-teal-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-teal-700">{editingId ? 'Update' : 'Save'}</button>
