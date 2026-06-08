@@ -84,7 +84,7 @@ export default function SettingsPage() {
     setRefreshing(cal.id)
     setRefreshStatus(prev => ({ ...prev, [cal.id]: 'loading' }))
     try {
-      const res = await fetch(`/api/ics?url=${encodeURIComponent(cal.url)}`)
+      const res = await fetch(`/api/life/ics?url=${encodeURIComponent(cal.url)}`)
       const data = await res.json()
       if (!res.ok) {
         setRefreshStatus(prev => ({ ...prev, [cal.id]: `Error: ${data.error}` }))

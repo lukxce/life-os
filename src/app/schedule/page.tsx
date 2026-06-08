@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { Pencil, X, Plus, RefreshCw, ChevronLeft, ChevronRight, Calendar, Share2, Check } from 'lucide-react'
+import { Pencil, X, Plus, RefreshCw, ChevronLeft, ChevronRight, Calendar, Share2, Check, Settings } from 'lucide-react'
+import Link from 'next/link'
 import { BlockModal, BlockFormData } from '@/components/schedule/BlockModal'
 
 type ScheduleBlock = {
@@ -327,6 +328,11 @@ export default function SchedulePage() {
                 {!isMobile && 'Refresh'}
               </button>
             )}
+            <Link href="/life/settings"
+              style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 12px',borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',color:'#374151',fontWeight:600,fontSize:13,textDecoration:'none' }}
+              title="Calendar settings">
+              <Settings size={14} /> {!isMobile && 'Calendars'}
+            </Link>
             <button onClick={() => setShowSharePanel(v => !v)}
               style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 12px',borderRadius:10,border:showSharePanel?'1.5px solid #6366f1':'1.5px solid #e5e7eb',background:showSharePanel?'#EEF2FF':'#fff',color:showSharePanel?'#4F46E5':'#374151',fontWeight:600,fontSize:13,cursor:'pointer' }}>
               <Share2 size={14} /> {!isMobile && 'Share'}

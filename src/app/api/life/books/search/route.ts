@@ -21,38 +21,56 @@ export async function GET(req: NextRequest) {
   if (!q) return NextResponse.json([])
 
   const keyParam = BOOKS_KEY ? `&key=${BOOKS_KEY}` : ''
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=12${keyParam}`
+  // printType=books avoids magazines; orderBy=relevance gives best matches
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=15&printType=books&orderBy=relevance${keyParam}`
 
-  const res = await fetch(url, { next: { revalidate: 60 } })
-  if (!res.ok) {
-    console.error('[books] Google Books API error:', res.status, await res.text().catch(() => ''))
-    return NextResponse.json({ error: 'Google Books error' }, { status: 502 })
+  let res: Response
+  try {
+    // cache: 'no-store' — search results must be fresh, not cached
+    res = await fetch(url, { cache: 'no-store' })
+  } catch (err) {
+    console.error('[books] fetch error:', err)
+    return NextResponse.json([], { status: 200 }) // return empty array, not error
   }
 
-  const data = await res.json()
-  if (!data.items) return NextResponse.json([])
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    console.error('[books] Google Books API error:', res.status, body)
+    // Return empty array (not a 5xx) so the UI shows "No results" instead of breaking
+    return NextResponse.json([])
+  }
 
-  const results = data.items.map((item: { id: string; volumeInfo: VolumeInfo }) => {
-    const v = item.volumeInfo
-    // Google Books returns http thumbnails — upgrade to https
-    const rawThumb = v.imageLinks?.thumbnail ?? v.imageLinks?.smallThumbnail ?? null
-    const posterUrl = rawThumb ? rawThumb.replace('http://', 'https://') : null
+  let data: any
+  try {
+    data = await res.json()
+  } catch {
+    return NextResponse.json([])
+  }
 
-    const year = v.publishedDate ? parseInt(v.publishedDate.slice(0, 4), 10) || null : null
+  if (!data.items || !Array.isArray(data.items)) return NextResponse.json([])
 
-    return {
-      id:         item.id,
-      type:       'book' as const,
-      title:      v.title ?? 'Unknown',
-      author:     (v.authors ?? []).join(', ') || null,
-      year,
-      posterUrl,
-      overview:   v.description ?? null,
-      genres:     v.categories ?? [],
-      tmdbRating: v.averageRating ?? null,
-      pageCount:  v.pageCount ?? null,
-    }
-  })
+  const results = data.items
+    .filter((item: any) => item?.volumeInfo)  // skip items without volumeInfo
+    .map((item: { id: string; volumeInfo: VolumeInfo }) => {
+      const v = item.volumeInfo
+      // Google Books returns http thumbnails — upgrade to https
+      const rawThumb = v.imageLinks?.thumbnail ?? v.imageLinks?.smallThumbnail ?? null
+      const posterUrl = rawThumb ? rawThumb.replace('http://', 'https://') : null
+      const year = v.publishedDate ? parseInt(v.publishedDate.slice(0, 4), 10) || null : null
+
+      return {
+        id:         item.id,
+        type:       'book' as const,
+        title:      v.title ?? 'Unknown',
+        author:     (v.authors ?? []).join(', ') || null,
+        year,
+        posterUrl,
+        overview:   v.description ?? null,
+        genres:     v.categories ?? [],
+        tmdbRating: v.averageRating ?? null,
+        pageCount:  v.pageCount ?? null,
+      }
+    })
 
   return NextResponse.json(results)
 }

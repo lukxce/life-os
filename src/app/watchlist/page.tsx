@@ -193,6 +193,7 @@ function AddSheet({
   const [query, setQuery]       = useState('')
   const [results, setResults]   = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
   const [selected, setSelected] = useState<SearchResult | null>(null)
   const [loadingDetails, setLoadingDetails] = useState(false)
 
@@ -210,16 +211,25 @@ function AddSheet({
   // Debounced search
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
-    if (query.trim().length < 2) { setResults([]); return }
+    if (query.trim().length < 2) { setResults([]); setSearchError(null); return }
 
     timerRef.current = setTimeout(async () => {
       setSearching(true)
+      setResults([])
+      setSearchError(null)
       try {
         const endpoint = tab === 'book'
           ? `/api/life/books/search?q=${encodeURIComponent(query)}`
           : `/api/life/tmdb/search?q=${encodeURIComponent(query)}`
         const res = await fetch(endpoint)
-        if (res.ok) setResults(await res.json())
+        if (res.ok) {
+          const data = await res.json()
+          setResults(Array.isArray(data) ? data : [])
+        } else {
+          setSearchError(`Search failed (${res.status})`)
+        }
+      } catch (err) {
+        setSearchError('Search unavailable — check your connection')
       } finally {
         setSearching(false)
       }
@@ -229,7 +239,7 @@ function AddSheet({
   }, [query, tab])
 
   // Reset results when tab changes
-  useEffect(() => { setResults([]); setQuery(''); setSelected(null) }, [tab])
+  useEffect(() => { setResults([]); setQuery(''); setSelected(null); setSearchError(null) }, [tab])
 
   async function selectResult(r: SearchResult) {
     if (r.type === 'book') {
@@ -412,6 +422,8 @@ function AddSheet({
                   <Loader2 size={20} className="animate-spin" />
                   <span className="text-sm">Searching…</span>
                 </div>
+              ) : searchError ? (
+                <p className="text-center text-sm text-red-400 py-8">{searchError}</p>
               ) : results.length > 0 ? (
                 <div className="space-y-1">
                   {results.map(r => (
