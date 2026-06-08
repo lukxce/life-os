@@ -138,8 +138,11 @@ async function tryDiscoverApi(vl: string): Promise<{
     const bundleText = await bundleRes.text()
 
     // Look for API path strings in the bundle
-    const apiPaths = [...bundleText.matchAll(/["'`](\/v\/api\/[^"'`\s?]+)/g)].map(m => m[1])
-    const uniquePaths = [...new Set(apiPaths)].slice(0, 10)
+    const apiPaths: string[] = []
+    const re = /["'`](\/v\/api\/[^"'`\s?]+)/g
+    let match: RegExpExecArray | null
+    while ((match = re.exec(bundleText)) !== null) apiPaths.push(match[1])
+    const uniquePaths = Array.from(new Set(apiPaths)).slice(0, 10)
     console.log('[scan] Discovered bundle API paths:', uniquePaths)
 
     for (const path of uniquePaths) {
