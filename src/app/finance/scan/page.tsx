@@ -563,27 +563,36 @@ export default function ScanPage() {
 
       {parsed && (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Receipt Parsed</h3>
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Merchant</span>
-              <span className="font-medium text-gray-900 dark:text-gray-100">{parsed.merchantName || '—'}</span>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Receipt details</h3>
+
+          {parsed.warning && (
+            <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 rounded-lg p-3 text-xs">
+              ⚠️ {parsed.warning}
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">PIB</span>
-              <span className="font-mono text-xs text-gray-700 dark:text-gray-300">{parsed.merchantPib || '—'}</span>
+          )}
+
+          <div className="space-y-3 text-sm">
+            <div>
+              <label className="text-xs text-gray-400 block mb-1">Merchant</label>
+              <input className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                value={parsed.merchantName ?? ''}
+                onChange={e => setParsed((p: any) => ({ ...p, merchantName: e.target.value }))}
+                placeholder="Merchant name" />
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Date</span>
-              <span className="text-gray-700 dark:text-gray-300">
-                {parsed.date ? new Date(parsed.date).toLocaleString('sr-RS') : '—'}
-              </span>
-            </div>
-            <div className="flex justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
-              <span className="text-gray-700 dark:text-gray-300 font-medium">Total</span>
-              <span className="font-bold text-gray-900 dark:text-gray-100">
-                {parsed.total?.toLocaleString('sr-RS')} RSD
-              </span>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Total (RSD)</label>
+                <input type="number" className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  value={parsed.total ?? ''}
+                  onChange={e => setParsed((p: any) => ({ ...p, total: parseFloat(e.target.value) || null }))}
+                  placeholder="0.00" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Date</label>
+                <input type="date" className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  value={parsed.date ? new Date(parsed.date).toISOString().split('T')[0] : ''}
+                  onChange={e => setParsed((p: any) => ({ ...p, date: e.target.value ? new Date(e.target.value).toISOString() : null }))} />
+              </div>
             </div>
           </div>
 

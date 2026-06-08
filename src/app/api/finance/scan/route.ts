@@ -7,7 +7,6 @@ const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/6
 // ── Date parser ───────────────────────────────────────────────────────────────
 function parseReceiptDate(raw: string): Date | null {
   if (!raw) return null
-  // DD.MM.YYYY HH:MM:SS or DD.MM.YYYY HH:MM
   const dmy = raw.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{2}):(\d{2})(?::(\d{2}))?/)
   if (dmy) {
     const [, d, m, y, h, min, s = '00'] = dmy
@@ -31,7 +30,65 @@ function parseAmount(raw: string): number | null {
   return parseFloat(cleaned.replace(/,/g, ''))
 }
 
-// ── Selector helper ───────────────────────────────────────────────────────────
+// ── Try the PURS JSON API directly (bypasses JS-rendered HTML) ────────────────
+async function tryPursApi(vl: string): Promise<{
+  merchantName: string | null; merchantPib: string | null
+  total: number | null; date: Date | null
+} | null> {
+  // The React SPA at suf.purs.gov.rs makes XHR calls to backend endpoints.
+  // Try the most common patterns observed in the wild.
+  const candidates = [
+    { method: 'GET',  url: `https://suf.purs.gov.rs/v/api/fiscalData?vl=${vl}` },
+    { method: 'GET',  url: `https://suf.purs.gov.rs/v/api/vl?vl=${vl}` },
+    { method: 'POST', url: `https://suf.purs.gov.rs/v/api/vl`, body: JSON.stringify({ vl }) },
+    { method: 'GET',  url: `https://suf.purs.gov.rs/v/api/sdr-vl/get?vl=${vl}` },
+  ]
+
+  for (const c of candidates) {
+    try {
+      const res = await fetch(c.url, {
+        method: c.method,
+        headers: {
+          'User-Agent': UA,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Referer': 'https://suf.purs.gov.rs/',
+          'Origin': 'https://suf.purs.gov.rs',
+        },
+        ...(c.body ? { body: c.body } : {}),
+        // @ts-ignore
+        next: { revalidate: 0 },
+      })
+      const ct = res.headers.get('content-type') ?? ''
+      if (!res.ok || !ct.includes('json')) continue
+      const data = await res.json()
+
+      // Extract from common field name patterns
+      const merchantName =
+        data.shopFullName ?? data.merchantName ?? data.companyName ??
+        data.naziv ?? data.shopName ?? data.seller?.name ?? null
+
+      const merchantPib =
+        data.tin ?? data.pib ?? data.taxId ?? data.seller?.tin ?? null
+
+      const dateRaw =
+        data.sdcDateTime ?? data.dateTime ?? data.date ?? data.datumVremeIzdavanja ?? null
+      const date = dateRaw ? parseReceiptDate(String(dateRaw)) : null
+
+      const totalRaw =
+        data.totalAmount ?? data.total ?? data.ukupanIznos ?? data.amount ?? null
+      const total = totalRaw != null ? (typeof totalRaw === 'number' ? totalRaw : parseAmount(String(totalRaw))) : null
+
+      if (merchantName || total || date) {
+        console.log('[scan] PURS API hit:', c.url)
+        return { merchantName, merchantPib, total, date }
+      }
+    } catch {}
+  }
+  return null
+}
+
+// ── Cheerio selector helper ───────────────────────────────────────────────────
 function pick($: ReturnType<typeof cheerio.load>, ...selectors: string[]): string | null {
   for (const sel of selectors) {
     try {
@@ -42,78 +99,24 @@ function pick($: ReturnType<typeof cheerio.load>, ...selectors: string[]): strin
   return null
 }
 
-// ── Text-pattern extraction ───────────────────────────────────────────────────
-function extractFromText(text: string): {
-  merchantName: string | null
-  merchantPib: string | null
-  total: number | null
-  date: Date | null
-} {
-  // PIB: 9-digit Serbian tax number
+// ── Full-text regex extraction ────────────────────────────────────────────────
+function extractFromText(text: string) {
   const pibMatch = text.match(/\bPIB[:\s]*(\d{9})\b/i) ?? text.match(/\bTIN[:\s]*(\d{9})\b/i)
-  const merchantPib = pibMatch ? pibMatch[1] : null
-
-  // Date: DD.MM.YYYY HH:MM:SS
   const dateMatch = text.match(/\d{1,2}\.\d{1,2}\.\d{4}\s+\d{2}:\d{2}(?::\d{2})?/)
-  const date = dateMatch ? parseReceiptDate(dateMatch[0]) : null
-
-  // Total: look for "Ukupan iznos" or "Total" followed by an amount
   const totalMatch =
     text.match(/Ukupan\s+iznos[:\s]+([\d.,]+)/i) ??
-    text.match(/Total[:\s]+([\d.,]+)/i) ??
     text.match(/TOTAL[:\s]+([\d.,]+)/) ??
     text.match(/Iznos[:\s]+([\d.,]+)/i)
-  const total = totalMatch ? parseAmount(totalMatch[1]) : null
-
-  // Merchant name: first substantial line of text (before PIB/date)
-  // Heuristic: first non-empty line that isn't purely numbers/symbols
   const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3 && /[a-zA-ZšđčćžŠĐČĆŽ]/.test(l))
   const merchantName = lines.find(l =>
-    !/PIB|TIN|JID|PFR|suf\.|purs\.gov|http/i.test(l) &&
-    !/^\d/.test(l) &&
-    l.length < 80
+    !/PIB|TIN|JID|PFR|suf\.|purs\.gov|http/i.test(l) && !/^\d/.test(l) && l.length < 80
   ) ?? null
 
-  return { merchantName, merchantPib, total, date }
-}
-
-// ── Claude vision fallback ─────────────────────────────────────────────────────
-async function parseWithClaude(htmlText: string): Promise<{
-  merchantName: string | null
-  merchantPib: string | null
-  total: number | null
-  date: string | null
-} | null> {
-  const key = process.env.ANTHROPIC_API_KEY
-  if (!key) return null
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5',
-        max_tokens: 256,
-        messages: [{
-          role: 'user',
-          content: `Extract from this Serbian fiscal receipt text. Return JSON only, no markdown.
-Fields: merchantName (string), merchantPib (9-digit string), total (number, RSD), date (ISO 8601 string or null).
-Receipt text:
-${htmlText.slice(0, 4000)}`,
-        }],
-      }),
-    })
-    if (!res.ok) return null
-    const data = await res.json()
-    const content = data.content?.[0]?.text ?? ''
-    const jsonMatch = content.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) return null
-    return JSON.parse(jsonMatch[0])
-  } catch {
-    return null
+  return {
+    merchantName,
+    merchantPib: pibMatch ? pibMatch[1] : null,
+    total: totalMatch ? parseAmount(totalMatch[1]) : null,
+    date: dateMatch ? parseReceiptDate(dateMatch[0]) : null,
   }
 }
 
@@ -125,9 +128,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid SUF URL' }, { status: 400 })
   }
 
-  let html = ''
-  let portalStatus = 0
+  // Extract the base64 vl param
+  const vl = new URL(sufUrl).searchParams.get('vl') ?? ''
 
+  // ── Layer 1: try the PURS JSON API directly ────────────────────────────────
+  if (vl) {
+    const apiResult = await tryPursApi(vl)
+    if (apiResult && (apiResult.merchantName || apiResult.total)) {
+      return NextResponse.json({
+        merchantName: apiResult.merchantName,
+        merchantPib:  apiResult.merchantPib,
+        total:        apiResult.total,
+        date:         apiResult.date?.toISOString() ?? null,
+        sufUrl,
+      })
+    }
+  }
+
+  // ── Layer 2: fetch HTML + cheerio selectors ────────────────────────────────
+  let html = ''
   try {
     const res = await fetch(sufUrl, {
       headers: {
@@ -141,90 +160,53 @@ export async function POST(req: NextRequest) {
       // @ts-ignore
       next: { revalidate: 0 },
     })
-    portalStatus = res.status
     html = await res.text()
   } catch (err) {
     console.error('[scan] network error:', err)
-    return NextResponse.json({ error: 'Failed to reach receipt portal' }, { status: 502 })
   }
 
-  console.log('[scan] status:', portalStatus, '| html length:', html.length)
+  console.log('[scan] html length:', html.length)
 
   const $ = cheerio.load(html)
 
-  // ── Layer 1: specific selector approach ───────────────────────────────────
-  const merchantName = pick($,
-    '#shopFullNameLabel', '.shop-full-name', '[class*="shopFullName"]',
-    '[id*="shopFullName"]', '[class*="merchant"]', '[id*="merchant"]',
-    '[class*="company"]', '[id*="company"]', '[class*="naziv"]', '[id*="naziv"]',
-    'h1', 'h2',
+  let merchantName = pick($,
+    '#shopFullNameLabel', '.shop-full-name', '[class*="shopFullName"]', '[id*="shopFullName"]',
+    '[class*="merchant"]', '[id*="merchant"]', '[class*="company"]', '[id*="company"]',
+    '[class*="naziv"]', '[id*="naziv"]', 'h1', 'h2',
   )
-
-  const merchantPib = pick($,
+  let merchantPib = pick($,
     '#tinLabel', '.tin-label', '[id*="tin"]', '[class*="tin"]',
-    '[id*="pib"]', '[class*="pib"]', '[id*="PIB"]', '[class*="PIB"]',
+    '[id*="pib"]', '[class*="pib"]',
   )
+  let dateText  = pick($, '#sdcDateTimeLabel', '[id*="sdcDateTime"]', '[class*="dateTime"]', '[id*="datum"]')
+  let totalText = pick($, '#totalAmountLabel', '[id*="totalAmount"]', '[class*="totalAmount"]', '[id*="ukupan"]', '[class*="iznos"]')
 
-  const dateText = pick($,
-    '#sdcDateTimeLabel', '[id*="sdcDateTime"]', '[class*="dateTime"]',
-    '[class*="date-time"]', '[id*="dateTime"]', '[id*="datum"]', '[class*="datum"]',
-    '[id*="time"]', '[class*="time"]',
-  )
+  let total = parseAmount(totalText ?? '')
+  let date  = parseReceiptDate(dateText ?? '')
 
-  const totalText = pick($,
-    '#totalAmountLabel', '[id*="totalAmount"]', '[class*="totalAmount"]',
-    '[class*="total-amount"]', '[id*="total"]', '[class*="ukupan"]',
-    '[id*="ukupan"]', '[class*="iznos"]', '[id*="iznos"]',
-  )
-
-  let total    = parseAmount(totalText ?? '')
-  let date     = parseReceiptDate(dateText ?? '')
-  let finalName = merchantName
-  let finalPib  = merchantPib
-
-  // ── Layer 2: full-text regex fallback ─────────────────────────────────────
-  // Fires when selectors miss (JS-rendered portal, changed markup)
-  if (!total || !date || !finalName) {
+  // ── Layer 3: full-text regex ───────────────────────────────────────────────
+  if (!total || !date || !merchantName) {
     const allText = $.text().replace(/\s+/g, ' ')
-    const fromText = extractFromText(allText)
-    if (!finalName)  finalName = fromText.merchantName
-    if (!finalPib)   finalPib  = fromText.merchantPib
-    if (!total)      total     = fromText.total
-    if (!date)       date      = fromText.date
-  }
-
-  // ── Layer 3: Claude text-parsing fallback ─────────────────────────────────
-  // Fires when even text extraction yields nothing (SPA with no readable content)
-  if (!total || !date || !finalName) {
-    const plainText = $.text().replace(/\s+/g, '\n').trim()
-    if (plainText.length > 50) {
-      const ai = await parseWithClaude(plainText)
-      if (ai) {
-        if (!finalName && ai.merchantName) finalName = ai.merchantName
-        if (!finalPib  && ai.merchantPib)  finalPib  = ai.merchantPib
-        if (!total     && ai.total)        total     = ai.total
-        if (!date      && ai.date)         date      = parseReceiptDate(ai.date)
-      }
+    if (allText.trim().length > 30) {
+      const t = extractFromText(allText)
+      if (!merchantName) merchantName = t.merchantName
+      if (!merchantPib)  merchantPib  = t.merchantPib
+      if (!total)        total        = t.total
+      if (!date)         date         = t.date
     }
   }
 
-  const isEmpty = !finalName && !total && !date
-  if (isEmpty) {
-    console.warn('[scan] All parsing layers failed. HTML length:', html.length, '| Likely JS-rendered portal.')
-    return NextResponse.json({
-      error: html.length < 2000
-        ? 'The receipt portal returned a JavaScript app — try the "Photo" scan instead.'
-        : 'Could not extract receipt data. Try the photo scan option.',
-      portalStatus,
-      htmlLength: html.length,
-    }, { status: 422 })
-  }
+  // ── Always return — let the UI show what we have and allow manual fill ─────
+  const warning = (!merchantName && !total && !date)
+    ? 'The receipt portal uses JavaScript rendering — fill in the details manually or use the Photo scan.'
+    : null
 
   return NextResponse.json({
-    merchantName: finalName,
-    merchantPib:  finalPib,
-    total,
-    date: date ? date.toISOString() : null,
+    merchantName: merchantName ?? null,
+    merchantPib:  merchantPib  ?? null,
+    total:        total  ?? null,
+    date:         date   ? date.toISOString() : null,
     sufUrl,
+    warning,
   })
 }
