@@ -86,7 +86,7 @@ export default function ExpensesPage({ params }: { params: { type: string } }) {
         })
     }
 
-    setTimeout(() => router.replace(`/expenses/${type}`), 100)
+    setTimeout(() => router.replace(`/finance/expenses/${type}`), 100)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, hasHandledScan])
 
