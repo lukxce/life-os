@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarDays, BarChart2, Settings, History, Plus, CalendarCheck, CalendarRange, Home, Target, Users, BookOpen, Calendar, SlidersHorizontal, Activity } from 'lucide-react'
+import { CalendarDays, BarChart2, Settings, History, Plus, CalendarCheck, Home, Target, SlidersHorizontal, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const LIFE_LINKS = [
@@ -13,16 +13,6 @@ const LIFE_LINKS = [
   { href: '/life/history',   label: 'History',  icon: History       },
   { href: '/life/habits',    label: 'Habits',   icon: Settings      },
   { href: '/life/settings',  label: 'Settings', icon: SlidersHorizontal },
-]
-
-const SCHEDULE_LINKS = [
-  { href: '/schedule',       label: 'Schedule', icon: CalendarRange },
-  { href: '/life/ics',       label: 'Calendars',icon: Calendar      },
-  { href: '/life/contacts',  label: 'People',   icon: Users         },
-]
-
-const JOURNAL_LINKS = [
-  { href: '/journal',        label: 'Journal',  icon: BookOpen      },
 ]
 
 function NavSection({ title, links, pathname }: { title: string; links: typeof LIFE_LINKS; pathname: string }) {
@@ -58,8 +48,6 @@ export function LifeSidebar({ onAdd }: { onAdd?: () => void }) {
 
       <nav className="flex flex-col gap-4 flex-1 overflow-y-auto">
         <NavSection title="Habits & Fitness" links={LIFE_LINKS} pathname={pathname} />
-        <NavSection title="Schedule" links={SCHEDULE_LINKS} pathname={pathname} />
-        <NavSection title="Journal" links={JOURNAL_LINKS} pathname={pathname} />
       </nav>
 
       <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
