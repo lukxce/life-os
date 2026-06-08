@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import {
   Camera, X, Zap, ZapOff, ZoomIn, ZoomOut,
-  Hash, ScanText, QrCode, Check, RotateCcw,
+  Hash, ScanText, QrCode, Check, RotateCcw, ImageIcon,
 } from 'lucide-react'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -63,8 +63,9 @@ export default function ScanPage() {
   const [pfrInput,       setPfrInput]      = useState('')
   const [ocrBusy,        setOcrBusy]       = useState(false)
   const [ocrLoopRunning, setOcrLoopRunning]= useState(false)
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
-  // ── Parse receipt ──────────────────────────────────────────────────────────
+  // ── Parse receipt via portal URL ──────────────────────────────────────────
 
   const handleSufUrl = async (url: string) => {
     setLoading(true)
@@ -80,6 +81,33 @@ export default function ScanPage() {
       else setParsed(data)
     } catch {
       setError('Failed to parse receipt')
+    }
+    setLoading(false)
+  }
+
+  // ── Parse receipt via photo (Claude vision) ───────────────────────────────
+
+  const handlePhoto = async (file: File) => {
+    setLoading(true)
+    setError('')
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      const mediaType = file.type || 'image/jpeg'
+      const res = await fetch('/api/finance/scan-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64, mediaType }),
+      })
+      const data = await res.json()
+      if (data.error) setError(data.error)
+      else setParsed(data)
+    } catch {
+      setError('Failed to read photo')
     }
     setLoading(false)
   }
@@ -370,17 +398,30 @@ export default function ScanPage() {
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
 
             {mode === 'idle' && (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <button onClick={startQr}
                   className="flex flex-col items-center gap-1.5 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors">
                   <QrCode size={24} />
-                  <span className="text-sm font-medium">Scan QR Code</span>
+                  <span className="text-sm font-medium">Scan QR</span>
                 </button>
                 <button onClick={startPfr}
                   className="flex flex-col items-center gap-1.5 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-colors">
                   <ScanText size={24} />
-                  <span className="text-sm font-medium">Scan PFR Text</span>
+                  <span className="text-sm font-medium">Scan PFR</span>
                 </button>
+                <button onClick={() => photoInputRef.current?.click()}
+                  className="flex flex-col items-center gap-1.5 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
+                  <ImageIcon size={24} />
+                  <span className="text-sm font-medium">Photo</span>
+                </button>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handlePhoto(f) }}
+                />
               </div>
             )}
 
