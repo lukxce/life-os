@@ -164,6 +164,22 @@ model BillPayment {
   createdAt DateTime @default(now())
 }
 
+model PurchaseItem {
+  id        String    @id @default(cuid())
+  userId    String    @default("default")
+  name      String
+  price     Float?
+  currency  String    @default("EUR")
+  priority  String    @default("medium") // "high" | "medium" | "low"
+  category  String?
+  notes     String?
+  url       String?
+  bought    Boolean   @default(false)
+  boughtAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 model CryptoHolding {
   id        String   @id @default(cuid())
   userId    String   @default("default")

@@ -6,7 +6,7 @@ import {
   LayoutDashboard, TrendingUp, ShoppingCart, Briefcase,
   Building2, ArrowLeftRight, RefreshCw, BarChart3, Tag, X, ScanLine,
   ChevronDown, ChevronRight, Wallet, Banknote, LineChart, Settings, Shield, SlidersHorizontal, Store,
-  Bitcoin, FileText, CreditCard, Search, PiggyBank, Target, Sparkles, Home, Lightbulb
+  Bitcoin, FileText, CreditCard, Search, PiggyBank, Target, Sparkles, Home, Lightbulb, ShoppingBag
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -27,19 +27,15 @@ const nav: NavEntry[] = [
       { href: '/finance/income',            label: 'Income',            icon: TrendingUp },
       { href: '/finance/expenses/personal', label: 'Personal Expenses', icon: ShoppingCart },
       { href: '/finance/expenses/business', label: 'Business Expenses', icon: Briefcase },
-      { href: '/finance/crypto',            label: 'Crypto',            icon: Bitcoin },
     ],
   },
   {
-    id: 'planning',
-    label: 'Planning',
-    icon: Sparkles,
+    id: 'recurring',
+    label: 'Recurring',
+    icon: RefreshCw,
     items: [
       { href: '/finance/subscriptions', label: 'Subscriptions', icon: CreditCard },
       { href: '/finance/bills',         label: 'Bills & Loans', icon: FileText },
-      { href: '/finance/budgets',       label: 'Budgets',       icon: Target },
-      { href: '/finance/goals',         label: 'Goals',         icon: PiggyBank },
-      { href: '/finance/planner',       label: 'Planner',       icon: LineChart },
     ],
   },
   {
@@ -50,6 +46,18 @@ const nav: NavEntry[] = [
       { href: '/finance/accounts',    label: 'Accounts',    icon: Building2 },
       { href: '/finance/transfers',   label: 'Transfers',   icon: ArrowLeftRight },
       { href: '/finance/conversions', label: 'Conversions', icon: RefreshCw },
+      { href: '/finance/crypto',      label: 'Crypto',      icon: Bitcoin },
+    ],
+  },
+  {
+    id: 'planning',
+    label: 'Planning',
+    icon: Sparkles,
+    items: [
+      { href: '/finance/budgets',   label: 'Budgets',        icon: Target },
+      { href: '/finance/goals',     label: 'Goals',          icon: PiggyBank },
+      { href: '/finance/planner',   label: 'Planner',        icon: LineChart },
+      { href: '/finance/purchases', label: 'Purchase List',  icon: ShoppingBag },
     ],
   },
   {
