@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { Pencil, X, Plus, RefreshCw, ChevronLeft, ChevronRight, Calendar, Share2, Check, Settings, Users } from 'lucide-react'
+import { Pencil, X, Plus, RefreshCw, ChevronLeft, ChevronRight, Calendar, Share2, Check, Settings, Users, Home } from 'lucide-react'
 import Link from 'next/link'
 import { BlockModal, BlockFormData } from '@/components/schedule/BlockModal'
 
@@ -319,7 +319,12 @@ export default function SchedulePage() {
 
         {/* Header */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, gap:8 }}>
-          <h1 style={{ fontSize:22, fontWeight:700, color:'#111827' }}>Schedule</h1>
+          <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
+            <Link href="/" style={{ fontSize:11, color:'#9CA3AF', textDecoration:'none', fontWeight:500, display:'flex', alignItems:'center', gap:4 }}>
+              <Home size={11} /> Life OS
+            </Link>
+            <h1 style={{ fontSize:22, fontWeight:700, color:'#111827', margin:0 }}>Schedule</h1>
+          </div>
           <div style={{ display:'flex', gap:8 }}>
             {hasICS && (
               <button onClick={() => loadICS()} disabled={icsLoading}
