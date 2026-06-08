@@ -9,7 +9,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(s => setManualRate(String(s.manualRate ?? 117.5)))
-    fetch('/api/finance/dashboard?period=all').then(r => r.json()).then(d => setLiveRate(d.liveRate ?? null)).catch(() => {})
+    fetch('/api/finance/rate').then(r => r.json()).then(d => setLiveRate(d.rate ?? null)).catch(() => {})
   }, [])
 
   const save = async () => {
