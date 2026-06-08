@@ -1,9 +1,23 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { computeCryptoPortfolioEUR } from '@/lib/crypto'
 
 export async function GET() {
   const accounts = await prisma.account.findMany({ orderBy: { createdAt: 'asc' } })
+
+  // Auto-compute live portfolio value for any account named "crypto*"
+  const cryptoIdx = accounts.findIndex(a => a.name.toLowerCase().includes('crypto'))
+  if (cryptoIdx !== -1) {
+    const portfolioEUR = await computeCryptoPortfolioEUR()
+    const acc = accounts[cryptoIdx]
+    accounts[cryptoIdx] = {
+      ...acc,
+      currentBalance: portfolioEUR,
+      cryptoAutoSync: true,
+    } as any
+  }
+
   return NextResponse.json(accounts)
 }
 

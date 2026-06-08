@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getDateRange, getLiveRate, Period } from '@/lib/utils'
+import { computeCryptoPortfolioEUR } from '@/lib/crypto'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -18,8 +19,21 @@ export async function GET(req: NextRequest) {
 
   const manualRate = settings?.manualRate ?? 117.5
 
+  // Pre-compute crypto portfolio once if there's a crypto account
+  const hasCryptoAcc = accounts.some(a => a.name.toLowerCase().includes('crypto'))
+  const cryptoPortfolioEUR = hasCryptoAcc ? await computeCryptoPortfolioEUR() : 0
+
   // Calculate balance for each account
   const accountBalances = await Promise.all(accounts.map(async (acc) => {
+    const isCryptoAcc = acc.name.toLowerCase().includes('crypto')
+
+    // Crypto accounts use live portfolio value as base — no transactions tracked
+    if (isCryptoAcc) {
+      const balanceEUR = cryptoPortfolioEUR
+      const balanceRSD = balanceEUR * manualRate
+      return { ...acc, currentBalance: balanceEUR, balanceRSD, balanceEUR, cryptoAutoSync: true }
+    }
+
     const overrideWhere = acc.overrideDate
       ? { date: { gte: acc.overrideDate } }
       : {}

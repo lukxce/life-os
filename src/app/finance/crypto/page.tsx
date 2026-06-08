@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, Pencil, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react'
+import { Plus, Trash2, Pencil, TrendingUp, TrendingDown } from 'lucide-react'
 import { toast } from 'sonner'
 
 const SUPPORTED_SYMBOLS = ['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','TRX','DOT','MATIC','AVAX','LINK','UNI','LTC','ATOM','USDT','USDC']
@@ -10,19 +10,13 @@ const defaultForm = { symbol: 'SOL', quantity: '' }
 export default function CryptoPage() {
   const [holdings, setHoldings] = useState<any[]>([])
   const [prices, setPrices] = useState<Record<string, { eur: number; eur_24h_change: number }>>({})
-  const [accounts, setAccounts] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(defaultForm)
-  const [syncing, setSyncing] = useState(false)
 
   const load = async () => {
-    const [h, a] = await Promise.all([
-      fetch('/api/finance/crypto/holdings').then(r => r.json()),
-      fetch('/api/finance/accounts').then(r => r.json()),
-    ])
+    const h = await fetch('/api/finance/crypto/holdings').then(r => r.json())
     setHoldings(Array.isArray(h) ? h : [])
-    setAccounts(Array.isArray(a) ? a : [])
   }
 
   const loadPrices = async () => {
@@ -54,19 +48,6 @@ export default function CryptoPage() {
     setEditingId(h.id); setForm({ symbol: h.symbol, quantity: String(h.quantity) }); setShowForm(true)
   }
 
-  const syncToAccount = async () => {
-    const cryptoAcc = accounts.find(a => a.name.toLowerCase().includes('crypto'))
-    if (!cryptoAcc) { toast.error('No Crypto account found'); return }
-    setSyncing(true)
-    const totalEUR = holdings.reduce((s, h) => s + h.quantity * (prices[h.symbol]?.eur ?? 0), 0)
-    await fetch('/api/finance/accounts', {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: cryptoAcc.id, manualOverride: totalEUR, overrideDate: new Date().toISOString() })
-    })
-    toast.success(`Crypto account synced to €${totalEUR.toFixed(2)}`)
-    setSyncing(false)
-  }
-
   const totalEUR = holdings.reduce((s, h) => s + h.quantity * (prices[h.symbol]?.eur ?? 0), 0)
 
   return (
@@ -74,10 +55,6 @@ export default function CryptoPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Crypto Holdings</h2>
         <div className="flex gap-2">
-          <button onClick={syncToAccount} disabled={syncing}
-            className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60">
-            <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} /> Sync to account
-          </button>
           <button onClick={() => { setEditingId(null); setForm(defaultForm); setShowForm(s => !s) }}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700">
             <Plus size={16} /> Add Holding
@@ -88,7 +65,7 @@ export default function CryptoPage() {
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-5 text-white">
         <p className="text-purple-200 text-sm">Total Portfolio Value</p>
         <p className="text-3xl font-bold mt-1">€{totalEUR.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-        <p className="text-purple-200 text-xs mt-1">Prices updated every 5 min · CoinGecko</p>
+        <p className="text-purple-200 text-xs mt-1">Prices cached 6h · CoinGecko · auto-synced to wallet</p>
       </div>
 
       {showForm && (

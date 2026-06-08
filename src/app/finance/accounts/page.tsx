@@ -148,25 +148,37 @@ export default function AccountsPage() {
       </div>
 
       <div className="space-y-1 text-sm">
-        <div className="flex justify-between">
-          <span className="text-gray-500">Starting balance</span>
-          <span>{fmt(a.startingBalance, a.currency)}</span>
-        </div>
-        {a.manualOverride != null && (
-          <div className="flex justify-between items-center">
-            <span className="text-gray-500">Manual override</span>
-            <span className="flex items-center gap-2">
-              <span className="font-medium text-orange-600">{fmt(a.manualOverride, a.currency)}</span>
-              <button onClick={() => clearOverride(a.id)} className="text-gray-400 hover:text-red-500">
-                <X size={12} />
-              </button>
+        {a.cryptoAutoSync ? (
+          <div className="flex justify-between items-center pt-2">
+            <span className="flex items-center gap-1.5 text-gray-700 font-medium">
+              Live portfolio
+              <span className="text-[10px] font-semibold bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full">AUTO</span>
             </span>
+            <span className="font-bold text-purple-600">{fmt(a.currentBalance ?? 0, a.currency)}</span>
           </div>
+        ) : (
+          <>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Starting balance</span>
+              <span>{fmt(a.startingBalance, a.currency)}</span>
+            </div>
+            {a.manualOverride != null && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Manual override</span>
+                <span className="flex items-center gap-2">
+                  <span className="font-medium text-orange-600">{fmt(a.manualOverride, a.currency)}</span>
+                  <button onClick={() => clearOverride(a.id)} className="text-gray-400 hover:text-red-500">
+                    <X size={12} />
+                  </button>
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between pt-2 border-t border-gray-100 mt-2">
+              <span className="text-gray-700 font-medium">Current</span>
+              <span className="font-bold text-gray-900">{fmt(a.currentBalance ?? a.startingBalance, a.currency)}</span>
+            </div>
+          </>
         )}
-        <div className="flex justify-between pt-2 border-t border-gray-100 mt-2">
-          <span className="text-gray-700 font-medium">Current</span>
-          <span className="font-bold text-gray-900">{fmt(a.currentBalance ?? a.startingBalance, a.currency)}</span>
-        </div>
       </div>
 
       {editId === a.id && (
