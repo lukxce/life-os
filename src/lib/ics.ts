@@ -106,7 +106,8 @@ function parseICSDate(keyFull: string, value: string): { date: Date; allDay: boo
   if (isUTC) return { date: new Date(Date.UTC(y, mo, d, h, mi, s)), allDay: false }
 
   // DTSTART;TZID=W. Europe Standard Time:20240610T100000
-  const tzidMatch = keyFull.match(/TZID=([^;:]+)/)
+  // DTSTART;TZID="W. Europe Standard Time":20240610T100000  ← Outlook sometimes quotes the name
+  const tzidMatch = keyFull.match(/TZID=["']?([^"';:]+)["']?/)
   if (tzidMatch) {
     return { date: tzLocalToUTC(tzidMatch[1].trim(), y, mo, d, h, mi, s), allDay: false }
   }

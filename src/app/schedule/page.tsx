@@ -255,6 +255,15 @@ export default function SchedulePage() {
     })
   }
 
+  const allDayEventsToday = icsEvents.filter(ev => {
+    if (!ev.allDay) return false
+    // All-day event dates are midnight UTC (parsed server-side). Compare by local date string.
+    const evDate = new Date(ev.start)
+    const evLocal = `${evDate.getUTCFullYear()}-${String(evDate.getUTCMonth()+1).padStart(2,'0')}-${String(evDate.getUTCDate()).padStart(2,'0')}`
+    const selLocal = toLocalDateStr(selectedDate)
+    return evLocal === selLocal
+  })
+
   const weekParity = getISOWeekParity(selectedMonday)
   const blocks = (data?.blocks[activeDay] ?? []).filter(b => {
     if (b.frequency === 'biweekly' && b.biweeklyRef !== null) {
@@ -504,6 +513,20 @@ export default function SchedulePage() {
             style={{ width:'100%',fontSize:12,color:'#6B7280',border:'none',outline:'none',background:'transparent',resize:'none',fontFamily:'inherit',lineHeight:1.55,cursor:'text',display:'block' }}
           />
         </div>
+
+        {/* All-day events strip */}
+        {allDayEventsToday.length > 0 && (
+          <div style={{ background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,padding:'10px 16px',marginBottom:12,display:'flex',flexWrap:'wrap',gap:6 }}>
+            {allDayEventsToday.map(ev => {
+              const color = ev.calendarColor ?? '#6366f1'
+              return (
+                <span key={ev.uid} style={{ fontSize:12,fontWeight:600,color,background:color+'15',borderRadius:99,padding:'4px 12px',whiteSpace:'nowrap' }}>
+                  {ev.summary}
+                </span>
+              )
+            })}
+          </div>
+        )}
 
         {/* Timeline */}
         <div style={{ background:'#fff',border:'1px solid #e5e7eb',borderRadius:14,padding:'16px 16px 16px 0',position:'relative',overflowX: isMobile ? 'hidden' : 'auto' }}>

@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   if (!url) return NextResponse.json({ error: 'Missing url param' }, { status: 400 })
 
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'HabitTracker/1.0' }, next: { revalidate: 300 } })
+    const res = await fetch(url, { headers: { 'User-Agent': 'HabitTracker/1.0' }, cache: 'no-store' })
     if (!res.ok) return NextResponse.json({ error: `Upstream ${res.status}` }, { status: 502 })
     const text = await res.text()
     return NextResponse.json(parseICS(text))
