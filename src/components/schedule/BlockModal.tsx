@@ -9,34 +9,49 @@ export type BlockFormData = {
   note: string
   category: string
   sacred: boolean
+  day: string
+  frequency: 'weekly' | 'biweekly'
 }
 
 type Props = {
   initial?: Partial<BlockFormData> & { id?: string }
+  currentDay: string
   onSave: (data: BlockFormData) => void
   onDelete?: () => void
   onCancel: () => void
 }
 
 const CATEGORIES = [
-  { value: 'ritual', label: 'Ritual' },
-  { value: 'hypefy', label: 'Hypefy' },
-  { value: 'agency', label: 'Agency' },
-  { value: 'pt', label: 'PT' },
-  { value: 'food', label: 'Food' },
-  { value: 'social', label: 'Social' },
+  { value: 'ritual',   label: 'Ritual' },
+  { value: 'hypefy',   label: 'Hypefy' },
+  { value: 'agency',   label: 'Agency' },
+  { value: 'pt',       label: 'PT' },
+  { value: 'food',     label: 'Food' },
+  { value: 'social',   label: 'Social' },
   { value: 'property', label: 'Property' },
-  { value: 'sleep', label: 'Sleep' },
+  { value: 'sleep',    label: 'Sleep' },
 ]
 
-export function BlockModal({ initial, onSave, onDelete, onCancel }: Props) {
+const DAYS = [
+  { key: 'mon', label: 'Monday' },
+  { key: 'tue', label: 'Tuesday' },
+  { key: 'wed', label: 'Wednesday' },
+  { key: 'thu', label: 'Thursday' },
+  { key: 'fri', label: 'Friday' },
+  { key: 'sat', label: 'Saturday' },
+  { key: 'sun', label: 'Sunday' },
+]
+
+export function BlockModal({ initial, currentDay, onSave, onDelete, onCancel }: Props) {
   const [form, setForm] = useState<BlockFormData>({
     startTime: initial?.startTime ?? '',
-    endTime: initial?.endTime ?? '',
-    name: initial?.name ?? '',
-    note: initial?.note ?? '',
-    category: initial?.category ?? 'ritual',
-    sacred: initial?.sacred ?? false,
+    endTime:   initial?.endTime   ?? '',
+    name:      initial?.name      ?? '',
+    note:      initial?.note      ?? '',
+    category:  initial?.category  ?? 'ritual',
+    sacred:    initial?.sacred    ?? false,
+    day:       initial?.day       ?? currentDay,
+    frequency: initial?.frequency ?? 'weekly',
   })
 
   function handleSubmit(e: React.FormEvent) {
@@ -60,6 +75,21 @@ export function BlockModal({ initial, onSave, onDelete, onCancel }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          {/* Day selector */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Day</label>
+            <select
+              value={form.day}
+              onChange={(e) => setForm((f) => ({ ...f, day: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+            >
+              {DAYS.map((d) => (
+                <option key={d.key} value={d.key}>{d.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Time */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Start time</label>
@@ -84,6 +114,7 @@ export function BlockModal({ initial, onSave, onDelete, onCancel }: Props) {
             </div>
           </div>
 
+          {/* Name */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
             <input
@@ -96,6 +127,7 @@ export function BlockModal({ initial, onSave, onDelete, onCancel }: Props) {
             />
           </div>
 
+          {/* Note */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Note <span className="text-gray-400">(optional)</span></label>
             <textarea
@@ -107,6 +139,7 @@ export function BlockModal({ initial, onSave, onDelete, onCancel }: Props) {
             />
           </div>
 
+          {/* Category */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Category</label>
             <select
@@ -120,6 +153,41 @@ export function BlockModal({ initial, onSave, onDelete, onCancel }: Props) {
             </select>
           </div>
 
+          {/* Recurrence */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Recurrence</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, frequency: 'weekly' }))}
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors ${
+                  form.frequency === 'weekly'
+                    ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                    : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                Every week
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, frequency: 'biweekly' }))}
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors ${
+                  form.frequency === 'biweekly'
+                    ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                    : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                Every other week
+              </button>
+            </div>
+            {form.frequency === 'biweekly' && (
+              <p className="text-xs text-amber-600 mt-1.5">
+                ⚡ Will appear on alternating weeks starting from the current week.
+              </p>
+            )}
+          </div>
+
+          {/* Sacred */}
           <div className="flex items-center gap-2">
             <input
               id="sacred-check"
@@ -131,6 +199,7 @@ export function BlockModal({ initial, onSave, onDelete, onCancel }: Props) {
             <label htmlFor="sacred-check" className="text-sm text-gray-700 font-medium">Sacred (non-negotiable)</label>
           </div>
 
+          {/* Actions */}
           <div className="flex items-center gap-2 pt-1">
             {onDelete && (
               <button

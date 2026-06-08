@@ -42,15 +42,15 @@ const MODULES = [
   },
   {
     href: '/life',
-    emoji: '✅',
-    title: 'Life',
+    emoji: '💪',
+    title: 'Habits & Fitness',
     description: 'Habits, body & goals',
     color: 'from-indigo-500 to-indigo-600',
     border: 'border-indigo-100 dark:border-indigo-900',
     bg: 'bg-indigo-50 dark:bg-indigo-950/40',
   },
   {
-    href: '/life/schedule',
+    href: '/schedule',
     emoji: '📅',
     title: 'Schedule',
     description: 'Calendar, people & planning',
@@ -59,10 +59,10 @@ const MODULES = [
     bg: 'bg-sky-50 dark:bg-sky-950/40',
   },
   {
-    href: '/life/journal',
+    href: '/journal',
     emoji: '📓',
     title: 'Journal',
-    description: 'Daily reflections & notes',
+    description: 'Weekly reflections & notes',
     color: 'from-amber-500 to-amber-600',
     border: 'border-amber-100 dark:border-amber-900',
     bg: 'bg-amber-50 dark:bg-amber-950/40',
@@ -237,7 +237,7 @@ export default function HomePage() {
               { href: '/life', label: "Today's habits", emoji: '☀️' },
               { href: '/finance/scan', label: 'Scan receipt', emoji: '📷' },
               { href: '/finance/expenses/personal', label: 'Add expense', emoji: '💸' },
-              { href: '/life/schedule', label: 'My schedule', emoji: '📅' },
+              { href: '/schedule', label: 'My schedule', emoji: '📅' },
             ].map(q => (
               <Link key={q.href} href={q.href}
                 className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 hover:shadow-sm transition-all text-center">

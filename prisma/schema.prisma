@@ -283,16 +283,18 @@ model BodyMetric {
 }
 
 model ScheduleBlock {
-  id        String   @id @default(cuid())
-  day       String
-  startTime String
-  endTime   String?
-  name      String
-  note      String?
-  category  String
-  sacred    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  day          String
+  startTime    String
+  endTime      String?
+  name         String
+  note         String?
+  category     String
+  sacred       Boolean  @default(false)
+  frequency    String   @default("weekly") // "weekly" | "biweekly"
+  biweeklyRef  Int?     // ISO week number % 2 when block was configured
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model ScheduleDay {

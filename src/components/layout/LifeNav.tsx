@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 const TABS = [
   { href: '/life/goals',    label: 'Goals'   },
   { href: '/life/contacts', label: 'People'  },
-  { href: '/life/journal',  label: 'Journal' },
+  { href: '/journal',       label: 'Journal' },
 ]
 
 export function LifeNav() {

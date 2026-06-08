@@ -14,12 +14,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const block = await prisma.scheduleBlock.update({
     where: { id: params.id },
     data: {
-      startTime: body.startTime,
-      endTime: body.endTime ?? null,
-      name: body.name,
-      note: body.note ?? null,
-      category: body.category,
-      sacred: body.sacred ?? false,
+      ...(body.day        !== undefined && { day: body.day }),
+      startTime:    body.startTime,
+      endTime:      body.endTime || null,
+      name:         body.name,
+      note:         body.note || null,
+      category:     body.category,
+      sacred:       body.sacred ?? false,
+      frequency:    body.frequency || 'weekly',
+      biweeklyRef:  body.biweeklyRef ?? null,
     },
   })
   return NextResponse.json(block)

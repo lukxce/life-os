@@ -16,13 +16,13 @@ const LIFE_LINKS = [
 ]
 
 const SCHEDULE_LINKS = [
-  { href: '/life/schedule',  label: 'Schedule', icon: CalendarRange },
+  { href: '/schedule',       label: 'Schedule', icon: CalendarRange },
   { href: '/life/ics',       label: 'Calendars',icon: Calendar      },
   { href: '/life/contacts',  label: 'People',   icon: Users         },
 ]
 
 const JOURNAL_LINKS = [
-  { href: '/life/journal',   label: 'Journal',  icon: BookOpen      },
+  { href: '/journal',        label: 'Journal',  icon: BookOpen      },
 ]
 
 function NavSection({ title, links, pathname }: { title: string; links: typeof LIFE_LINKS; pathname: string }) {
@@ -57,7 +57,7 @@ export function LifeSidebar({ onAdd }: { onAdd?: () => void }) {
       </Link>
 
       <nav className="flex flex-col gap-4 flex-1 overflow-y-auto">
-        <NavSection title="Life" links={LIFE_LINKS} pathname={pathname} />
+        <NavSection title="Habits & Fitness" links={LIFE_LINKS} pathname={pathname} />
         <NavSection title="Schedule" links={SCHEDULE_LINKS} pathname={pathname} />
         <NavSection title="Journal" links={JOURNAL_LINKS} pathname={pathname} />
       </nav>

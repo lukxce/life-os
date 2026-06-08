@@ -20,13 +20,15 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const block = await prisma.scheduleBlock.create({
     data: {
-      day: body.day,
-      startTime: body.startTime,
-      endTime: body.endTime ?? null,
-      name: body.name,
-      note: body.note ?? null,
-      category: body.category,
-      sacred: body.sacred ?? false,
+      day:          body.day,
+      startTime:    body.startTime,
+      endTime:      body.endTime || null,
+      name:         body.name,
+      note:         body.note || null,
+      category:     body.category,
+      sacred:       body.sacred ?? false,
+      frequency:    body.frequency || 'weekly',
+      biweeklyRef:  body.biweeklyRef ?? null,
     },
   })
   return NextResponse.json(block)
