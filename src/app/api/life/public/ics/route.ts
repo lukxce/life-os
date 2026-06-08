@@ -37,5 +37,16 @@ export async function GET(req: NextRequest) {
 
   allEvents.sort((a, b) => new Date((a as { start: string }).start).getTime() - new Date((b as { start: string }).start).getTime())
 
-  return NextResponse.json({ events: allEvents, isBusy, calendars: isPublic ? calendars.map(c => ({ name: c.name, color: c.color })) : [] })
+  const [locationRow, meetingRow] = await Promise.all([
+    prisma.appConfig.findUnique({ where: { key: 'scheduleLocation' } }),
+    prisma.appConfig.findUnique({ where: { key: 'scheduleMeetingLink' } }),
+  ])
+
+  return NextResponse.json({
+    events: allEvents,
+    isBusy,
+    calendars: isPublic ? calendars.map(c => ({ name: c.name, color: c.color })) : [],
+    location: locationRow?.value ?? null,
+    meetingLink: meetingRow?.value ?? null,
+  })
 }
