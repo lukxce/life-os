@@ -26,34 +26,46 @@ export async function GET(req: NextRequest) {
 
   let res: Response
   try {
-    // cache: 'no-store' — search results must be fresh, not cached
-    res = await fetch(url, { cache: 'no-store' })
+    res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; LifeOS/1.0)',
+        'Accept': 'application/json',
+      },
+    })
   } catch (err) {
-    console.error('[books] fetch error:', err)
-    return NextResponse.json([], { status: 200 }) // return empty array, not error
+    console.error('[books] network error:', err)
+    return NextResponse.json(
+      { error: 'Network error reaching Google Books', details: String(err) },
+      { status: 502 }
+    )
   }
 
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     console.error('[books] Google Books API error:', res.status, body)
-    // Return empty array (not a 5xx) so the UI shows "No results" instead of breaking
-    return NextResponse.json([])
+    return NextResponse.json(
+      { error: `Google Books returned ${res.status}`, hint: BOOKS_KEY ? 'Check GOOGLE_BOOKS_API_KEY is valid' : 'No API key set — add GOOGLE_BOOKS_API_KEY env var' },
+      { status: 502 }
+    )
   }
 
   let data: any
   try {
     data = await res.json()
   } catch {
+    return NextResponse.json({ error: 'Invalid JSON from Google Books' }, { status: 502 })
+  }
+
+  if (!data.items || !Array.isArray(data.items)) {
+    // totalItems === 0 means genuinely no results
     return NextResponse.json([])
   }
 
-  if (!data.items || !Array.isArray(data.items)) return NextResponse.json([])
-
   const results = data.items
-    .filter((item: any) => item?.volumeInfo)  // skip items without volumeInfo
+    .filter((item: any) => item?.volumeInfo)
     .map((item: { id: string; volumeInfo: VolumeInfo }) => {
       const v = item.volumeInfo
-      // Google Books returns http thumbnails — upgrade to https
       const rawThumb = v.imageLinks?.thumbnail ?? v.imageLinks?.smallThumbnail ?? null
       const posterUrl = rawThumb ? rawThumb.replace('http://', 'https://') : null
       const year = v.publishedDate ? parseInt(v.publishedDate.slice(0, 4), 10) || null : null

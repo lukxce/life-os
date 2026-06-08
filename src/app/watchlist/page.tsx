@@ -222,11 +222,15 @@ function AddSheet({
           ? `/api/life/books/search?q=${encodeURIComponent(query)}`
           : `/api/life/tmdb/search?q=${encodeURIComponent(query)}`
         const res = await fetch(endpoint)
-        if (res.ok) {
-          const data = await res.json()
-          setResults(Array.isArray(data) ? data : [])
+        const data = await res.json().catch(() => null)
+        if (res.ok && Array.isArray(data)) {
+          setResults(data)
+        } else if (!res.ok && data?.hint) {
+          setSearchError(`${data.error} — ${data.hint}`)
+        } else if (!res.ok) {
+          setSearchError(data?.error ?? `Search failed (${res.status})`)
         } else {
-          setSearchError(`Search failed (${res.status})`)
+          setResults([])
         }
       } catch (err) {
         setSearchError('Search unavailable — check your connection')
