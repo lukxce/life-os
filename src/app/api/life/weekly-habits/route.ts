@@ -21,7 +21,7 @@ export async function GET() {
   threeMonthsAgo.setDate(threeMonthsAgo.getDate() - 90)
 
   const habits = await prisma.habit.findMany({
-    where: { active: true, frequency: 'specific_days' },
+    where: { active: true, paused: false, frequency: 'specific_days' },
     orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
     include: {
       logs: {
@@ -32,7 +32,11 @@ export async function GET() {
     },
   })
 
-  const result = habits.map(h => {
+  // Only show habits scheduled for exactly one day per week.
+  // Multi-day habits (Mon/Wed/Fri etc.) appear in the daily Today view — not here.
+  const singleDayHabits = habits.filter(h => h.frequencyDays.length === 1)
+
+  const result = singleDayHabits.map(h => {
     const thisWeekLogs = h.logs.filter(l => {
       const d = new Date(l.date)
       return d >= monday && d < nextMonday

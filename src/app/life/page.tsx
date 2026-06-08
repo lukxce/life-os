@@ -85,6 +85,11 @@ function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
 
+/** Produces YYYY-MM-DD in the user's LOCAL timezone — never UTC-shifted */
+function toLocalDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function greeting() {
   const h = new Date().getHours()
   if (h < 12) return 'Good morning'
@@ -112,7 +117,7 @@ export default function TodayPage() {
   const today = startOfDay(new Date())
   const isToday = isSameDay(selectedDate, today)
   const days = weekDays(weekStart)
-  const selectedKey = selectedDate.toISOString().split('T')[0]
+  const selectedKey = toLocalDateStr(selectedDate)
   const isHoliday = holidays.has(selectedKey)
 
   function toggleHoliday() {
@@ -142,7 +147,7 @@ export default function TodayPage() {
 
   const load = useCallback(async (date: Date) => {
     setLoading(true)
-    const res = await fetch(`/api/life/today?date=${date.toISOString().split('T')[0]}`)
+    const res = await fetch(`/api/life/today?date=${toLocalDateStr(date)}`)
     setItems(await res.json())
     setLoading(false)
   }, [])
