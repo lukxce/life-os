@@ -198,7 +198,7 @@ export default function SchedulePage() {
   function copyLink(type: 'busy' | 'public') {
     if (!shareToken || !origin) return
     const token = type === 'busy' ? shareToken.busyToken : shareToken.publicToken
-    navigator.clipboard.writeText(`${origin}/share/${token}`)
+    navigator.clipboard.writeText(`${origin}/life/share/${token}`)
     setCopied(type)
     setTimeout(() => setCopied(null), 2000)
   }
@@ -338,7 +338,7 @@ export default function SchedulePage() {
               </div>
               <div style={{ display:'flex',alignItems:'center',gap:8 }}>
                 <div style={{ flex:1,fontSize:11,color:'#9CA3AF',overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis' }}>
-                  {origin ? `${origin}/share/${shareToken.busyToken}` : `…/${shareToken.busyToken}`}
+                  {origin ? `${origin}/life/share/${shareToken.busyToken}` : `…/${shareToken.busyToken}`}
                 </div>
                 <button onClick={() => regenerateToken('busy')} style={{ fontSize:11,color:'#9CA3AF',background:'none',border:'none',cursor:'pointer',padding:0,whiteSpace:'nowrap',textDecoration:'underline',flexShrink:0 }}>
                   Regenerate
@@ -360,7 +360,7 @@ export default function SchedulePage() {
               </div>
               <div style={{ display:'flex',alignItems:'center',gap:8 }}>
                 <div style={{ flex:1,fontSize:11,color:'#9CA3AF',overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis' }}>
-                  {origin ? `${origin}/share/${shareToken.publicToken}` : `…/${shareToken.publicToken}`}
+                  {origin ? `${origin}/life/share/${shareToken.publicToken}` : `…/${shareToken.publicToken}`}
                 </div>
                 <button onClick={() => regenerateToken('public')} style={{ fontSize:11,color:'#9CA3AF',background:'none',border:'none',cursor:'pointer',padding:0,whiteSpace:'nowrap',textDecoration:'underline',flexShrink:0 }}>
                   Regenerate
