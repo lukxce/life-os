@@ -19,10 +19,12 @@ export function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  const session = req.cookies.get('life_session')?.value
-  const secret  = process.env.SESSION_SECRET
+  const secret = process.env.SESSION_SECRET
+  // If SESSION_SECRET not configured, skip auth (not yet set up)
+  if (!secret) return NextResponse.next()
 
-  if (!secret || session !== secret) {
+  const session = req.cookies.get('life_session')?.value
+  if (session !== secret) {
     const loginUrl = new URL('/login', req.url)
     loginUrl.searchParams.set('from', pathname)
     return NextResponse.redirect(loginUrl)

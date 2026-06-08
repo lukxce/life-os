@@ -48,6 +48,13 @@ function toLocalDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
+function isVirtual(location?: string) {
+  if (!location) return false
+  const l = location.toLowerCase()
+  return l.includes('zoom') || l.includes('meet.google') || l.includes('teams.microsoft') ||
+    l.includes('webex') || l.includes('whereby') || l.includes('http')
+}
+
 function EventBlock({ ev }: { ev: ICSEvent }) {
   const color = ev.calendarColor ?? '#6366f1'
   const start = new Date(ev.start)
@@ -61,14 +68,21 @@ function EventBlock({ ev }: { ev: ICSEvent }) {
   const height = Math.max(minutesToPx(clampedEnd) - minutesToPx(clampedStart), 22)
   const isShort = height < 44
   const timeStr = `${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`
+  const virtual = isVirtual(ev.location)
+  const locationIcon = ev.location ? (virtual ? '💻' : '📍') : null
 
   return (
     <div style={{ position:'absolute',top,left:0,right:0,height,background:color+'18',borderLeft:`3px solid ${color}`,borderRadius:6,padding:isShort?'2px 8px':'5px 10px',overflow:'hidden',boxSizing:'border-box' }}>
       <div style={{ display:'flex',alignItems:'center',gap:5,overflow:'hidden' }}>
         <span style={{ fontSize:11,fontWeight:600,color,whiteSpace:'nowrap',flexShrink:0 }}>{timeStr}</span>
         <span style={{ fontSize:11,fontWeight:700,color,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis' }}>{ev.summary}</span>
+        {locationIcon && <span style={{ fontSize:10,flexShrink:0 }}>{locationIcon}</span>}
       </div>
-      {!isShort && ev.location && <div style={{ fontSize:10,color:color+'cc',marginTop:2,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis' }}>📍 {ev.location}</div>}
+      {!isShort && ev.location && (
+        <div style={{ fontSize:10,color:color+'cc',marginTop:2,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis' }}>
+          {virtual ? '💻 Online' : `📍 ${ev.location}`}
+        </div>
+      )}
     </div>
   )
 }

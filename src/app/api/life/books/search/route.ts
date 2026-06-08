@@ -21,10 +21,13 @@ export async function GET(req: NextRequest) {
   if (!q) return NextResponse.json([])
 
   const keyParam = BOOKS_KEY ? `&key=${BOOKS_KEY}` : ''
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=12&langRestrict=en${keyParam}`
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=12${keyParam}`
 
   const res = await fetch(url, { next: { revalidate: 60 } })
-  if (!res.ok) return NextResponse.json({ error: 'Google Books error' }, { status: 502 })
+  if (!res.ok) {
+    console.error('[books] Google Books API error:', res.status, await res.text().catch(() => ''))
+    return NextResponse.json({ error: 'Google Books error' }, { status: 502 })
+  }
 
   const data = await res.json()
   if (!data.items) return NextResponse.json([])
