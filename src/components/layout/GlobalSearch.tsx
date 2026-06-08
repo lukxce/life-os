@@ -231,7 +231,7 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
                     <ResultItem key={c.id} icon={<Users size={13} className="text-pink-500" />}
                       title={`${c.emoji ?? ''} ${c.name}`.trim()}
                       sub={`Reach out ${c.reachOutFrequency}`}
-                      onClick={() => go('/life/contacts')} />
+                      onClick={() => go('/people')} />
                   ))}
                 </Section>
               )}

@@ -333,7 +333,7 @@ export default function SchedulePage() {
                 {!isMobile && 'Refresh'}
               </button>
             )}
-            <Link href="/life/contacts"
+            <Link href="/people"
               style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 12px',borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',color:'#374151',fontWeight:600,fontSize:13,textDecoration:'none' }}
               title="People">
               <Users size={14} /> {!isMobile && 'People'}

@@ -326,7 +326,7 @@ export default function TodayPage() {
             const [bm, bd] = (c.birthday ?? '').split('-')
             const isTodayBday = bm === String(today.getMonth() + 1).padStart(2, '0') && bd === String(today.getDate()).padStart(2, '0')
             return (
-              <Link key={c.id} href="/life/contacts"
+              <Link key={c.id} href="/people"
                 className="flex items-center gap-3 bg-pink-50 dark:bg-pink-950/30 border border-pink-100 dark:border-pink-900/50 rounded-2xl px-4 py-3">
                 <span className="text-xl">{c.emoji ?? '👤'}</span>
                 <div className="flex-1 min-w-0">
@@ -346,7 +346,7 @@ export default function TodayPage() {
               ? Math.floor((today.getTime() - new Date(c.lastContactDate).getTime()) / 86400000)
               : null
             return (
-              <Link key={c.id} href="/life/contacts"
+              <Link key={c.id} href="/people"
                 className="flex items-center gap-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 rounded-2xl px-4 py-3">
                 <span className="text-xl">{c.emoji ?? '👤'}</span>
                 <div className="flex-1 min-w-0">
