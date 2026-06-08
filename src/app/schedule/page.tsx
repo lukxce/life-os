@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { Pencil, X, Plus, RefreshCw, ChevronLeft, ChevronRight, Calendar, Share2, Check, Settings } from 'lucide-react'
+import { Pencil, X, Plus, RefreshCw, ChevronLeft, ChevronRight, Calendar, Share2, Check, Settings, Users } from 'lucide-react'
 import Link from 'next/link'
 import { BlockModal, BlockFormData } from '@/components/schedule/BlockModal'
 
@@ -328,6 +328,11 @@ export default function SchedulePage() {
                 {!isMobile && 'Refresh'}
               </button>
             )}
+            <Link href="/life/contacts"
+              style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 12px',borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',color:'#374151',fontWeight:600,fontSize:13,textDecoration:'none' }}
+              title="People">
+              <Users size={14} /> {!isMobile && 'People'}
+            </Link>
             <Link href="/life/settings"
               style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 12px',borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',color:'#374151',fontWeight:600,fontSize:13,textDecoration:'none' }}
               title="Calendar settings">
