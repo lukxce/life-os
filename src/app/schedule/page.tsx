@@ -481,19 +481,23 @@ export default function SchedulePage() {
           )}
         </div>
 
-        {/* Day summary */}
+        {/* Day summary — always inline-editable */}
         <div style={{ background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,padding:'14px 16px',marginBottom:20 }}>
-          {editMode ? (
-            <>
-              <input value={dayLabel[activeDay]??''} onChange={e => setDayLabel(p => ({...p,[activeDay]:e.target.value}))} onBlur={() => saveDay(activeDay)} placeholder="Day label (e.g. Monday — PT day.)" style={{ width:'100%',fontSize:14,fontWeight:700,color:'#111827',border:'none',outline:'none',background:'transparent',marginBottom:6,borderBottom:'1.5px dashed #d1d5db',paddingBottom:4 }} />
-              <textarea value={daySummary[activeDay]??''} onChange={e => setDaySummary(p => ({...p,[activeDay]:e.target.value}))} onBlur={() => saveDay(activeDay)} placeholder="Day summary..." rows={3} style={{ width:'100%',fontSize:12,color:'#6B7280',border:'none',outline:'none',background:'transparent',resize:'none',fontFamily:'inherit',lineHeight:1.5 }} />
-            </>
-          ) : (
-            <>
-              <p style={{ fontSize:14,fontWeight:700,color:'#111827',marginBottom:4 }}>{dayLabel[activeDay] || DAYS.find(d => d.key === activeDay)?.full}</p>
-              <p style={{ fontSize:12,color:'#6B7280',lineHeight:1.55 }}>{daySummary[activeDay] || 'No summary.'}</p>
-            </>
-          )}
+          <input
+            value={dayLabel[activeDay]??''}
+            onChange={e => setDayLabel(p => ({...p,[activeDay]:e.target.value}))}
+            onBlur={() => saveDay(activeDay)}
+            placeholder={DAYS.find(d => d.key === activeDay)?.full ?? 'Day label…'}
+            style={{ width:'100%',fontSize:14,fontWeight:700,color:'#111827',border:'none',outline:'none',background:'transparent',marginBottom:6,cursor:'text' }}
+          />
+          <textarea
+            value={daySummary[activeDay]??''}
+            onChange={e => setDaySummary(p => ({...p,[activeDay]:e.target.value}))}
+            onBlur={() => saveDay(activeDay)}
+            placeholder="Add a note for this day…"
+            rows={daySummary[activeDay] ? Math.max(2, (daySummary[activeDay].match(/\n/g)?.length ?? 0) + 1) : 1}
+            style={{ width:'100%',fontSize:12,color:'#6B7280',border:'none',outline:'none',background:'transparent',resize:'none',fontFamily:'inherit',lineHeight:1.55,cursor:'text',display:'block' }}
+          />
         </div>
 
         {/* Timeline */}
