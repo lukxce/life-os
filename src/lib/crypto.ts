@@ -41,7 +41,7 @@ export async function getCryptoPrices(symbols: string[]): Promise<Record<string,
 export async function computeCryptoPortfolioEUR(): Promise<number> {
   const holdings = await prisma.cryptoHolding.findMany()
   if (!holdings.length) return 0
-  const symbols = [...new Set(holdings.map(h => h.symbol))]
+  const symbols = Array.from(new Set(holdings.map(h => h.symbol)))
   const prices = await getCryptoPrices(symbols)
   return holdings.reduce((sum, h) => sum + h.quantity * (prices[h.symbol]?.eur ?? 0), 0)
 }
