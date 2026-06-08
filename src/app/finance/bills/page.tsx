@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { cn } from '@/lib/utils'
 
-const defaultForm = { name: '', amount: '', currency: 'RSD', category: '', subcategory: '', accountId: '', dayOfMonth: '1', notes: '', isLoan: false, lender: '', loanEndDate: '' }
+const defaultForm = { name: '', amount: '', currency: 'RSD', category: '', subcategory: '', accountId: '', dayOfMonth: '1', notes: '', isLoan: false, lender: '', loanEndDate: '', type: 'personal' }
 
 function daysUntil(dayOfMonth: number): number {
   const now = new Date()
@@ -46,6 +46,7 @@ export default function BillsPage() {
   const [payAmount, setPayAmount] = useState('')
   const [form, setForm] = useState(defaultForm)
   const [tab, setTab] = useState<'bills' | 'loans' | 'calendar'>('bills')
+  const [typeFilter, setTypeFilter] = useState<'all' | 'personal' | 'company'>('all')
 
   const load = async () => {
     const [b, a, c, s] = await Promise.all([
@@ -82,7 +83,7 @@ export default function BillsPage() {
 
   const startEdit = (b: any) => {
     setEditingId(b.id)
-    setForm({ name: b.name, amount: String(b.amount), currency: b.currency, category: b.category || '', subcategory: b.subcategory || '', accountId: b.accountId || '', dayOfMonth: String(b.dayOfMonth), notes: b.notes || '', isLoan: b.isLoan ?? false, lender: b.lender || '', loanEndDate: b.loanEndDate ? new Date(b.loanEndDate).toISOString().split('T')[0] : '' })
+    setForm({ name: b.name, amount: String(b.amount), currency: b.currency, category: b.category || '', subcategory: b.subcategory || '', accountId: b.accountId || '', dayOfMonth: String(b.dayOfMonth), notes: b.notes || '', isLoan: b.isLoan ?? false, lender: b.lender || '', loanEndDate: b.loanEndDate ? new Date(b.loanEndDate).toISOString().split('T')[0] : '', type: b.type || 'personal' })
     setTab(b.isLoan ? 'loans' : 'bills')
     setShowForm(true)
   }
@@ -102,10 +103,12 @@ export default function BillsPage() {
 
   const allBills = [...bills].filter(b => !b.isLoan).sort((a, b) => daysUntil(a.dayOfMonth) - daysUntil(b.dayOfMonth))
   const allLoans = [...bills].filter(b => b.isLoan).sort((a, b) => daysUntil(a.dayOfMonth) - daysUntil(b.dayOfMonth))
-  const shown = tab === 'calendar' ? [] : tab === 'bills' ? allBills : allLoans
+  const baseList = tab === 'bills' ? allBills : allLoans
+  const filtered = typeFilter === 'all' ? baseList : baseList.filter(b => (b.type || 'personal') === typeFilter)
+  const shown = tab === 'calendar' ? [] : filtered
 
-  const totalMonthly = (tab === 'bills' ? allBills : allLoans).filter(b => b.active).reduce((s, b) => s + b.amount, 0)
-  const totalCurrency = (tab === 'bills' ? allBills : allLoans)[0]?.currency ?? 'RSD'
+  const totalMonthly = filtered.filter(b => b.active).reduce((s, b) => s + b.amount, 0)
+  const totalCurrency = filtered[0]?.currency ?? 'RSD'
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -117,7 +120,8 @@ export default function BillsPage() {
         </button>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs + type filter */}
+      <div className="flex flex-wrap items-center gap-3">
       <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
         {(['bills', 'loans'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
@@ -130,6 +134,19 @@ export default function BillsPage() {
             tab === 'calendar' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200')}>
           <CalendarDays size={14} /> Calendar
         </button>
+      </div>
+
+      {/* Personal / Company filter */}
+      {tab !== 'calendar' && (
+        <div className="flex gap-1">
+          {(['all', 'personal', 'company'] as const).map(t => (
+            <button key={t} onClick={() => setTypeFilter(t)}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors capitalize ${typeFilter === t ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}>
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
       </div>
 
       {shown.length > 0 && (
@@ -225,6 +242,19 @@ export default function BillsPage() {
               </select>
             </div>
 
+            {/* Personal / Company toggle */}
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Type</label>
+              <div className="mt-1 flex gap-2">
+                {(['personal', 'company'] as const).map(t => (
+                  <button key={t} type="button" onClick={() => setForm(p => ({ ...p, type: t }))}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors capitalize ${form.type === t ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {subcats.length > 0 && (
               <div className="col-span-2">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Subcategory</label>
@@ -277,6 +307,9 @@ export default function BillsPage() {
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusBadge(days, paid)}`}>
                       {paid ? 'Paid this month' : days < 0 ? `${Math.abs(days)}d overdue` : days === 0 ? 'Due today' : `${days}d left`}
                     </span>
+                    {b.type === 'company' && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300">company</span>
+                    )}
                   </div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
                     {b.amount.toLocaleString()} {b.currency}

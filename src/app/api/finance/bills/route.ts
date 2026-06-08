@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
       dayOfMonth: body.dayOfMonth,
       active: body.active ?? true,
       notes: body.notes || null,
+      type: body.type || 'personal',
       isLoan: body.isLoan ?? false,
       lender: body.lender || null,
       loanEndDate: body.loanEndDate ? new Date(body.loanEndDate) : null,

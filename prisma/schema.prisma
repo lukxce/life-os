@@ -145,6 +145,7 @@ model Bill {
   dayOfMonth  Int
   active      Boolean  @default(true)
   notes       String?
+  type        String    @default("personal") // "personal" | "company"
   isLoan      Boolean   @default(false)
   lender      String?
   loanEndDate DateTime?
