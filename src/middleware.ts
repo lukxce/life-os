@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // Routes accessible without login
 const PUBLIC_PREFIXES = [
-  '/guide',        // city food guides
-  '/life/share',   // shared calendar links
-  '/login',        // login page itself
-  '/api/auth',     // login/logout API
+  '/guide',              // city food guides
+  '/share',              // shared calendar links (top-level route)
+  '/life/share',         // legacy share redirect
+  '/api/life/public',    // public calendar ICS API (token-gated itself)
+  '/login',              // login page itself
+  '/api/auth',           // login/logout API
   '/_next',
   '/favicon',
   '/icons',

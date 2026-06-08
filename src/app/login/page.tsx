@@ -12,8 +12,12 @@ function LoginForm() {
 
   const from = searchParams.get('from') || '/'
 
-  // Focus hidden input on mount so keyboard works immediately
-  useEffect(() => { inputRef.current?.focus() }, [])
+  // Focus hidden input on mount so keyboard works on desktop.
+  // Skip on touch devices (mobile/tablet) — use the on-screen numpad instead.
+  useEffect(() => {
+    const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+    if (!isTouch) inputRef.current?.focus()
+  }, [])
 
   useEffect(() => {
     if (error) { const t = setTimeout(() => setError(false), 1200); return () => clearTimeout(t) }
@@ -33,7 +37,8 @@ function LoginForm() {
       setPin('')
       setError(true)
       setLoading(false)
-      setTimeout(() => inputRef.current?.focus(), 50)
+      const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+      if (!isTouch) setTimeout(() => inputRef.current?.focus(), 50)
     }
   }
 
@@ -65,7 +70,10 @@ function LoginForm() {
   return (
     <div
       className="min-h-screen bg-gray-950 flex items-center justify-center px-4"
-      onClick={() => inputRef.current?.focus()}
+      onClick={() => {
+        const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+        if (!isTouch) inputRef.current?.focus()
+      }}
     >
       {/* Hidden input captures keyboard */}
       <input
@@ -109,7 +117,11 @@ function LoginForm() {
             k === '' ? <div key={i} /> :
             <button
               key={i}
-              onClick={() => { press(k); inputRef.current?.focus() }}
+              onClick={() => {
+                press(k)
+                const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+                if (!isTouch) inputRef.current?.focus()
+              }}
               disabled={loading}
               className={`h-16 rounded-2xl text-xl font-semibold transition-all active:scale-95 disabled:opacity-40 ${
                 k === '←'

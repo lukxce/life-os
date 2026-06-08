@@ -154,42 +154,39 @@ export default function SharePage() {
 
         {/* Header card */}
         <div style={{ background:'#fff',border:'1px solid #e5e7eb',borderRadius:16,padding:'20px 24px',marginBottom:20 }}>
-          <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:16,flexWrap:'wrap' }}>
-            <div>
-              <h1 style={{ fontSize:22,fontWeight:700,color:'#111827',margin:'0 0 4px' }}>Calendar</h1>
-              <p style={{ fontSize:13,color:'#9CA3AF',margin:0 }}>
-                {data.isBusy ? 'Availability only' : 'Full schedule'}
-              </p>
-              {data.location && (
-                <div style={{ display:'flex',alignItems:'center',gap:5,marginTop:8 }}>
-                  <MapPin size={13} color="#6B7280" />
-                  <span style={{ fontSize:13,color:'#6B7280' }}>{data.location}</span>
-                </div>
-              )}
-              {!data.isBusy && data.calendars.length > 0 && (
-                <div style={{ display:'flex',gap:12,marginTop:10,flexWrap:'wrap' }}>
-                  {data.calendars.map(cal => (
-                    <div key={cal.name} style={{ display:'flex',alignItems:'center',gap:5 }}>
-                      <span style={{ width:8,height:8,borderRadius:'50%',background:cal.color,display:'inline-block',flexShrink:0 }} />
-                      <span style={{ fontSize:12,color:'#6B7280' }}>{cal.name}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          <h1 style={{ fontSize:22,fontWeight:700,color:'#111827',margin:'0 0 4px' }}>Calendar</h1>
+          <p style={{ fontSize:13,color:'#9CA3AF',margin:0 }}>
+            {data.isBusy ? 'Availability only' : 'Full schedule'}
+          </p>
 
-            {data.meetingLink && (
-              <a
-                href={data.meetingLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display:'flex',alignItems:'center',gap:7,padding:'10px 18px',borderRadius:10,background:'#6366f1',color:'#fff',fontWeight:700,fontSize:14,textDecoration:'none',whiteSpace:'nowrap',flexShrink:0 }}
-              >
-                <ExternalLink size={14} />
-                Request a meeting
-              </a>
+          {/* Location + calendar legend */}
+          <div style={{ marginTop:10,display:'flex',flexWrap:'wrap',gap:8,alignItems:'center' }}>
+            {data.location && (
+              <div style={{ display:'flex',alignItems:'center',gap:5,background:'#F3F4F6',borderRadius:99,padding:'4px 10px' }}>
+                <MapPin size={12} color="#6B7280" />
+                <span style={{ fontSize:12,color:'#374151',fontWeight:500 }}>{data.location}</span>
+              </div>
             )}
+            {!data.isBusy && data.calendars.map(cal => (
+              <div key={cal.name} style={{ display:'flex',alignItems:'center',gap:5,background:'#F3F4F6',borderRadius:99,padding:'4px 10px' }}>
+                <span style={{ width:7,height:7,borderRadius:'50%',background:cal.color,display:'inline-block',flexShrink:0 }} />
+                <span style={{ fontSize:12,color:'#374151',fontWeight:500 }}>{cal.name}</span>
+              </div>
+            ))}
           </div>
+
+          {/* Meeting CTA — full width below on mobile */}
+          {data.meetingLink && (
+            <a
+              href={data.meetingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ marginTop:16,display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'13px 20px',borderRadius:12,background:'#6366f1',color:'#fff',fontWeight:700,fontSize:15,textDecoration:'none',width:'100%',boxSizing:'border-box' }}
+            >
+              <ExternalLink size={15} />
+              Request a meeting
+            </a>
+          )}
         </div>
 
         {/* Week nav */}
