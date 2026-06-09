@@ -25,7 +25,7 @@ export function LifeShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-2">
             <GlobalSearch mobileIconOnly />
-            <Link href="/life/settings" className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <Link href="/schedule/settings" className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               <SlidersHorizontal size={18} />
             </Link>
             <ThemeToggle />

@@ -139,7 +139,7 @@ export default function ICSPage() {
           <Calendar size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
           <p className="text-sm font-medium text-gray-500">No calendars connected</p>
           <p className="text-xs text-gray-400 mt-1">Add your Google Calendar or Outlook ICS URL in settings.</p>
-          <Link href="/life/settings" className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold">
+          <Link href="/schedule/settings" className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold">
             <Settings size={15} /> Open Settings
           </Link>
         </div>
@@ -163,7 +163,7 @@ export default function ICSPage() {
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
-          <Link href="/life/settings" className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-indigo-500 transition-colors">
+          <Link href="/schedule/settings" className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-indigo-500 transition-colors">
             <Settings size={16} />
           </Link>
         </div>

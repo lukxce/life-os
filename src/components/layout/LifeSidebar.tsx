@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarDays, BarChart2, Settings, History, Plus, CalendarCheck, Home, Target, SlidersHorizontal, Activity } from 'lucide-react'
+import { CalendarDays, BarChart2, ListChecks, History, Plus, CalendarCheck, Home, Target, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const LIFE_LINKS = [
@@ -11,8 +11,7 @@ const LIFE_LINKS = [
   { href: '/life/goals',     label: 'Goals',    icon: Target        },
   { href: '/life/analytics', label: 'Analytics',icon: BarChart2     },
   { href: '/life/history',   label: 'History',  icon: History       },
-  { href: '/life/habits',    label: 'Habits',   icon: Settings      },
-  { href: '/life/settings',  label: 'Settings', icon: SlidersHorizontal },
+  { href: '/life/habits',    label: 'Habits',   icon: ListChecks    },
 ]
 
 function NavSection({ title, links, pathname }: { title: string; links: typeof LIFE_LINKS; pathname: string }) {
