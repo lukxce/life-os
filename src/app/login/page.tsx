@@ -50,12 +50,13 @@ function LoginForm() {
     setPin(next)
   }
 
-  // Keyboard input via hidden field
+  // Keyboard input via hidden field — append digits, don't replace
   const handleKeyInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (loading) return
-    const val = e.target.value.replace(/\D/g, '').slice(0, 8)
-    setPin(val)
-    e.target.value = ''
+    const digits = e.target.value.replace(/\D/g, '')
+    if (!digits) return
+    setPin(p => (p + digits).slice(0, 8))
+    e.target.value = ''   // clear so next keystroke arrives fresh
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
