@@ -1,46 +1,31 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarDays, BarChart2, ListChecks, History, Plus, CalendarCheck, Home, Target, Activity } from 'lucide-react'
+import { Users, ShieldCheck, Home, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV_GROUPS = [
   {
-    title: 'Daily',
+    title: 'People',
     links: [
-      { href: '/life',         label: 'Today',     icon: CalendarDays  },
-      { href: '/life/weekly',  label: 'Weekly',    icon: CalendarCheck },
+      { href: '/personal/contacts', label: 'Contacts', icon: Users },
     ],
   },
   {
-    title: 'Track',
+    title: 'Vault',
     links: [
-      { href: '/life/body',    label: 'Body',      icon: Activity      },
-      { href: '/life/goals',   label: 'Goals',     icon: Target        },
-    ],
-  },
-  {
-    title: 'Review',
-    links: [
-      { href: '/life/analytics', label: 'Analytics', icon: BarChart2   },
-      { href: '/life/history',   label: 'History',   icon: History     },
-    ],
-  },
-  {
-    title: 'Manage',
-    links: [
-      { href: '/life/habits',  label: 'Habits',    icon: ListChecks    },
+      { href: '/personal/documents', label: 'Documents', icon: ShieldCheck },
     ],
   },
 ]
 
-export function LifeSidebar({ onAdd }: { onAdd?: () => void }) {
+export function PersonalSidebar({ onAdd }: { onAdd?: () => void }) {
   const pathname = usePathname()
   return (
     <aside className="hidden md:flex flex-col w-56 shrink-0 h-screen sticky top-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-5">
       <div className="flex items-center gap-2.5 mb-2 px-2">
-        <span className="text-xl">💪</span>
-        <span className="font-bold tracking-tight dark:text-white">Habits</span>
+        <span className="text-xl">🗂️</span>
+        <span className="font-bold tracking-tight dark:text-white">Personal</span>
       </div>
       <Link href="/" className="flex items-center gap-1.5 px-2 mb-4 text-xs text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
         <Home size={11} /> Dashboard

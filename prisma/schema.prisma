@@ -362,9 +362,22 @@ model Contact {
   reachOutFrequency String    @default("monthly")
   lastContactDate   DateTime?
   note              String?
+  linkedinUrl       String?
   order             Int       @default(0)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+}
+
+model AdminDocument {
+  id           String    @id @default(cuid())
+  userId       String    @default("default")
+  name         String
+  category     String    // "ID & Travel" | "Vehicle" | "Health" | "Home" | "Business" | "Finance" | "Tech" | "Other"
+  expiryDate   DateTime?
+  reminderDays Int       @default(30)
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model JournalQuestion {

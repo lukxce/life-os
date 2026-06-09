@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
       reachOutFrequency: body.reachOutFrequency ?? 'monthly',
       lastContactDate: body.lastContactDate ? new Date(body.lastContactDate) : null,
       note: body.note ?? null,
+      linkedinUrl: body.linkedinUrl ?? null,
       order: count,
     },
   })

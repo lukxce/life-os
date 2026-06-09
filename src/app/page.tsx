@@ -77,6 +77,15 @@ const MODULES = [
     bg: 'bg-orange-50 dark:bg-orange-950/40',
   },
   {
+    href: '/personal',
+    emoji: '🗂️',
+    title: 'Personal',
+    description: 'Contacts, documents & vault',
+    color: 'from-teal-500 to-teal-600',
+    border: 'border-teal-100 dark:border-teal-900',
+    bg: 'bg-teal-50 dark:bg-teal-950/40',
+  },
+  {
     href: '/watchlist',
     emoji: '🎬',
     title: 'Watchlist',
