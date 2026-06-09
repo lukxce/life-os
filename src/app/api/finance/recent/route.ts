@@ -14,10 +14,10 @@ export async function GET(req: NextRequest) {
   ])
 
   const all = [
-    ...expenses.map(e => ({ id: e.id, type: 'expense', date: e.date, label: e.description || e.merchantName || e.category, sub: e.category, amount: e.amountRSD, currency: 'RSD', href: `/expenses/${e.type}` })),
-    ...income.map(e => ({ id: e.id, type: 'income', date: e.date, label: e.client || e.type, sub: e.type, amount: e.netAmount, currency: e.currency, href: '/income' })),
-    ...transfers.map(e => ({ id: e.id, type: 'transfer', date: e.date, label: `${e.fromAccount?.name} → ${e.toAccount?.name}`, sub: 'Transfer', amount: e.amountSent, currency: '', href: '/transfers' })),
-    ...conversions.map(e => ({ id: e.id, type: 'conversion', date: e.date, label: `${e.fromAccount?.name} → ${e.toAccount?.name}`, sub: 'Conversion', amount: e.amountSent, currency: '', href: '/conversions' })),
+    ...expenses.map(e => ({ id: e.id, type: 'expense', date: e.date, label: e.description || e.merchantName || e.category, sub: e.category, amount: e.amountRSD, currency: 'RSD', href: `/finance/expenses/${e.type}` })),
+    ...income.map(e => ({ id: e.id, type: 'income', date: e.date, label: e.client || e.type, sub: e.type, amount: e.netAmount, currency: e.currency, href: '/finance/income' })),
+    ...transfers.map(e => ({ id: e.id, type: 'transfer', date: e.date, label: `${e.fromAccount?.name} → ${e.toAccount?.name}`, sub: 'Transfer', amount: e.amountSent, currency: '', href: '/finance/transfers' })),
+    ...conversions.map(e => ({ id: e.id, type: 'conversion', date: e.date, label: `${e.fromAccount?.name} → ${e.toAccount?.name}`, sub: 'Conversion', amount: e.amountSent, currency: '', href: '/finance/conversions' })),
   ]
 
   all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())

@@ -121,6 +121,7 @@ model Subscription {
   id              String   @id @default(cuid())
   userId          String   @default("default")
   name            String
+  type            String   @default("personal") // "personal" | "business"
   billingAmount   Float
   billingCurrency String
   category        String?

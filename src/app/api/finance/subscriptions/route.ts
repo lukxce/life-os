@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
   const sub = await prisma.subscription.create({
     data: {
       name: body.name,
+      type: body.type || 'personal',
       billingAmount: body.billingAmount,
       billingCurrency: body.billingCurrency,
       category: body.category || null,
