@@ -65,6 +65,16 @@ export async function PATCH(req: NextRequest) {
   if (data.date) data.date = new Date(data.date)
   if (data.warrantyMonths === '') data.warrantyMonths = null
   const entry = await prisma.expenseEntry.update({ where: { id }, data, include: { account: true } })
+
+  // Auto-save merchant nickname whenever a name is explicitly set on a PIB expense
+  if (entry.merchantPib && entry.merchantName) {
+    await prisma.merchantNickname.upsert({
+      where: { pib: entry.merchantPib },
+      create: { pib: entry.merchantPib, customName: entry.merchantName },
+      update: { customName: entry.merchantName },
+    })
+  }
+
   return NextResponse.json(entry)
 }
 

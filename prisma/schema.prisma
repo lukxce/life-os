@@ -389,6 +389,13 @@ model ICSCalendar {
   order Int    @default(0)
 }
 
+model MerchantNickname {
+  pib        String   @id
+  userId     String   @default("default")
+  customName String
+  updatedAt  DateTime @updatedAt
+}
+
 model AppConfig {
   key   String @id
   value String
