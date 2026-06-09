@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
 import { Plus, Trash2, FileText, Filter, X, Pencil, Camera, Tag } from 'lucide-react'
@@ -7,7 +7,17 @@ import { toast } from 'sonner'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
 
+// Suspense wrapper required: useSearchParams() in a page without a Suspense
+// boundary causes Next.js 14 production builds to 404 (CSR bailout).
 export default function ExpensesPage({ params }: { params: { type: string } }) {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-gray-400 animate-pulse">Loading…</div>}>
+      <ExpensesContent params={params} />
+    </Suspense>
+  )
+}
+
+function ExpensesContent({ params }: { params: { type: string } }) {
   const type = params.type
   const searchParams = useSearchParams()
   const router = useRouter()
