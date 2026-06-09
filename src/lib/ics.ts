@@ -9,73 +9,154 @@ export interface ICSEvent {
 }
 
 // ── Windows timezone name → IANA mapping ──────────────────────────────────────
-// Outlook and Exchange emit Windows timezone names which Intl doesn't recognise.
+// Outlook and Exchange emit Windows timezone names that Intl doesn't recognise.
+// Source: CLDR windowsZones.xml (authoritative Windows→IANA mapping).
 const WIN_TO_IANA: Record<string, string> = {
-  // Europe
-  'W. Europe Standard Time':          'Europe/Berlin',
-  'Central Europe Standard Time':     'Europe/Budapest',
-  'Central European Standard Time':   'Europe/Warsaw',
-  'Romance Standard Time':            'Europe/Paris',
-  'GMT Standard Time':                'Europe/London',
-  'Greenwich Standard Time':          'Atlantic/Reykjavik',
-  'GTB Standard Time':                'Europe/Bucharest',
-  'E. Europe Standard Time':          'Asia/Nicosia',
-  'Eastern Europe Standard Time':     'Europe/Nicosia',
-  'FLE Standard Time':                'Europe/Helsinki',
-  'Turkey Standard Time':             'Europe/Istanbul',
-  'Russian Standard Time':            'Europe/Moscow',
-  'Belarus Standard Time':            'Europe/Minsk',
-  'Serbia Standard Time':             'Europe/Belgrade',
-  // Middle East / Africa
-  'Arab Standard Time':               'Asia/Riyadh',
-  'Arabian Standard Time':            'Asia/Dubai',
-  'Arabic Standard Time':             'Asia/Baghdad',
-  'Israel Standard Time':             'Asia/Jerusalem',
-  'Egypt Standard Time':              'Africa/Cairo',
-  'South Africa Standard Time':       'Africa/Johannesburg',
-  'E. Africa Standard Time':          'Africa/Nairobi',
-  // Asia-Pacific
-  'India Standard Time':              'Asia/Calcutta',
-  'Pakistan Standard Time':           'Asia/Karachi',
-  'Bangladesh Standard Time':         'Asia/Dhaka',
-  'SE Asia Standard Time':            'Asia/Bangkok',
-  'China Standard Time':              'Asia/Shanghai',
-  'Tokyo Standard Time':              'Asia/Tokyo',
-  'Korea Standard Time':              'Asia/Seoul',
-  'AUS Eastern Standard Time':        'Australia/Sydney',
-  // Americas — North
-  'Eastern Standard Time':            'America/New_York',
-  'Central Standard Time':            'America/Chicago',
-  'Mountain Standard Time':           'America/Denver',
-  'Pacific Standard Time':            'America/Los_Angeles',
-  'Alaskan Standard Time':            'America/Anchorage',
-  'Hawaiian Standard Time':           'Pacific/Honolulu',
-  'Atlantic Standard Time':           'America/Halifax',
-  'Canada Central Standard Time':     'America/Regina',
-  'Central America Standard Time':    'America/Guatemala',
-  'Mexico Standard Time':             'America/Mexico_City',
-  'Mexico Standard Time 2':           'America/Chihuahua',
-  'US Mountain Standard Time':        'America/Phoenix',
-  'US Eastern Standard Time':         'America/Indiana/Indianapolis',
-  'Greenland Standard Time':          'America/Godthab',
-  // Americas — South
-  'E. South America Standard Time':   'America/Sao_Paulo',   // Brazil (São Paulo/Rio)
-  'SA Eastern Standard Time':         'America/Cayenne',
-  'SA Western Standard Time':         'America/La_Paz',
-  'SA Pacific Standard Time':         'America/Bogota',
-  'Amazon Standard Time':             'America/Manaus',
-  'Bahia Standard Time':              'America/Bahia',
-  'Argentina Standard Time':          'America/Argentina/Buenos_Aires',
-  'Venezuela Standard Time':          'America/Caracas',
-  'Paraguay Standard Time':           'America/Asuncion',
-  'Montevideo Standard Time':         'America/Montevideo',
-  'Chile Standard Time':              'America/Santiago',
-  'Colombia Standard Time':           'America/Bogota',
-  'Peru Standard Time':               'America/Lima',
-  'Mid-Atlantic Standard Time':       'Atlantic/South_Georgia',
-  'UTC-02':                           'Etc/GMT+2',
-  'UTC+12':                           'Etc/GMT-12',
-  'UTC':                              'UTC',
+  // ── Europe ─────────────────────────────────────────────────────────────────
+  'W. Europe Standard Time':            'Europe/Berlin',
+  'Central Europe Standard Time':       'Europe/Budapest',
+  'Central European Standard Time':     'Europe/Warsaw',
+  'Romance Standard Time':              'Europe/Paris',
+  'GMT Standard Time':                  'Europe/London',
+  'Greenwich Standard Time':            'Atlantic/Reykjavik',
+  'GMT+12 Standard Time':               'Etc/GMT-12',
+  'GTB Standard Time':                  'Europe/Bucharest',
+  'E. Europe Standard Time':            'Asia/Nicosia',
+  'Eastern Europe Standard Time':       'Europe/Nicosia',
+  'FLE Standard Time':                  'Europe/Helsinki',
+  'Turkey Standard Time':               'Europe/Istanbul',
+  'Russian Standard Time':              'Europe/Moscow',
+  'Russia Standard Time':               'Europe/Moscow',
+  'Belarus Standard Time':              'Europe/Minsk',
+  'Serbia Standard Time':               'Europe/Belgrade',
+  'Kaliningrad Standard Time':          'Europe/Kaliningrad',
+  'Astrakhan Standard Time':            'Europe/Astrakhan',
+  'Volgograd Standard Time':            'Europe/Volgograd',
+  'Saratov Standard Time':              'Europe/Saratov',
+  'Russia Time Zone 3':                 'Europe/Samara',
+  'Russia Time Zone 9':                 'Asia/Srednekolymsk',
+  'Russia Time Zone 10':                'Asia/Magadan',
+  'Russia Time Zone 11':                'Asia/Kamchatka',
+  // ── Middle East / Africa ───────────────────────────────────────────────────
+  'Arab Standard Time':                 'Asia/Riyadh',
+  'Arabian Standard Time':              'Asia/Dubai',
+  'Arabic Standard Time':               'Asia/Baghdad',
+  'Middle East Standard Time':          'Asia/Beirut',
+  'Jordan Standard Time':               'Asia/Amman',
+  'Syria Standard Time':                'Asia/Damascus',
+  'West Bank Standard Time':            'Asia/Hebron',
+  'Israel Standard Time':               'Asia/Jerusalem',
+  'Iran Standard Time':                 'Asia/Tehran',
+  'Afghanistan Standard Time':          'Asia/Kabul',
+  'Egypt Standard Time':                'Africa/Cairo',
+  'South Africa Standard Time':         'Africa/Johannesburg',
+  'E. Africa Standard Time':            'Africa/Nairobi',
+  'Sudan Standard Time':                'Africa/Khartoum',
+  'Libya Standard Time':                'Africa/Tripoli',
+  'Namibia Standard Time':              'Africa/Windhoek',
+  'Morocco Standard Time':              'Africa/Casablanca',
+  'W. Central Africa Standard Time':    'Africa/Lagos',
+  'Sao Tome Standard Time':             'Africa/Sao_Tome',
+  // ── Asia ───────────────────────────────────────────────────────────────────
+  'India Standard Time':                'Asia/Calcutta',
+  'Pakistan Standard Time':             'Asia/Karachi',
+  'Bangladesh Standard Time':           'Asia/Dhaka',
+  'Sri Lanka Standard Time':            'Asia/Colombo',
+  'Nepal Standard Time':                'Asia/Katmandu',
+  'Myanmar Standard Time':              'Asia/Rangoon',
+  'SE Asia Standard Time':              'Asia/Bangkok',
+  'Singapore Standard Time':            'Asia/Singapore',
+  'China Standard Time':                'Asia/Shanghai',
+  'Taipei Standard Time':               'Asia/Taipei',
+  'Tokyo Standard Time':                'Asia/Tokyo',
+  'Korea Standard Time':                'Asia/Seoul',
+  'Ekaterinburg Standard Time':         'Asia/Yekaterinburg',
+  'West Asia Standard Time':            'Asia/Tashkent',
+  'Qyzylorda Standard Time':            'Asia/Qyzylorda',
+  'Central Asia Standard Time':         'Asia/Almaty',
+  'N. Central Asia Standard Time':      'Asia/Novosibirsk',
+  'Altai Standard Time':                'Asia/Barnaul',
+  'Tomsk Standard Time':                'Asia/Tomsk',
+  'North Asia Standard Time':           'Asia/Krasnoyarsk',
+  'North Asia East Standard Time':      'Asia/Irkutsk',
+  'Transbaikal Standard Time':          'Asia/Chita',
+  'Yakutsk Standard Time':              'Asia/Yakutsk',
+  'Vladivostok Standard Time':          'Asia/Vladivostok',
+  'Magadan Standard Time':              'Asia/Magadan',
+  'Kamchatka Standard Time':            'Asia/Kamchatka',
+  'Georgian Standard Time':             'Asia/Tbilisi',
+  'Caucasus Standard Time':             'Asia/Yerevan',
+  'Azerbaijan Standard Time':           'Asia/Baku',
+  // ── Pacific / Australia ────────────────────────────────────────────────────
+  'AUS Eastern Standard Time':          'Australia/Sydney',
+  'E. Australia Standard Time':         'Australia/Brisbane',
+  'AUS Central Standard Time':          'Australia/Darwin',
+  'Cen. Australia Standard Time':       'Australia/Adelaide',
+  'W. Australia Standard Time':         'Australia/Perth',
+  'Tasmania Standard Time':             'Australia/Hobart',
+  'Lord Howe Standard Time':            'Australia/Lord_Howe',
+  'New Zealand Standard Time':          'Pacific/Auckland',
+  'Chatham Islands Standard Time':      'Pacific/Chatham',
+  'Fiji Standard Time':                 'Pacific/Fiji',
+  'Central Pacific Standard Time':      'Pacific/Guadalcanal',
+  'West Pacific Standard Time':         'Pacific/Port_Moresby',
+  'Bougainville Standard Time':         'Pacific/Bougainville',
+  'Tonga Standard Time':                'Pacific/Tongatapu',
+  'Samoa Standard Time':                'Pacific/Apia',
+  'Line Islands Standard Time':         'Pacific/Kiritimati',
+  'Dateline Standard Time':             'Etc/GMT+12',
+  'UTC-11':                             'Pacific/Pago_Pago',
+  'Marquesas Standard Time':            'Pacific/Marquesas',
+  'Easter Island Standard Time':        'Pacific/Easter',
+  // ── Americas — North ───────────────────────────────────────────────────────
+  'Eastern Standard Time':              'America/New_York',
+  'Eastern Standard Time (Mexico)':     'America/Cancun',
+  'US Eastern Standard Time':           'America/Indiana/Indianapolis',
+  'Haiti Standard Time':                'America/Port-au-Prince',
+  'Cuba Standard Time':                 'America/Havana',
+  'Turks And Caicos Standard Time':     'America/Grand_Turk',
+  'Central Standard Time':              'America/Chicago',
+  'Central Standard Time (Mexico)':     'America/Mexico_City',
+  'Canada Central Standard Time':       'America/Regina',
+  'Central America Standard Time':      'America/Guatemala',
+  'Mountain Standard Time':             'America/Denver',
+  'Mountain Standard Time (Mexico)':    'America/Chihuahua',
+  'Mexico Standard Time':               'America/Mexico_City',
+  'Mexico Standard Time 2':             'America/Chihuahua',
+  'US Mountain Standard Time':          'America/Phoenix',
+  'Pacific Standard Time':              'America/Los_Angeles',
+  'Pacific Standard Time (Mexico)':     'America/Santa_Isabel',
+  'Alaskan Standard Time':              'America/Anchorage',
+  'Aleutian Standard Time':             'America/Adak',
+  'Hawaiian Standard Time':             'Pacific/Honolulu',
+  'Atlantic Standard Time':             'America/Halifax',
+  'Newfoundland Standard Time':         'America/St_Johns',
+  'Saint Pierre Standard Time':         'America/Miquelon',
+  'Greenland Standard Time':            'America/Godthab',
+  // ── Americas — South ───────────────────────────────────────────────────────
+  'E. South America Standard Time':     'America/Sao_Paulo',   // Brazil (São Paulo/Rio, UTC-3)
+  'SA Eastern Standard Time':           'America/Cayenne',
+  'SA Western Standard Time':           'America/La_Paz',
+  'SA Pacific Standard Time':           'America/Bogota',
+  'Amazon Standard Time':               'America/Manaus',
+  'Central Brazilian Standard Time':    'America/Cuiaba',
+  'Bahia Standard Time':                'America/Bahia',
+  'Tocantins Standard Time':            'America/Araguaina',
+  'Argentina Standard Time':            'America/Argentina/Buenos_Aires',
+  'Venezuela Standard Time':            'America/Caracas',
+  'Paraguay Standard Time':             'America/Asuncion',
+  'Montevideo Standard Time':           'America/Montevideo',
+  'Chile Standard Time':                'America/Santiago',
+  'Magallanes Standard Time':           'America/Punta_Arenas',
+  'Colombia Standard Time':             'America/Bogota',
+  'Peru Standard Time':                 'America/Lima',
+  // ── Atlantic / Other ───────────────────────────────────────────────────────
+  'Mid-Atlantic Standard Time':         'Atlantic/South_Georgia',
+  'Azores Standard Time':               'Atlantic/Azores',
+  'Cape Verde Standard Time':           'Atlantic/Cape_Verde',
+  'UTC-02':                             'Etc/GMT+2',
+  'UTC+12':                             'Etc/GMT-12',
+  'UTC':                                'UTC',
 }
 
 /** Resolve a TZID (IANA or Windows) to an IANA name Intl understands. */
@@ -83,10 +164,56 @@ function resolveIana(tzid: string): string {
   return WIN_TO_IANA[tzid] ?? tzid
 }
 
+// ── VTIMEZONE fallback ─────────────────────────────────────────────────────────
+// ICS files always embed a VTIMEZONE block containing the raw UTC offset.
+// We parse these as a last-resort fallback so that any unknown/custom TZID
+// still converts correctly instead of silently falling through to UTC.
+//
+// We use the STANDARD component's TZOFFSETTO (the non-DST offset). This is
+// not DST-aware but is far better than UTC for an unrecognised timezone.
+
+function parseVtimezoneOffsets(lines: string[]): Record<string, number> {
+  const offsets: Record<string, number> = {}
+  let inVtz = false
+  let inStd = false
+  let tzid = ''
+
+  for (const line of lines) {
+    if (line === 'BEGIN:VTIMEZONE') { inVtz = true; tzid = ''; continue }
+    if (line === 'END:VTIMEZONE')   { inVtz = false;            continue }
+    if (!inVtz) continue
+    if (line === 'BEGIN:STANDARD')  { inStd = true;             continue }
+    if (line === 'END:STANDARD')    { inStd = false;            continue }
+
+    const c = line.indexOf(':')
+    if (c < 1) continue
+    const k = line.slice(0, c).trim()
+    const v = line.slice(c + 1).trim()
+
+    if (k === 'TZID') { tzid = v; continue }
+
+    // Capture the first STANDARD TZOFFSETTO for this TZID
+    if (inStd && k === 'TZOFFSETTO' && tzid && !(tzid in offsets)) {
+      const sign = v[0] === '-' ? -1 : 1
+      const h = parseInt(v.slice(1, 3)) || 0
+      const m = parseInt(v.slice(3, 5)) || 0
+      offsets[tzid] = sign * (h * 60 + m)
+    }
+  }
+
+  return offsets
+}
+
 /** Convert a wall-clock time in a named timezone to a UTC Date.
- *  Handles both IANA names and Windows timezone names (via mapping). */
+ *  Resolution order:
+ *  1. WIN_TO_IANA map   → Intl
+ *  2. IANA name direct  → Intl
+ *  3. vtimezoneOffsets  → raw offset arithmetic
+ *  4. UTC fallback      (last resort, logged to console) */
 function tzLocalToUTC(
-  tzid: string, y: number, mo: number, d: number, h: number, mi: number, s: number
+  tzid: string,
+  y: number, mo: number, d: number, h: number, mi: number, s: number,
+  vtimezoneOffsets?: Record<string, number>,
 ): Date {
   const iana = resolveIana(tzid)
   try {
@@ -105,12 +232,22 @@ function tzLocalToUTC(
       Date.UTC(get('year'), get('month') - 1, get('day'), tzH, get('minute'), get('second'))
     return new Date(trial.getTime() + diff)
   } catch {
-    // Still unrecognised — fall back to UTC (better than a wrong local shift)
+    // Intl didn't recognise the name — try the VTIMEZONE-extracted offset
+    if (vtimezoneOffsets && tzid in vtimezoneOffsets) {
+      const offsetMins = vtimezoneOffsets[tzid]
+      return new Date(Date.UTC(y, mo, d, h, mi, s) - offsetMins * 60_000)
+    }
+    // Last resort: treat as UTC (and warn so this is visible in logs)
+    console.warn(`[ICS] Unrecognised TZID "${tzid}" — treating as UTC. Add it to WIN_TO_IANA or check the VTIMEZONE block.`)
     return new Date(Date.UTC(y, mo, d, h, mi, s))
   }
 }
 
-function parseICSDate(keyFull: string, value: string): { date: Date; allDay: boolean } {
+function parseICSDate(
+  keyFull: string,
+  value: string,
+  vtimezoneOffsets?: Record<string, number>,
+): { date: Date; allDay: boolean } {
   const isAllDay = keyFull.includes('VALUE=DATE') || /^\d{8}$/.test(value)
   if (isAllDay) {
     const y = parseInt(value.slice(0, 4))
@@ -131,10 +268,13 @@ function parseICSDate(keyFull: string, value: string): { date: Date; allDay: boo
   if (isUTC) return { date: new Date(Date.UTC(y, mo, d, h, mi, s)), allDay: false }
 
   // DTSTART;TZID=W. Europe Standard Time:20240610T100000
-  // DTSTART;TZID="W. Europe Standard Time":20240610T100000  ← Outlook sometimes quotes the name
+  // DTSTART;TZID="W. Europe Standard Time":20240610T100000  ← Outlook sometimes quotes
   const tzidMatch = keyFull.match(/TZID=["']?([^"';:]+)["']?/)
   if (tzidMatch) {
-    return { date: tzLocalToUTC(tzidMatch[1].trim(), y, mo, d, h, mi, s), allDay: false }
+    return {
+      date: tzLocalToUTC(tzidMatch[1].trim(), y, mo, d, h, mi, s, vtimezoneOffsets),
+      allDay: false,
+    }
   }
 
   // Floating time — treat as UTC
@@ -146,12 +286,12 @@ function parseICSDate(keyFull: string, value: string): { date: Date; allDay: boo
 /** Parse an RRULE UNTIL value (YYYYMMDD or YYYYMMDDTHHmmssZ). */
 function parseRruleDate(s: string): Date {
   const clean = s.replace(/Z$/, '')
-  const y  = parseInt(clean.slice(0, 4))
-  const mo = parseInt(clean.slice(4, 6)) - 1
-  const d  = parseInt(clean.slice(6, 8))
+  const y   = parseInt(clean.slice(0, 4))
+  const mo  = parseInt(clean.slice(4, 6)) - 1
+  const d   = parseInt(clean.slice(6, 8))
   if (clean.length <= 8) return new Date(Date.UTC(y, mo, d, 23, 59, 59))
-  const h  = parseInt(clean.slice(9, 11))  || 0
-  const mi = parseInt(clean.slice(11, 13)) || 0
+  const h   = parseInt(clean.slice(9, 11))  || 0
+  const mi  = parseInt(clean.slice(11, 13)) || 0
   const sec = parseInt(clean.slice(13, 15)) || 0
   return new Date(Date.UTC(y, mo, d, h, mi, sec))
 }
@@ -179,7 +319,7 @@ function expandRrule(
   const maxCount = params['COUNT'] ? parseInt(params['COUNT']) : Infinity
   const until    = params['UNTIL'] ? parseRruleDate(params['UNTIL']) : null
 
-  // BYDAY: comma-separated day names, possibly prefixed with nth-weekday (e.g. "+1MO", "-1FR", "2TU")
+  // BYDAY: optional nth-weekday prefix (e.g. "+1MO", "-1FR", "2TU") stripped to day name
   const bydayStrs  = params['BYDAY']
     ? params['BYDAY'].split(',').map(s => s.replace(/^[+-]?\d*/, '').trim().toUpperCase())
     : null
@@ -187,9 +327,10 @@ function expandRrule(
     ? params['BYMONTHDAY'].split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
     : null
 
-  // Map day abbreviation → JS getUTCDay() value
   const DAY_MAP: Record<string, number> = { SU:0, MO:1, TU:2, WE:3, TH:4, FR:5, SA:6 }
-  const bydayNums = bydayStrs?.map(d => DAY_MAP[d]).filter(n => n !== undefined) as number[] | null
+  const bydayNums = bydayStrs
+    ?.map(d => DAY_MAP[d])
+    .filter((n): n is number => n !== undefined) ?? null
 
   const effectiveEnd = until
     ? new Date(Math.min(until.getTime(), windowEnd.getTime()))
@@ -198,65 +339,54 @@ function expandRrule(
   const results: Date[] = []
 
   function addIfValid(d: Date) {
-    if (d.getTime() < dtstart.getTime()) return   // before recurrence start
+    if (d.getTime() < dtstart.getTime())     return
     if (d.getTime() < windowStart.getTime()) return
     if (d.getTime() > effectiveEnd.getTime()) return
-    if (results.length >= maxCount) return
-    // Exclude by EXDATE (match on UTC calendar date)
+    if (results.length >= maxCount)           return
     const dayKey = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
     if (exdateSet.has(dayKey)) return
     results.push(new Date(d))
   }
 
   if (freq === 'DAILY') {
-    let cur = new Date(dtstart)
-    let safety = 0
+    let cur = new Date(dtstart); let safety = 0
     while (cur.getTime() <= effectiveEnd.getTime() && results.length < maxCount && safety++ < 800) {
       addIfValid(cur)
-      cur = new Date(cur)
-      cur.setUTCDate(cur.getUTCDate() + interval)
+      cur = new Date(cur); cur.setUTCDate(cur.getUTCDate() + interval)
     }
 
   } else if (freq === 'WEEKLY') {
-    // Find the Monday (UTC) of the week that dtstart falls in
-    const startDayOfWeek = dtstart.getUTCDay()           // 0=Sun
-    const daysToMon = startDayOfWeek === 0 ? -6 : 1 - startDayOfWeek
+    // Find the Monday (UTC) of dtstart's week, then step by interval weeks
+    const startDow = dtstart.getUTCDay()                          // 0=Sun
+    const daysToMon = startDow === 0 ? -6 : 1 - startDow
     const weekMonday = new Date(dtstart)
     weekMonday.setUTCDate(dtstart.getUTCDate() + daysToMon)
 
-    let weekStart = new Date(weekMonday)
-    let safety = 0
+    let weekStart = new Date(weekMonday); let safety = 0
     while (weekStart.getTime() <= effectiveEnd.getTime() && results.length < maxCount && safety++ < 500) {
-      // Which days of this week to check: BYDAY list, or just dtstart's weekday
-      const daysToCheck = bydayNums ?? [startDayOfWeek === 0 ? 0 : startDayOfWeek]
+      const daysToCheck = bydayNums ?? [startDow === 0 ? 0 : startDow]
       for (const dayNum of [...daysToCheck].sort((a, b) => a - b)) {
-        const daysFromMon = dayNum === 0 ? 6 : dayNum - 1   // MO=0 offset, SU=6 offset
+        const daysFromMon = dayNum === 0 ? 6 : dayNum - 1
         const candidate = new Date(weekStart)
         candidate.setUTCDate(weekStart.getUTCDate() + daysFromMon)
         addIfValid(candidate)
       }
-      weekStart = new Date(weekStart)
-      weekStart.setUTCDate(weekStart.getUTCDate() + 7 * interval)
+      weekStart = new Date(weekStart); weekStart.setUTCDate(weekStart.getUTCDate() + 7 * interval)
     }
 
   } else if (freq === 'MONTHLY') {
-    let cur = new Date(dtstart)
-    let safety = 0
+    let cur = new Date(dtstart); let safety = 0
     while (cur.getTime() <= effectiveEnd.getTime() && results.length < maxCount && safety++ < 100) {
-      const dom = cur.getUTCDate()
-      const ok = !bymonthday || bymonthday.includes(dom)
+      const ok = !bymonthday || bymonthday.includes(cur.getUTCDate())
       if (ok) addIfValid(cur)
-      cur = new Date(cur)
-      cur.setUTCMonth(cur.getUTCMonth() + interval)
+      cur = new Date(cur); cur.setUTCMonth(cur.getUTCMonth() + interval)
     }
 
   } else if (freq === 'YEARLY') {
-    let cur = new Date(dtstart)
-    let safety = 0
+    let cur = new Date(dtstart); let safety = 0
     while (cur.getTime() <= effectiveEnd.getTime() && results.length < maxCount && safety++ < 20) {
       addIfValid(cur)
-      cur = new Date(cur)
-      cur.setUTCFullYear(cur.getUTCFullYear() + interval)
+      cur = new Date(cur); cur.setUTCFullYear(cur.getUTCFullYear() + interval)
     }
   }
   // Unknown FREQ — return empty (safer than looping forever)
@@ -269,15 +399,16 @@ function expandRrule(
 export function parseICS(text: string): ICSEvent[] {
   const lines = text
     .replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-    .replace(/\n[ \t]/g, '')  // unfold long lines
+    .replace(/\n[ \t]/g, '')   // unfold long lines
     .split('\n')
 
-  // Expand events 1 year back → 1 year forward so all navigable weeks are covered
+  // First pass: extract VTIMEZONE offsets as fallback for unknown TZIDs
+  const vtimezoneOffsets = parseVtimezoneOffsets(lines)
+
+  // Expand events ±1 year from today so all navigable weeks are covered
   const now = new Date()
-  const windowStart = new Date(now)
-  windowStart.setFullYear(windowStart.getFullYear() - 1)
-  const windowEnd = new Date(now)
-  windowEnd.setFullYear(windowEnd.getFullYear() + 1)
+  const windowStart = new Date(now); windowStart.setFullYear(windowStart.getFullYear() - 1)
+  const windowEnd   = new Date(now); windowEnd.setFullYear(windowEnd.getFullYear() + 1)
 
   const events: ICSEvent[] = []
   let inEvent = false
@@ -292,8 +423,10 @@ export function parseICS(text: string): ICSEvent[] {
       const endKey   = Object.keys(raw).find(k => k.startsWith('DTEND'))
       if (!startKey) continue
 
-      const { date: startDate, allDay } = parseICSDate(startKey, raw[startKey])
-      const endDate = endKey ? parseICSDate(endKey, raw[endKey]).date : startDate
+      const { date: startDate, allDay } = parseICSDate(startKey, raw[startKey], vtimezoneOffsets)
+      const endDate = endKey
+        ? parseICSDate(endKey, raw[endKey], vtimezoneOffsets).date
+        : startDate
       const durationMs = endDate.getTime() - startDate.getTime()
 
       const baseEvent = {
@@ -304,10 +437,10 @@ export function parseICS(text: string): ICSEvent[] {
         allDay,
       }
 
-      // ── Recurring event: expand RRULE ─────────────────────────────────────
+      // ── Recurring event: expand RRULE ──────────────────────────────────────
       const rrule = raw['RRULE']
       if (rrule) {
-        // Collect EXDATE entries (may have TZID params → different raw keys)
+        // Collect EXDATE entries (may carry TZID params → different raw keys)
         const exdateSet = new Set<number>()
         for (const [k, v] of Object.entries(raw)) {
           if (!k.startsWith('EXDATE')) continue
@@ -315,7 +448,11 @@ export function parseICS(text: string): ICSEvent[] {
             const trimmed = val.trim()
             if (!trimmed) continue
             try {
-              const { date } = parseICSDate(k.replace(/^EXDATE/, 'DTSTART'), trimmed)
+              const { date } = parseICSDate(
+                k.replace(/^EXDATE/, 'DTSTART'),
+                trimmed,
+                vtimezoneOffsets,
+              )
               exdateSet.add(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
             } catch { /* skip unparseable EXDATE */ }
           }
@@ -332,7 +469,7 @@ export function parseICS(text: string): ICSEvent[] {
           })
         }
       } else {
-        // ── Single (non-recurring) event ─────────────────────────────────────
+        // ── Single (non-recurring) event ────────────────────────────────────
         events.push({
           ...baseEvent,
           start: startDate.toISOString(),
@@ -349,7 +486,7 @@ export function parseICS(text: string): ICSEvent[] {
     const key = line.slice(0, colon)
     const val = line.slice(colon + 1)
 
-    // Accumulate all EXDATE values (there can be multiple EXDATE lines)
+    // Accumulate all EXDATE values (there can be multiple EXDATE lines per event)
     if (key.startsWith('EXDATE')) {
       raw[key] = raw[key] ? raw[key] + ',' + val : val
     } else if (!raw[key]) {
