@@ -1,5 +1,16 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+
+function formatDisplay(raw: string): string {
+  if (!raw) return ''
+  const [int, dec] = raw.split('.')
+  const formatted = parseInt(int || '0', 10).toLocaleString('en')
+  return dec !== undefined ? `${formatted}.${dec}` : formatted
+}
+
+function strip(s: string): string {
+  return s.replace(/,/g, '')
+}
 
 interface NumberInputProps {
   value: string
@@ -9,44 +20,33 @@ interface NumberInputProps {
   step?: string
 }
 
-function format(raw: string): string {
-  if (!raw) return ''
-  const [int, dec] = raw.split('.')
-  const formatted = parseInt(int || '0', 10).toLocaleString('en')
-  return dec !== undefined ? `${formatted}.${dec}` : formatted
-}
-
-function strip(display: string): string {
-  return display.replace(/,/g, '')
-}
-
-export function NumberInput({ value, onChange, placeholder, className, step }: NumberInputProps) {
-  const [display, setDisplay] = useState(format(value))
-
-  useEffect(() => {
-    setDisplay(format(value))
-  }, [value])
+/**
+ * Controlled number input that formats with thousand-separators on blur.
+ * While focused the raw digits are shown directly (no commas) so cursor
+ * position is never disturbed by reformatting mid-type.
+ */
+export function NumberInput({ value, onChange, placeholder, className }: NumberInputProps) {
+  const [focused, setFocused] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = strip(e.target.value)
     if (raw !== '' && !/^\d*\.?\d*$/.test(raw)) return
     onChange(raw)
-    setDisplay(format(raw))
   }
 
-  const handleBlur = () => {
-    setDisplay(format(value))
-  }
+  // While typing: show raw digits (no commas → no cursor-jump issues)
+  // While blurred: show formatted number with thousand-separators
+  const displayValue = focused ? value : formatDisplay(value)
 
   return (
     <input
       type="text"
       inputMode="decimal"
-      value={display}
+      value={displayValue}
       onChange={handleChange}
-      onBlur={handleBlur}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       placeholder={placeholder}
-      step={step}
       className={className}
     />
   )
