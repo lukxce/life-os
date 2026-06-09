@@ -4,34 +4,35 @@ import { usePathname } from 'next/navigation'
 import { CalendarDays, BarChart2, ListChecks, History, Plus, CalendarCheck, Home, Target, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const LIFE_LINKS = [
-  { href: '/life',           label: 'Today',    icon: CalendarDays  },
-  { href: '/life/weekly',    label: 'Weekly',   icon: CalendarCheck },
-  { href: '/life/body',      label: 'Body',     icon: Activity      },
-  { href: '/life/goals',     label: 'Goals',    icon: Target        },
-  { href: '/life/analytics', label: 'Analytics',icon: BarChart2     },
-  { href: '/life/history',   label: 'History',  icon: History       },
-  { href: '/life/habits',    label: 'Habits',   icon: ListChecks    },
+const NAV_GROUPS = [
+  {
+    title: 'Daily',
+    links: [
+      { href: '/life',         label: 'Today',     icon: CalendarDays  },
+      { href: '/life/weekly',  label: 'Weekly',    icon: CalendarCheck },
+    ],
+  },
+  {
+    title: 'Track',
+    links: [
+      { href: '/life/body',    label: 'Body',      icon: Activity      },
+      { href: '/life/goals',   label: 'Goals',     icon: Target        },
+    ],
+  },
+  {
+    title: 'Review',
+    links: [
+      { href: '/life/analytics', label: 'Analytics', icon: BarChart2   },
+      { href: '/life/history',   label: 'History',   icon: History     },
+    ],
+  },
+  {
+    title: 'Manage',
+    links: [
+      { href: '/life/habits',  label: 'Habits',    icon: ListChecks    },
+    ],
+  },
 ]
-
-function NavSection({ title, links, pathname }: { title: string; links: typeof LIFE_LINKS; pathname: string }) {
-  return (
-    <div>
-      <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-600">{title}</p>
-      {links.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href
-        return (
-          <Link key={href} href={href}
-            className={cn('flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors',
-              active ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800')}>
-            <Icon size={17} strokeWidth={active ? 2.5 : 2} />
-            {label}
-          </Link>
-        )
-      })}
-    </div>
-  )
-}
 
 export function LifeSidebar({ onAdd }: { onAdd?: () => void }) {
   const pathname = usePathname()
@@ -45,8 +46,29 @@ export function LifeSidebar({ onAdd }: { onAdd?: () => void }) {
         <Home size={11} /> Dashboard
       </Link>
 
-      <nav className="flex flex-col gap-4 flex-1 overflow-y-auto">
-        <NavSection title="Habits & Fitness" links={LIFE_LINKS} pathname={pathname} />
+      <nav className="flex flex-col gap-5 flex-1 overflow-y-auto">
+        {NAV_GROUPS.map(group => (
+          <div key={group.title}>
+            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-600">
+              {group.title}
+            </p>
+            {group.links.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href
+              return (
+                <Link key={href} href={href}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors',
+                    active
+                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  )}>
+                  <Icon size={17} strokeWidth={active ? 2.5 : 2} />
+                  {label}
+                </Link>
+              )
+            })}
+          </div>
+        ))}
       </nav>
 
       <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
