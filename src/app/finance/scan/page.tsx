@@ -77,8 +77,13 @@ export default function ScanPage() {
         body: JSON.stringify({ sufUrl: url }),
       })
       const data = await res.json()
-      if (data.error) setError(data.error)
-      else setParsed(data)
+      if (data.error) {
+        setError(data.error)
+      } else if (data.pfrFailed) {
+        setError('The PFR broj alone can\'t fetch receipt data — the PURS portal needs the full QR code. Scan the QR code on the receipt or paste the full receipt URL below.')
+      } else {
+        setParsed(data)
+      }
     } catch {
       setError('Failed to parse receipt')
     }

@@ -182,6 +182,49 @@ function pick($: ReturnType<typeof cheerio.load>, ...selectors: string[]): strin
   return null
 }
 
+// ── PFR broj direct lookup ────────────────────────────────────────────────────
+// The PFR broj is only a reference number — it doesn't contain receipt data.
+// We try several PURS endpoints that may accept it directly.
+async function tryPfrLookup(pfr: string): Promise<{
+  merchantName: string | null; merchantPib: string | null
+  total: number | null; date: Date | null
+} | null> {
+  const encoded = Buffer.from(pfr).toString('base64')
+  const candidates = [
+    `https://suf.purs.gov.rs/v/api/publicApi/checkReceipt?refNum=${encodeURIComponent(pfr)}`,
+    `https://suf.purs.gov.rs/v/api/publicApi/checkReceipt?pfrBroj=${encodeURIComponent(pfr)}`,
+    `https://suf.purs.gov.rs/v/api/publicApi/checkReceipt?journalVoucherNumber=${encodeURIComponent(pfr)}`,
+    `https://suf.purs.gov.rs/v/api/vl?refNum=${encodeURIComponent(pfr)}`,
+    `https://suf.purs.gov.rs/v/api/fiscalData?refNum=${encodeURIComponent(pfr)}`,
+    // Also try with the base64-encoded PFR as vl param
+    `https://suf.purs.gov.rs/v/api/publicApi/checkReceipt?vl=${encoded}`,
+    `https://suf.purs.gov.rs/v/api/vl?vl=${encoded}`,
+  ]
+  for (const url of candidates) {
+    try {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': UA, 'Accept': 'application/json', 'Referer': 'https://suf.purs.gov.rs/' },
+        // @ts-ignore
+        next: { revalidate: 0 },
+      })
+      const ct = res.headers.get('content-type') ?? ''
+      if (!res.ok || !ct.includes('json')) continue
+      const data = await res.json()
+      const merchantName = data.shopFullName ?? data.merchantName ?? data.companyName ?? data.naziv ?? data.seller?.name ?? null
+      const merchantPib  = data.tin ?? data.pib ?? data.taxId ?? data.seller?.tin ?? null
+      const totalRaw     = data.totalAmount ?? data.total ?? data.ukupanIznos ?? null
+      const total        = totalRaw != null ? (typeof totalRaw === 'number' ? totalRaw : parseAmount(String(totalRaw))) : null
+      const dateRaw      = data.sdcDateTime ?? data.dateTime ?? data.date ?? null
+      const date         = dateRaw ? parseReceiptDate(String(dateRaw)) : null
+      if (merchantName || total || date) {
+        console.log('[scan] PFR lookup hit:', url)
+        return { merchantName, merchantPib, total, date }
+      }
+    } catch {}
+  }
+  return null
+}
+
 // ── Route ─────────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   const { sufUrl } = await req.json()
@@ -191,6 +234,26 @@ export async function POST(req: NextRequest) {
   }
 
   const vl = new URL(sufUrl).searchParams.get('vl') ?? ''
+
+  // ── Layer 0: detect PFR-only VL — try dedicated PFR lookup ────────────────
+  if (vl) {
+    try {
+      const decoded = Buffer.from(vl, 'base64').toString('utf8')
+      if (/^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(decoded.trim())) {
+        // VL is just a base64-encoded PFR broj, not full receipt data
+        const result = await tryPfrLookup(decoded.trim())
+        if (result && (result.merchantName || result.total || result.date)) {
+          return NextResponse.json({ ...result, date: result.date?.toISOString() ?? null, sufUrl })
+        }
+        // PFR lookup failed — return a clear signal so the frontend can explain
+        return NextResponse.json({
+          merchantName: null, merchantPib: null, total: null, date: null, sufUrl,
+          pfrFailed: true,
+          warning: 'The PFR broj alone cannot fetch receipt details — the PURS portal requires the full QR code data. Please scan the QR code on the receipt or paste the full receipt URL instead.',
+        })
+      }
+    } catch {}
+  }
 
   // ── Layer 1: decode VL directly — works offline, no portal needed ──────────
   if (vl) {
