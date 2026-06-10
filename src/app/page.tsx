@@ -185,6 +185,25 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* Quick actions */}
+        <div>
+          <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase mb-4">Quick access</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { href: '/life', label: "Today's habits", emoji: '☀️' },
+              { href: '/finance/scan', label: 'Scan receipt', emoji: '📷' },
+              { href: '/finance/expenses/personal', label: 'Add expense', emoji: '💸' },
+              { href: '/schedule', label: 'My schedule', emoji: '📅' },
+            ].map(q => (
+              <Link key={q.href} href={q.href}
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 hover:shadow-sm transition-all text-center">
+                <span className="text-2xl mb-2 block">{q.emoji}</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-tight block">{q.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
         {/* Upcoming bills */}
         {data && data.finance.upcomingBills.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
@@ -238,24 +257,6 @@ export default function HomePage() {
           <FoodMapPreview />
         </div>
 
-        {/* Quick actions */}
-        <div>
-          <h2 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase mb-4">Quick access</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { href: '/life', label: "Today's habits", emoji: '☀️' },
-              { href: '/finance/scan', label: 'Scan receipt', emoji: '📷' },
-              { href: '/finance/expenses/personal', label: 'Add expense', emoji: '💸' },
-              { href: '/schedule', label: 'My schedule', emoji: '📅' },
-            ].map(q => (
-              <Link key={q.href} href={q.href}
-                className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 hover:shadow-sm transition-all text-center">
-                <span className="text-2xl mb-2 block">{q.emoji}</span>
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-tight block">{q.label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
 
       </main>
       <GlobalSearch keyboardOnly />

@@ -374,6 +374,25 @@ export default function ScanPage() {
 
       {!parsed && (
         <>
+          {/* URL paste — most reliable, shown first */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-2">
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              Paste the receipt URL (fastest — from your camera app or share sheet)
+            </label>
+            <input
+              value={manualUrl}
+              onChange={e => setManualUrl(e.target.value)}
+              placeholder="https://suf.purs.gov.rs/v/?vl=..."
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+            />
+            <button
+              onClick={() => handleSufUrl(manualUrl)}
+              disabled={!manualUrl || loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors">
+              {loading ? 'Parsing…' : 'Parse Receipt'}
+            </button>
+          </div>
+
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
 
             {mode === 'idle' && (
@@ -495,24 +514,6 @@ export default function ScanPage() {
             </button>
           </div>
 
-          {/* URL paste */}
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-2">
-            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              Or paste the receipt URL
-            </label>
-            <input
-              value={manualUrl}
-              onChange={e => setManualUrl(e.target.value)}
-              placeholder="https://suf.purs.gov.rs/v/?vl=..."
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-            />
-            <button
-              onClick={() => handleSufUrl(manualUrl)}
-              disabled={!manualUrl || loading}
-              className="w-full bg-gray-800 dark:bg-gray-700 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50">
-              {loading ? 'Parsing…' : 'Parse Receipt'}
-            </button>
-          </div>
         </>
       )}
 

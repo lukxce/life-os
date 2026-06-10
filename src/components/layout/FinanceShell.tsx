@@ -1,6 +1,5 @@
 'use client'
 import Link from 'next/link'
-import { useState } from 'react'
 import { FinanceSidebar } from './FinanceSidebar'
 import { FinanceBottomNav } from './FinanceBottomNav'
 import { Toaster } from 'sonner'
@@ -9,19 +8,11 @@ import { ThemeToggle } from './ThemeToggle'
 import { SlidersHorizontal } from 'lucide-react'
 
 export function FinanceShell({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-800">
       <div className="hidden md:block">
         <FinanceSidebar open={true} onClose={() => {}} />
       </div>
-
-      {sidebarOpen && (
-        <div className="md:hidden">
-          <FinanceSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        </div>
-      )}
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
