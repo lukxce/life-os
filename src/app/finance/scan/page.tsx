@@ -10,18 +10,22 @@ import {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function isPfrBroj(text: string): boolean {
-  return /^[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{2,12}$/i.test(text.trim())
+  const t = text.trim()
+  // Standard Serbian fiscal format: XXXXXXXX-XXXXXXXX-XX (segments can vary in length)
+  // Accept 2–3 dash-separated alphanumeric segments, first two at least 4 chars each
+  return /^[A-Z0-9]{4,12}-[A-Z0-9]{4,12}-[A-Z0-9]{1,12}$/i.test(t)
 }
 function pfrToUrl(pfr: string): string {
   return `https://suf.purs.gov.rs/v/?vl=${btoa(pfr.trim())}`
 }
 function extractPfr(rawText: string): string | null {
   const text = rawText.toUpperCase()
-  const direct = text.match(/[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{2,12}/)
+  // Match flexible segment lengths (4-12 each)
+  const direct = text.match(/[A-Z0-9]{4,12}-[A-Z0-9]{4,12}-[A-Z0-9]{1,12}/)
   if (direct) return direct[0]
   // OCR sometimes inserts spaces inside tokens — collapse and retry
   const collapsed = text.replace(/([A-Z0-9]) ([A-Z0-9])/g, '$1$2')
-  const retry = collapsed.match(/[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{2,12}/)
+  const retry = collapsed.match(/[A-Z0-9]{4,12}-[A-Z0-9]{4,12}-[A-Z0-9]{1,12}/)
   return retry ? retry[0] : null
 }
 
@@ -476,10 +480,13 @@ export default function ScanPage() {
             <input
               value={manualPfr}
               onChange={e => setManualPfr(e.target.value.toUpperCase())}
-              placeholder="ABCD1234-EFGH5678-IJ90"
+              placeholder="ABCD1234-EFGH5678-83"
               spellCheck={false} autoCorrect="off" autoCapitalize="characters"
               className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm font-mono bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 tracking-wider"
             />
+            {manualPfr.length > 0 && !isPfrBroj(manualPfr) && (
+              <p className="text-xs text-red-400">Format: XXXXXXXX-XXXXXXXX-XX (letters and numbers, two dashes)</p>
+            )}
             <button
               onClick={() => handleSufUrl(pfrToUrl(manualPfr))}
               disabled={!isPfrBroj(manualPfr) || loading}
