@@ -10,22 +10,19 @@ import {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function isPfrBroj(text: string): boolean {
-  const t = text.trim()
-  // Standard Serbian fiscal format: XXXXXXXX-XXXXXXXX-XX (segments can vary in length)
-  // Accept 2–3 dash-separated alphanumeric segments, first two at least 4 chars each
-  return /^[A-Z0-9]{4,12}-[A-Z0-9]{4,12}-[A-Z0-9]{1,12}$/i.test(t)
+  // Just needs two dashes with alphanumeric segments — no length restrictions
+  return /^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(text.trim())
 }
 function pfrToUrl(pfr: string): string {
   return `https://suf.purs.gov.rs/v/?vl=${btoa(pfr.trim())}`
 }
 function extractPfr(rawText: string): string | null {
   const text = rawText.toUpperCase()
-  // Match flexible segment lengths (4-12 each)
-  const direct = text.match(/[A-Z0-9]{4,12}-[A-Z0-9]{4,12}-[A-Z0-9]{1,12}/)
+  const direct = text.match(/[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+/)
   if (direct) return direct[0]
   // OCR sometimes inserts spaces inside tokens — collapse and retry
   const collapsed = text.replace(/([A-Z0-9]) ([A-Z0-9])/g, '$1$2')
-  const retry = collapsed.match(/[A-Z0-9]{4,12}-[A-Z0-9]{4,12}-[A-Z0-9]{1,12}/)
+  const retry = collapsed.match(/[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+/)
   return retry ? retry[0] : null
 }
 
@@ -484,9 +481,7 @@ export default function ScanPage() {
               spellCheck={false} autoCorrect="off" autoCapitalize="characters"
               className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm font-mono bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 tracking-wider"
             />
-            {manualPfr.length > 0 && !isPfrBroj(manualPfr) && (
-              <p className="text-xs text-red-400">Format: XXXXXXXX-XXXXXXXX-XX (letters and numbers, two dashes)</p>
-            )}
+
             <button
               onClick={() => handleSufUrl(pfrToUrl(manualPfr))}
               disabled={!isPfrBroj(manualPfr) || loading}
