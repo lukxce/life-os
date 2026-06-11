@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { X, Dumbbell, Target, Users } from 'lucide-react'
+import { X, Dumbbell, Target } from 'lucide-react'
 import { QuickAddModal } from '@/components/habits/QuickAddModal'
 import { cn } from '@/lib/utils'
 
@@ -9,7 +9,7 @@ interface Props {
   onCreated: () => void
 }
 
-type Mode = 'choice' | 'habit' | 'goal' | 'person'
+type Mode = 'choice' | 'habit' | 'goal'
 
 const GOAL_TYPES = [
   { key: 'short_term', label: 'Short-term', emoji: '⚡' },
@@ -18,13 +18,6 @@ const GOAL_TYPES = [
 ]
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f97316', '#10b981', '#3b82f6']
-const FREQ_OPTIONS = [
-  { value: 'weekly',    label: 'Weekly'    },
-  { value: 'monthly',   label: 'Monthly'   },
-  { value: 'quarterly', label: 'Quarterly' },
-  { value: 'yearly',    label: 'Yearly'    },
-]
-
 function GoalForm({ onClose, onCreated }: Props) {
   const [name, setName] = useState('')
   const [type, setType] = useState('short_term')
@@ -83,64 +76,6 @@ function GoalForm({ onClose, onCreated }: Props) {
   )
 }
 
-function PersonForm({ onClose, onCreated }: Props) {
-  const [name, setName] = useState('')
-  const [emoji, setEmoji] = useState('👤')
-  const [freq, setFreq] = useState('monthly')
-  const [birthday, setBirthday] = useState('')
-  const [saving, setSaving] = useState(false)
-
-  async function save() {
-    if (!name.trim()) return
-    setSaving(true)
-    await fetch('/api/life/contacts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name.trim(), emoji, reachOutFrequency: freq, birthday: birthday || null, color: '#6366f1' }) })
-    setSaving(false)
-    onCreated()
-    onClose()
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">Add person</h2>
-        <button onClick={onClose}><X size={18} className="text-gray-400" /></button>
-      </div>
-
-      <input autoFocus type="text" placeholder="Name"
-        className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm bg-gray-50 dark:bg-gray-800 outline-none focus:border-indigo-400"
-        value={name} onChange={e => setName(e.target.value)}
-        onKeyDown={e => { if (e.key === 'Enter') save() }} />
-
-      <div className="flex gap-2">
-        {['👤','👨‍👩‍👧','👫','🤝','💼','❤️'].map(e => (
-          <button key={e} onClick={() => setEmoji(e)} className={cn('w-10 h-10 rounded-xl text-xl flex items-center justify-center', emoji === e ? 'ring-2 ring-indigo-500 bg-indigo-50' : 'bg-gray-100 dark:bg-gray-800')}>
-            {e}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Reach out</label>
-          <select className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none" value={freq} onChange={e => setFreq(e.target.value)}>
-            {FREQ_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Birthday (MM-DD)</label>
-          <input type="text" placeholder="03-15" maxLength={5}
-            className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none"
-            value={birthday} onChange={e => setBirthday(e.target.value)} />
-        </div>
-      </div>
-
-      <button onClick={save} disabled={saving || !name.trim()} className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-2xl disabled:opacity-50">
-        {saving ? 'Saving…' : 'Add person'}
-      </button>
-    </div>
-  )
-}
-
 export function QuickAddSheet({ onClose, onCreated }: Props) {
   const [mode, setMode] = useState<Mode>('choice')
 
@@ -157,7 +92,7 @@ export function QuickAddSheet({ onClose, onCreated }: Props) {
               <h2 className="text-lg font-bold">What do you want to add?</h2>
               <button onClick={onClose}><X size={18} className="text-gray-400" /></button>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setMode('habit')}
                 className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border-2 border-gray-100 dark:border-gray-800 hover:border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
@@ -176,22 +111,12 @@ export function QuickAddSheet({ onClose, onCreated }: Props) {
                 </span>
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Goal</span>
               </button>
-              <button
-                onClick={() => setMode('person')}
-                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border-2 border-gray-100 dark:border-gray-800 hover:border-pink-300 hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-all"
-              >
-                <span className="w-12 h-12 rounded-2xl bg-pink-100 dark:bg-pink-900/40 flex items-center justify-center">
-                  <Users size={22} className="text-pink-600 dark:text-pink-400" />
-                </span>
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Person</span>
-              </button>
             </div>
           </div>
         )}
 
         {mode === 'habit' && <QuickAddModal onClose={onClose} onCreated={() => { onCreated(); onClose() }} embedded />}
         {mode === 'goal' && <GoalForm onClose={onClose} onCreated={onCreated} />}
-        {mode === 'person' && <PersonForm onClose={onClose} onCreated={onCreated} />}
       </div>
     </div>
   )

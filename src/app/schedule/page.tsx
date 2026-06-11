@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { Pencil, X, Plus, RefreshCw, ChevronLeft, ChevronRight, Calendar, Share2, Check, Settings, Users, Home } from 'lucide-react'
-import Link from 'next/link'
+import { Pencil, X, Plus, RefreshCw, ChevronLeft, ChevronRight, Calendar, Share2, Check } from 'lucide-react'
 import { BlockModal, BlockFormData } from '@/components/schedule/BlockModal'
 
 type ScheduleBlock = {
@@ -326,35 +325,20 @@ export default function SchedulePage() {
     <div style={{ minHeight:'100vh', background:'#F9FAFB', padding:'24px 0' }}>
       <div style={{ maxWidth: isMobile ? '100%' : 'none', margin:'0 auto', padding: isMobile ? '0 12px' : '0 24px' }}>
 
-        {/* Header */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, gap:8 }}>
-          <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
-            <Link href="/" style={{ fontSize:11, color:'#9CA3AF', textDecoration:'none', fontWeight:500, display:'flex', alignItems:'center', gap:4 }}>
-              <Home size={11} /> Life OS
-            </Link>
-            <h1 style={{ fontSize:22, fontWeight:700, color:'#111827', margin:0 }}>Schedule</h1>
-          </div>
-          <div style={{ display:'flex', gap:8 }}>
+        {/* Controls row — shell provides the top header/nav */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, gap:8, flexWrap:'wrap' }}>
+          <h1 style={{ fontSize:22, fontWeight:700, color:'#111827', margin:0 }}>Schedule</h1>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             {hasICS && (
               <button onClick={() => loadICS()} disabled={icsLoading}
                 style={{ display:'flex',alignItems:'center',gap:5,padding:'7px 12px',borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',color:'#374151',fontWeight:600,fontSize:12,cursor:'pointer',opacity:icsLoading?0.6:1 }}>
                 <RefreshCw size={13} style={{ animation: icsLoading ? 'spin 1s linear infinite' : 'none' }} />
-                {!isMobile && 'Refresh'}
+                Refresh
               </button>
             )}
-            <Link href="/people"
-              style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 12px',borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',color:'#374151',fontWeight:600,fontSize:13,textDecoration:'none' }}
-              title="People">
-              <Users size={14} /> {!isMobile && 'People'}
-            </Link>
-            <Link href="/schedule/settings"
-              style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 12px',borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',color:'#374151',fontWeight:600,fontSize:13,textDecoration:'none' }}
-              title="Calendar settings">
-              <Settings size={14} /> {!isMobile && 'Calendars'}
-            </Link>
             <button onClick={() => setShowSharePanel(v => !v)}
               style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 12px',borderRadius:10,border:showSharePanel?'1.5px solid #6366f1':'1.5px solid #e5e7eb',background:showSharePanel?'#EEF2FF':'#fff',color:showSharePanel?'#4F46E5':'#374151',fontWeight:600,fontSize:13,cursor:'pointer' }}>
-              <Share2 size={14} /> {!isMobile && 'Share'}
+              <Share2 size={14} /> Share
             </button>
             <button onClick={() => setEditMode(v => !v)}
               style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:10,border:editMode?'1.5px solid #6366f1':'1.5px solid #e5e7eb',background:editMode?'#EEF2FF':'#fff',color:editMode?'#4F46E5':'#374151',fontWeight:600,fontSize:13,cursor:'pointer' }}>

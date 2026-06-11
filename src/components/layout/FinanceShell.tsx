@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { FinanceSidebar } from './FinanceSidebar'
 import { FinanceBottomNav } from './FinanceBottomNav'
 import { Toaster } from 'sonner'
@@ -8,14 +9,24 @@ import { ThemeToggle } from './ThemeToggle'
 import { SlidersHorizontal } from 'lucide-react'
 
 export function FinanceShell({ children }: { children: React.ReactNode }) {
+  const [collapsed, setCollapsed] = useState(false)
+
+  useEffect(() => {
+    setCollapsed(localStorage.getItem('sidebar-finance-collapsed') === 'true')
+  }, [])
+
+  const toggle = () => setCollapsed(v => {
+    localStorage.setItem('sidebar-finance-collapsed', String(!v))
+    return !v
+  })
+
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-800">
-      <div className="hidden md:block">
-        <FinanceSidebar open={true} onClose={() => {}} />
-      </div>
+      <FinanceSidebar collapsed={collapsed} onToggle={toggle} />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        {/* Mobile header */}
+        <header className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between shrink-0">
           <span className="font-bold text-gray-900 dark:text-white text-lg">💰 Finance</span>
           <div className="flex items-center gap-1">
             <GlobalSearch mobileIconOnly />
@@ -26,7 +37,8 @@ export function FinanceShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <header className="hidden md:flex items-center justify-end px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 gap-2">
+        {/* Desktop header */}
+        <header className="hidden md:flex items-center justify-end px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 gap-2 shrink-0">
           <GlobalSearch />
           <ThemeToggle />
           <Link href="/finance/settings" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Settings">

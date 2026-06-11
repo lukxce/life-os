@@ -1,8 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
-import { Plus, Trash2, ChevronDown, BookOpen, Settings2, Home, X, GripVertical } from 'lucide-react'
-import Link from 'next/link'
+import { Plus, Trash2, ChevronDown, BookOpen, Settings2, X, GripVertical } from 'lucide-react'
 
 interface Question { id: string; text: string; order: number }
 interface Entry { id: string; date: string; answers: Record<string, string> }
@@ -157,36 +156,26 @@ export default function JournalPage() {
   const pastEntries = entries.filter(e => toLocalISODate(new Date(e.date)) !== dateStr)
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* Top bar */}
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-xs text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 transition-colors">
-            <Home size={13} /> Life OS
-          </Link>
-          <span className="text-gray-300 dark:text-gray-600">/</span>
-          <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">📓 Journal</span>
+    <div className="max-w-2xl mx-auto px-4 py-6 pb-12 space-y-6">
+      {loading ? (
+        <div className="space-y-4">
+          {[1,2,3].map(i => <div key={i} className="h-28 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
         </div>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
-          title="Manage questions"
-        >
-          <Settings2 size={16} />
-        </button>
-      </header>
-
-      <main className="max-w-2xl mx-auto px-4 py-6 pb-12 space-y-6">
-        {loading ? (
-          <div className="space-y-4">
-            {[1,2,3].map(i => <div key={i} className="h-28 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
-          </div>
-        ) : (
-          <>
+      ) : (
+        <>
+          <div className="flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Journal</h1>
               <p className="text-sm text-gray-400 mt-0.5">{weekLabel(monday)}</p>
             </div>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors mt-0.5"
+              title="Manage questions"
+            >
+              <Settings2 size={16} />
+            </button>
+          </div>
 
             {/* This week's reflection */}
             {questions.length === 0 ? (
@@ -272,7 +261,6 @@ export default function JournalPage() {
             )}
           </>
         )}
-      </main>
 
       {/* Questions settings modal */}
       {showSettings && (
