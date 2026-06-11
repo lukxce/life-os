@@ -30,6 +30,9 @@ export function ScheduleShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2">
             <GlobalSearch mobileIconOnly />
             <ThemeToggle />
+            <Link href="/schedule/settings" className="p-2 rounded-xl text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Calendar settings">
+              <Settings size={16} />
+            </Link>
           </div>
         </header>
 

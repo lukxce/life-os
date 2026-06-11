@@ -1,11 +1,12 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BookOpen, Home, Menu } from 'lucide-react'
+import { BookOpen, Settings, Home, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const links = [
-  { href: '/journal', label: 'Journal', icon: BookOpen },
+  { href: '/journal',          label: 'Journal',   icon: BookOpen },
+  { href: '/journal/settings', label: 'Questions', icon: Settings },
 ]
 
 interface Props { collapsed?: boolean; onToggle?: () => void }
@@ -39,7 +40,7 @@ export function JournalSidebar({ collapsed = false, onToggle }: Props) {
 
       <nav className={cn('flex flex-col flex-1 overflow-y-auto', collapsed ? 'px-1.5 gap-0.5 py-2' : 'px-3 gap-0.5 py-1')}>
         {links.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href
+          const active = pathname === href || pathname.startsWith(href + '/')
           return (
             <Link key={href} href={href} title={collapsed ? label : undefined}
               className={cn(

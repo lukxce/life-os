@@ -1,12 +1,12 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarDays, Users } from 'lucide-react'
+import { CalendarDays, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const LINKS = [
-  { href: '/schedule', label: 'Schedule', icon: CalendarDays },
-  { href: '/people',   label: 'People',   icon: Users        },
+  { href: '/schedule',          label: 'Schedule', icon: CalendarDays },
+  { href: '/schedule/settings', label: 'Calendars', icon: Settings    },
 ]
 
 export function ScheduleBottomNav() {
@@ -15,7 +15,7 @@ export function ScheduleBottomNav() {
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 pb-4 pt-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-t border-gray-100 dark:border-gray-800">
       <div className="flex items-center justify-around max-w-sm mx-auto px-2">
         {LINKS.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href
+          const active = pathname === href || pathname.startsWith(href + '/')
           return (
             <Link key={href} href={href}
               className={cn(
