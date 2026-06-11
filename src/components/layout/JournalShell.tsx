@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Settings } from 'lucide-react'
 import { JournalSidebar } from './JournalSidebar'
 import { JournalBottomNav } from './JournalBottomNav'
 import { GlobalSearch } from './GlobalSearch'
@@ -35,6 +37,9 @@ export function JournalShell({ children }: { children: React.ReactNode }) {
         <header className="hidden md:flex items-center justify-end px-6 py-3 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 gap-2 shrink-0">
           <GlobalSearch />
           <ThemeToggle />
+          <Link href="/journal/settings" className="p-2 rounded-xl text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Manage questions">
+            <Settings size={16} />
+          </Link>
         </header>
 
         <main className="flex-1 overflow-auto pb-24 md:pb-0">
