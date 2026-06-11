@@ -38,6 +38,15 @@ function parseAmount(raw: string): number | null {
   return parseFloat(cleaned.replace(/,/g, ''))
 }
 
+// ── Normalize URL-safe base64 ─────────────────────────────────────────────────
+// Serbian fiscal QR VL params use URL-safe base64 (- and _ instead of + and /)
+// with no padding. Node's Buffer handles some of this but not reliably.
+function normalizeBase64(b64: string): string {
+  let s = b64.replace(/-/g, '+').replace(/_/g, '/')
+  while (s.length % 4 !== 0) s += '='
+  return s
+}
+
 // ── Decode the VL parameter directly ─────────────────────────────────────────
 // Serbian fiscal QR codes encode receipt data as base64 of a pipe-delimited string:
 //   TIN|BU|DC|IN|IV|IC|DT|TP|TT[|BP]
@@ -47,7 +56,7 @@ function decodeVl(vl: string): {
   merchantPib: string | null; total: number | null; date: Date | null
 } | null {
   try {
-    const decoded = Buffer.from(vl, 'base64').toString('utf8')
+    const decoded = Buffer.from(normalizeBase64(vl), 'base64').toString('utf8')
     // Must contain pipes to be the full data format (not just a PFR broj)
     if (!decoded.includes('|')) return null
     const parts = decoded.split('|')
@@ -238,7 +247,7 @@ export async function POST(req: NextRequest) {
   // ── Layer 0: detect PFR-only VL — try dedicated PFR lookup ────────────────
   if (vl) {
     try {
-      const decoded = Buffer.from(vl, 'base64').toString('utf8')
+      const decoded = Buffer.from(normalizeBase64(vl), 'base64').toString('utf8')
       if (/^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(decoded.trim())) {
         // VL is just a base64-encoded PFR broj, not full receipt data
         const result = await tryPfrLookup(decoded.trim())
