@@ -88,20 +88,11 @@ const MODULES = [
   {
     href: '/watchlist',
     emoji: '🎬',
-    title: 'Movies & TV',
-    description: 'Films and shows to watch',
+    title: 'Watchlist & Books',
+    description: 'Movies, TV shows & reading list',
     color: 'from-violet-500 to-violet-600',
     border: 'border-violet-100 dark:border-violet-900',
     bg: 'bg-violet-50 dark:bg-violet-950/40',
-  },
-  {
-    href: '/books',
-    emoji: '📚',
-    title: 'Books',
-    description: 'Reading list & reviews',
-    color: 'from-rose-500 to-rose-600',
-    border: 'border-rose-100 dark:border-rose-900',
-    bg: 'bg-rose-50 dark:bg-rose-950/40',
   },
 ]
 
