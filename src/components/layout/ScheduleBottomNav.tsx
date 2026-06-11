@@ -1,13 +1,12 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarDays, Settings, Users } from 'lucide-react'
+import { CalendarDays, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const LINKS = [
-  { href: '/schedule',          label: 'Schedule',  icon: CalendarDays },
-  { href: '/people',            label: 'People',    icon: Users        },
-  { href: '/schedule/settings', label: 'Calendars', icon: Settings     },
+  { href: '/schedule', label: 'Schedule', icon: CalendarDays },
+  { href: '/people',   label: 'People',   icon: Users        },
 ]
 
 export function ScheduleBottomNav() {
@@ -20,7 +19,7 @@ export function ScheduleBottomNav() {
           return (
             <Link key={href} href={href}
               className={cn(
-                'flex flex-col items-center gap-0.5 px-4 py-1 rounded-xl transition-colors min-w-[56px]',
+                'flex flex-col items-center gap-0.5 px-5 py-1 rounded-xl transition-colors min-w-[72px]',
                 active ? 'text-sky-600 dark:text-sky-400' : 'text-gray-400 dark:text-gray-500',
               )}>
               <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />

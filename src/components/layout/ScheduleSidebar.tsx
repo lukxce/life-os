@@ -1,13 +1,12 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarDays, Settings, Users, Home, Menu } from 'lucide-react'
+import { CalendarDays, Users, Home, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const links = [
-  { href: '/schedule',          label: 'Schedule',  icon: CalendarDays },
-  { href: '/schedule/settings', label: 'Calendars', icon: Settings     },
-  { href: '/people',            label: 'People',    icon: Users        },
+  { href: '/schedule', label: 'Schedule', icon: CalendarDays },
+  { href: '/people',   label: 'People',   icon: Users        },
 ]
 
 interface Props { collapsed?: boolean; onToggle?: () => void }
