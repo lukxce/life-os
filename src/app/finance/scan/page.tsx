@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import {
   Camera, X, Zap, ZapOff, ZoomIn, ZoomOut,
-  Hash, ScanText, QrCode, Check, RotateCcw, ImageUp,
+  Hash, ScanText, QrCode, Check, RotateCcw,
 } from 'lucide-react'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -93,13 +93,12 @@ export default function ScanPage() {
     setLoading(false)
   }, [])
 
-  // ── Photo capture + BarcodeDetector / Claude fallback ─────────────────────
+  // ── Photo capture — BarcodeDetector only, no AI OCR fallback ────────────────
 
   const handlePhotoCapture = useCallback(async (file: File) => {
     setPhotoWorking(true)
     setError('')
 
-    // Step 1: try BarcodeDetector on the captured image (native QR decoding)
     if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
       try {
         const bitmap   = await createImageBitmap(file)
@@ -114,28 +113,8 @@ export default function ScanPage() {
       } catch {}
     }
 
-    // Step 2: no QR found → send to Claude for receipt OCR
-    try {
-      const reader = new FileReader()
-      const base64: string = await new Promise((resolve, reject) => {
-        reader.onload  = e => resolve((e.target!.result as string).split(',')[1])
-        reader.onerror = reject
-        reader.readAsDataURL(file)
-      })
-      const res  = await fetch('/api/finance/scan-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64, mediaType: file.type || 'image/jpeg' }),
-      })
-      const data = await res.json()
-      if (data.error) {
-        setError('Could not read receipt — try pasting the URL instead.')
-      } else {
-        setParsed({ ...data, sufUrl: '' })
-      }
-    } catch {
-      setError('Could not process photo')
-    }
+    // No QR found in photo
+    setError('No QR code found in photo — make sure the QR code is visible and try again, or paste the receipt URL below.')
     setPhotoWorking(false)
   }, [handleSufUrl])
 
@@ -352,7 +331,7 @@ export default function ScanPage() {
           {/* ① Photo capture — best on iPhone, works for both QR and receipt photos */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-2">
             <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              Take a photo — auto-detects QR code, or reads the receipt with AI
+              Take a photo of the QR code — fastest on iPhone
             </label>
             <input
               ref={photoInputRef}
@@ -511,11 +490,6 @@ export default function ScanPage() {
           {parsed._allEmpty && (
             <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 rounded-lg p-3 text-xs">
               Could not read this receipt automatically — fill in the details below.
-              <button
-                onClick={() => { setParsed(null); setTimeout(() => photoInputRef.current?.click(), 100) }}
-                className="flex items-center gap-1 mt-2 text-blue-600 dark:text-blue-400 font-medium hover:underline">
-                <ImageUp size={12} /> Try a photo scan instead
-              </button>
             </div>
           )}
 
