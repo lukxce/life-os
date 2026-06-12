@@ -109,30 +109,6 @@ function ScanInner() {
     }
   }, [params, handleSufUrl])
 
-  // ── Clipboard paste (user-gesture triggered — required for iOS Safari) ────
-
-  const [pasteError, setPasteError] = useState('')
-
-  const pasteFromClipboard = async () => {
-    setPasteError('')
-    if (!navigator.clipboard?.readText) {
-      setPasteError('Clipboard not available — paste manually into the field below.')
-      return
-    }
-    try {
-      const text = (await navigator.clipboard.readText()).trim()
-      if (!text) { setPasteError('Clipboard is empty.'); return }
-      if (isSufUrl(text)) {
-        setManualUrl(text)
-        handleSufUrl(text)
-      } else {
-        setPasteError('No receipt URL found in clipboard. Copy the URL from Safari first.')
-      }
-    } catch {
-      // iOS: user denied the "Allow Paste" prompt, or API unavailable
-      setPasteError('Paste permission denied. Use the field below to paste manually.')
-    }
-  }
 
   // ── Camera helpers ─────────────────────────────────────────────────────────
 
@@ -413,54 +389,49 @@ function ScanInner() {
                 <Link2 size={14} className="text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Receipt URL</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Paste receipt URL</p>
                 <p className="text-[11px] text-gray-400 leading-snug">
-                  iPhone Camera → tap QR banner → copy URL in Safari → come back and tap Paste
+                  iPhone Camera → tap QR banner → Copy in Safari → tap the field below → Paste
                 </p>
               </div>
             </div>
 
-            {/* Big paste button — needs user tap for iOS clipboard permission */}
-            <button
-              onClick={pasteFromClipboard}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 text-white font-semibold text-base transition-colors"
+            {/* Tap-to-paste field — onPaste fires without any iOS permission dialog */}
+            <div
+              onClick={() => document.getElementById('scan-url-input')?.focus()}
+              className={`w-full min-h-[56px] border-2 rounded-2xl px-4 py-3.5 flex items-center cursor-text transition-colors ${
+                manualUrl
+                  ? 'border-blue-400 dark:border-blue-500 bg-white dark:bg-gray-900'
+                  : 'border-dashed border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40'
+              }`}
             >
-              <ClipboardPaste size={18} />
-              Paste from Clipboard
-            </button>
-
-            {pasteError && (
-              <p className="text-xs text-red-500 dark:text-red-400">{pasteError}</p>
-            )}
-
-            {/* Fallback: manual type/paste into text field */}
-            <div className="relative">
-              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center px-3 pointer-events-none">
-                <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
-                <span className="mx-2 text-[10px] text-gray-400 shrink-0">or type/paste below</span>
-                <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
-              </div>
-              <div className="pt-6">
-                <input
-                  value={manualUrl}
-                  onChange={e => {
-                    setManualUrl(e.target.value)
-                    if (isSufUrl(e.target.value.trim())) handleSufUrl(e.target.value.trim())
-                  }}
-                  onPaste={e => {
-                    const text = e.clipboardData.getData('text')
-                    if (isSufUrl(text.trim())) {
-                      e.preventDefault()
-                      setManualUrl(text.trim())
-                      handleSufUrl(text.trim())
-                    }
-                  }}
-                  placeholder="https://suf.purs.gov.rs/v/?vl=..."
-                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              {!manualUrl && (
+                <div className="flex items-center gap-2 w-full pointer-events-none select-none">
+                  <ClipboardPaste size={20} className="text-blue-400 dark:text-blue-500 shrink-0" />
+                  <span className="text-blue-400 dark:text-blue-500 text-sm">Tap here, then Paste…</span>
+                </div>
+              )}
+              <input
+                id="scan-url-input"
+                value={manualUrl}
+                onChange={e => {
+                  setManualUrl(e.target.value)
+                  if (isSufUrl(e.target.value.trim())) handleSufUrl(e.target.value.trim())
+                }}
+                onPaste={e => {
+                  const text = e.clipboardData.getData('text')
+                  if (isSufUrl(text.trim())) {
+                    e.preventDefault()
+                    setManualUrl(text.trim())
+                    handleSufUrl(text.trim())
+                  }
+                }}
+                placeholder=""
+                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+                className={`w-full bg-transparent text-sm text-gray-900 dark:text-gray-100 focus:outline-none font-mono ${!manualUrl ? 'h-0 opacity-0 absolute' : ''}`}
+              />
             </div>
+
             {manualUrl && !isSufUrl(manualUrl) && (
               <button onClick={() => handleSufUrl(manualUrl.trim())} disabled={loading}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors">
