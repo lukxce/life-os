@@ -86,7 +86,18 @@ function ExpensesContent({ params }: { params: { type: string } }) {
     }))
     setShowForm(true)
 
+    // Look up saved nickname for this PIB and override description if found
     if (merchantPib) {
+      fetch(`/api/finance/merchants`)
+        .then(r => r.json())
+        .then((nicknames: { pib: string; customName: string }[]) => {
+          const match = nicknames.find(n => n.pib === merchantPib)
+          if (match) {
+            setForm(p => ({ ...p, description: match.customName, merchantName: match.customName }))
+          }
+        })
+        .catch(() => {})
+
       fetch(`/api/finance/suggest-category?pib=${merchantPib}`)
         .then(r => r.json())
         .then(data => {
@@ -212,6 +223,17 @@ function ExpensesContent({ params }: { params: { type: string } }) {
         body: JSON.stringify(payload)
       })
     }
+
+    // Save merchant nickname: if user typed a description and we have a PIB, remember it
+    const nicknameToSave = form.description.trim() || form.merchantName.trim()
+    if (form.merchantPib && nicknameToSave) {
+      fetch('/api/finance/merchants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pib: form.merchantPib, customName: nicknameToSave }),
+      }).catch(() => {})
+    }
+
     setShowForm(false)
     setEditingId(null)
     setForm({ ...defaultForm, category: categories[0]?.name || '' })
