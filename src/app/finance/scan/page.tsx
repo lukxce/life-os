@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   X, Zap, ZapOff, ZoomIn, ZoomOut,
-  ScanText, Check, RotateCcw, ClipboardPaste, Link2, QrCode,
+  ScanText, Check, RotateCcw, Link2, QrCode,
 } from 'lucide-react'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -396,41 +396,24 @@ function ScanInner() {
               </div>
             </div>
 
-            {/* Tap-to-paste field — onPaste fires without any iOS permission dialog */}
-            <div
-              onClick={() => document.getElementById('scan-url-input')?.focus()}
-              className={`w-full min-h-[56px] border-2 rounded-2xl px-4 py-3.5 flex items-center cursor-text transition-colors ${
-                manualUrl
-                  ? 'border-blue-400 dark:border-blue-500 bg-white dark:bg-gray-900'
-                  : 'border-dashed border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40'
-              }`}
-            >
-              {!manualUrl && (
-                <div className="flex items-center gap-2 w-full pointer-events-none select-none">
-                  <ClipboardPaste size={20} className="text-blue-400 dark:text-blue-500 shrink-0" />
-                  <span className="text-blue-400 dark:text-blue-500 text-sm">Tap here, then Paste…</span>
-                </div>
-              )}
-              <input
-                id="scan-url-input"
-                value={manualUrl}
-                onChange={e => {
-                  setManualUrl(e.target.value)
-                  if (isSufUrl(e.target.value.trim())) handleSufUrl(e.target.value.trim())
-                }}
-                onPaste={e => {
-                  const text = e.clipboardData.getData('text')
-                  if (isSufUrl(text.trim())) {
-                    e.preventDefault()
-                    setManualUrl(text.trim())
-                    handleSufUrl(text.trim())
-                  }
-                }}
-                placeholder=""
-                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-                className={`w-full bg-transparent text-sm text-gray-900 dark:text-gray-100 focus:outline-none font-mono ${!manualUrl ? 'h-0 opacity-0 absolute' : ''}`}
-              />
-            </div>
+            <input
+              value={manualUrl}
+              onChange={e => {
+                setManualUrl(e.target.value)
+                if (isSufUrl(e.target.value.trim())) handleSufUrl(e.target.value.trim())
+              }}
+              onPaste={e => {
+                const text = e.clipboardData.getData('text')
+                if (isSufUrl(text.trim())) {
+                  e.preventDefault()
+                  setManualUrl(text.trim())
+                  handleSufUrl(text.trim())
+                }
+              }}
+              placeholder="https://suf.purs.gov.rs/v/?vl=..."
+              autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
 
             {manualUrl && !isSufUrl(manualUrl) && (
               <button onClick={() => handleSufUrl(manualUrl.trim())} disabled={loading}
