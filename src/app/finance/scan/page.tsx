@@ -1,10 +1,9 @@
 'use client'
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { flushSync } from 'react-dom'
-import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState, useCallback, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   X, Zap, ZapOff, ZoomIn, ZoomOut,
-  ScanText, QrCode, Check, RotateCcw, Link2,
+  ScanText, Check, RotateCcw, ClipboardPaste, Link2, QrCode,
 } from 'lucide-react'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -15,6 +14,9 @@ function isPfrBroj(text: string): boolean {
 function pfrToUrl(pfr: string): string {
   return `https://suf.purs.gov.rs/v/?vl=${btoa(pfr.trim())}`
 }
+function isSufUrl(s: string): boolean {
+  return s.includes('suf.purs.gov.rs')
+}
 function extractPfr(rawText: string): string | null {
   const text = rawText.toUpperCase()
   const direct = text.match(/[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+/)
@@ -24,40 +26,36 @@ function extractPfr(rawText: string): string | null {
   return retry ? retry[0] : null
 }
 
-// ── Types ──────────────────────────────────────────────────────────────────
-
-type Mode   = 'idle' | 'qr' | 'pfr'
 type Parsed = {
   merchantName: string | null
-  merchantPib:  string | null
-  total:        number | null
-  date:         string | null
-  sufUrl:       string
-  pfrRef?:      string
-  warning?:     string | null
+  merchantPib: string | null
+  total: number | null
+  date: string | null
+  sufUrl: string
+  pfrRef?: string
+  warning?: string | null
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+// ── Inner component (needs useSearchParams) ────────────────────────────────
 
-export default function ScanPage() {
-  const router = useRouter()
+function ScanInner() {
+  const router     = useRouter()
+  const params     = useSearchParams()
 
-  // QR
   const qrVideoRef   = useRef<HTMLVideoElement>(null)
   const qrStreamRef  = useRef<MediaStream | null>(null)
   const qrActiveRef  = useRef(false)
-  const qrScannerRef = useRef<any>(null)
-  // PFR OCR
+  const trackRef     = useRef<MediaStreamTrack | null>(null)
   const pfrVideoRef  = useRef<HTMLVideoElement>(null)
   const pfrCanvasRef = useRef<HTMLCanvasElement>(null)
   const pfrStreamRef = useRef<MediaStream | null>(null)
   const tesseractRef = useRef<any>(null)
   const ocrActiveRef = useRef(false)
-  // camera track (torch/zoom)
-  const trackRef     = useRef<MediaStreamTrack | null>(null)
 
+  type Mode = 'idle' | 'qr' | 'pfr'
   const [mode,           setMode]           = useState<Mode>('idle')
   const [manualUrl,      setManualUrl]      = useState('')
+  const [clipboardUrl,   setClipboardUrl]   = useState<string | null>(null)
   const [parsed,         setParsed]         = useState<Parsed | null>(null)
   const [loading,        setLoading]        = useState(false)
   const [error,          setError]          = useState('')
@@ -68,12 +66,12 @@ export default function ScanPage() {
   const [zoomSupported,  setZoomSupported]  = useState(false)
   const [zoomMin,        setZoomMin]        = useState(1)
   const [zoomMax,        setZoomMax]        = useState(5)
-  const [qrStatus,       setQrStatus]       = useState<'scanning' | 'found'>('scanning')
+  const [qrFound,        setQrFound]        = useState(false)
   const [pfrInput,       setPfrInput]       = useState('')
   const [ocrBusy,        setOcrBusy]        = useState(false)
   const [ocrDone,        setOcrDone]        = useState(false)
 
-  // ── Parse receipt URL via API ──────────────────────────────────────────────
+  // ── Parse receipt URL ──────────────────────────────────────────────────────
 
   const handleSufUrl = useCallback(async (url: string) => {
     setLoading(true)
@@ -85,7 +83,6 @@ export default function ScanPage() {
         body: JSON.stringify({ sufUrl: url }),
       })
       const data = await res.json()
-      // Always show the form — even if parsing failed, let user fill it in
       setParsed({
         merchantName: data.merchantName ?? null,
         merchantPib:  data.merchantPib  ?? null,
@@ -101,6 +98,43 @@ export default function ScanPage() {
     }
     setLoading(false)
   }, [])
+
+  // ── Share Target / URL param on load ──────────────────────────────────────
+
+  useEffect(() => {
+    // Handles ?url= from PWA Share Target (Safari Share → Life OS)
+    // Also handles ?text= which Safari sometimes sends instead
+    const sharedUrl  = params.get('url') || params.get('text') || ''
+    if (sharedUrl && isSufUrl(sharedUrl)) {
+      handleSufUrl(sharedUrl.trim())
+    }
+  }, [params, handleSufUrl])
+
+  // ── Clipboard auto-detect ─────────────────────────────────────────────────
+  // When user copies the URL from Safari and switches back to Life OS, detect it.
+
+  const checkClipboard = useCallback(async () => {
+    if (!navigator.clipboard?.readText) return
+    try {
+      const text = await navigator.clipboard.readText()
+      if (text && isSufUrl(text) && !parsed && !loading) {
+        setClipboardUrl(text.trim())
+      }
+    } catch {}
+  }, [parsed, loading])
+
+  useEffect(() => {
+    // Check on mount and whenever the page regains focus (user switches back from Safari)
+    checkClipboard()
+    const onFocus = () => checkClipboard()
+    const onVisible = () => { if (document.visibilityState === 'visible') checkClipboard() }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [checkClipboard])
 
   // ── Camera helpers ─────────────────────────────────────────────────────────
 
@@ -129,43 +163,21 @@ export default function ScanPage() {
     setTorchOn(false); setTorchSupported(false); setZoomSupported(false); setZoom(1)
   }
 
-  async function startCamera(ref: React.RefObject<HTMLVideoElement>) {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-      audio: false,
-    })
-    if (ref.current) { ref.current.srcObject = stream; await ref.current.play() }
-    applyTrackCaps(stream.getVideoTracks()[0])
-    return stream
-  }
-
   // ── QR scanner ─────────────────────────────────────────────────────────────
 
   const stopQr = useCallback(async () => {
     qrActiveRef.current = false
     qrStreamRef.current?.getTracks().forEach(t => t.stop())
     qrStreamRef.current = null
-    try {
-      if (qrScannerRef.current) {
-        await qrScannerRef.current.stop()
-        qrScannerRef.current.clear()
-        qrScannerRef.current = null
-      }
-    } catch {}
-    resetCamState()
-    setMode('idle')
-    setQrStatus('scanning')
+    resetCamState(); setMode('idle'); setQrFound(false)
   }, [])
 
   const startQr = () => {
-    setError('')
-    // video element is always in DOM — ref is ready before we request the stream
-    setMode('qr')
-    void initQrNative()
+    setError(''); setQrFound(false); setMode('qr')
+    void initQr()
   }
 
-  const initQrNative = async () => {
-    // getUserMedia + attach stream directly to the always-mounted video element
+  const initQr = async () => {
     let stream: MediaStream
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -183,7 +195,6 @@ export default function ScanPage() {
     try { await vid.play() } catch {}
     applyTrackCaps(stream.getVideoTracks()[0])
 
-    // If BarcodeDetector available, use it for fast native detection
     if ('BarcodeDetector' in window) {
       const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] })
       qrActiveRef.current = true
@@ -194,7 +205,7 @@ export default function ScanPage() {
               const codes = await detector.detect(vid)
               if (codes.length > 0) {
                 const text: string = codes[0].rawValue
-                setQrStatus('found')
+                setQrFound(true)
                 stopQr()
                 handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
                 return
@@ -206,37 +217,31 @@ export default function ScanPage() {
       }
       loop()
     } else {
-      // Fallback: html5-qrcode decoder on canvas frames from our stream
-      void initQrHtml5Decode(vid)
-    }
-  }
-
-  const initQrHtml5Decode = async (vid: HTMLVideoElement) => {
-    const { Html5Qrcode } = await import('html5-qrcode')
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')!
-    qrActiveRef.current = true
-    while (qrActiveRef.current) {
-      if (vid.videoWidth > 0 && !vid.paused) {
-        canvas.width = vid.videoWidth; canvas.height = vid.videoHeight
-        ctx.drawImage(vid, 0, 0)
-        try {
-          const blob: Blob = await new Promise(res => canvas.toBlob(b => res(b!), 'image/jpeg', 0.8))
-          const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' })
-          const text = await (Html5Qrcode as any).scanFile(file, false)
-          if (text) {
-            setQrStatus('found')
-            stopQr()
-            handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
-            return
-          }
-        } catch {}
+      const { Html5Qrcode } = await import('html5-qrcode')
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
+      qrActiveRef.current = true
+      while (qrActiveRef.current) {
+        if (vid.videoWidth > 0 && !vid.paused) {
+          canvas.width = vid.videoWidth; canvas.height = vid.videoHeight
+          ctx.drawImage(vid, 0, 0)
+          try {
+            const blob: Blob = await new Promise(res => canvas.toBlob(b => res(b!), 'image/jpeg', 0.8))
+            const file = new File([blob], 'f.jpg', { type: 'image/jpeg' })
+            const text = await (Html5Qrcode as any).scanFile(file, false)
+            if (text) {
+              setQrFound(true); stopQr()
+              handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
+              return
+            }
+          } catch {}
+        }
+        await new Promise(r => setTimeout(r, 200))
       }
-      await new Promise(r => setTimeout(r, 200))
     }
   }
 
-  // ── PFR live OCR ───────────────────────────────────────────────────────────
+  // ── PFR OCR scanner ────────────────────────────────────────────────────────
 
   const stopPfr = useCallback(async () => {
     ocrActiveRef.current = false
@@ -244,20 +249,26 @@ export default function ScanPage() {
     tesseractRef.current = null
     pfrStreamRef.current?.getTracks().forEach(t => t.stop())
     pfrStreamRef.current = null
-    resetCamState()
-    setMode('idle'); setOcrBusy(false); setOcrDone(false); setPfrInput('')
+    resetCamState(); setMode('idle'); setOcrBusy(false); setOcrDone(false); setPfrInput('')
   }, [])
 
   const startPfr = async () => {
     setError(''); setPfrInput(''); setOcrDone(false)
-    flushSync(() => setMode('pfr'))
+    setMode('pfr')
+    let stream: MediaStream
     try {
-      pfrStreamRef.current = await startCamera(pfrVideoRef)
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      })
     } catch (e: any) {
       setMode('idle')
       setError(/permission|denied/i.test(String(e)) ? 'Camera permission denied.' : 'Could not start camera.')
       return
     }
+    pfrStreamRef.current = stream
+    if (pfrVideoRef.current) { pfrVideoRef.current.srcObject = stream; await pfrVideoRef.current.play() }
+    applyTrackCaps(stream.getVideoTracks()[0])
     try {
       const { createWorker } = await import('tesseract.js')
       const worker = await createWorker('eng', 1, { logger: () => {} })
@@ -283,13 +294,7 @@ export default function ScanPage() {
         ctx.filter = 'none'
         const { data: { text } } = await worker.recognize(canvas)
         const pfr = extractPfr(text)
-        if (pfr) {
-          setPfrInput(pfr)
-          ocrActiveRef.current = false
-          setOcrBusy(false)
-          setOcrDone(true)
-          return
-        }
+        if (pfr) { setPfrInput(pfr); ocrActiveRef.current = false; setOcrBusy(false); setOcrDone(true); return }
       } catch {}
       setOcrBusy(false)
       await new Promise(r => setTimeout(r, 300))
@@ -297,28 +302,17 @@ export default function ScanPage() {
     setOcrBusy(false)
   }
 
-  const restartOcr = () => { setPfrInput(''); setOcrDone(false); ocrActiveRef.current = true; runOcrLoop() }
-
-  // PFR confirm: don't call PURS API (it doesn't work for PFR-only).
-  // Just open the form with PFR as a reference and let user fill in amount.
   const confirmPfr = async () => {
     await stopPfr()
-    setParsed({
-      merchantName: null,
-      merchantPib:  null,
-      total:        null,
-      date:         null,
-      sufUrl:       '',
-      pfrRef:       pfrInput,
-      warning:      'Enter the amount and merchant below — PFR saved as reference.',
-    })
+    setParsed({ merchantName: null, merchantPib: null, total: null, date: null, sufUrl: '',
+                pfrRef: pfrInput, warning: 'Enter the amount and merchant — PFR saved as reference.' })
   }
 
   useEffect(() => () => { stopQr(); stopPfr() }, [stopQr, stopPfr])
 
   // ── Camera controls ────────────────────────────────────────────────────────
 
-  const CameraControls = ({ onStop }: { onStop: () => void }) => (
+  const CamControls = ({ onStop }: { onStop: () => void }) => (
     <div className="space-y-2">
       {zoomSupported && (
         <div className="flex items-center gap-2">
@@ -326,7 +320,7 @@ export default function ScanPage() {
           <input type="range" min={zoomMin} max={zoomMax} step={0.1} value={zoom}
             onChange={e => applyZoom(Number(e.target.value))} className="flex-1 accent-indigo-500" />
           <ZoomIn size={14} className="text-gray-400 shrink-0" />
-          <span className="text-xs text-gray-400 w-8 tabular-nums text-right">{zoom.toFixed(1)}×</span>
+          <span className="text-xs text-gray-400 w-8 tabular-nums">{zoom.toFixed(1)}×</span>
         </div>
       )}
       <div className="flex gap-2">
@@ -351,10 +345,91 @@ export default function ScanPage() {
     <div className="max-w-lg mx-auto space-y-3 pb-8">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Scan Receipt</h2>
 
+      {/* QR video — always mounted so ref is ready */}
+      <video ref={qrVideoRef} playsInline muted autoPlay
+        style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                 objectFit: 'cover', zIndex: mode === 'qr' ? 50 : -1,
+                 opacity: mode === 'qr' ? 1 : 0, pointerEvents: 'none' }} />
+
+      {/* QR fullscreen UI */}
+      {mode === 'qr' && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 51, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '52px 20px 16px', background: 'linear-gradient(to bottom,rgba(0,0,0,0.65),transparent)' }}>
+            <span style={{ color: 'white', fontWeight: 600, fontSize: 18 }}>Scan QR Code</span>
+            <button onClick={stopQr}
+              style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.2)',
+                       border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <X size={20} />
+            </button>
+          </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'relative', width: 260, height: 260, boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }}>
+              {([[[0,'auto'],[0,'auto']],[[0,'auto'],['auto',0]],[['auto',0],[0,'auto']],[['auto',0],['auto',0]]] as any).map(([[t,b],[l,r]]: any, i: number) => (
+                <span key={i} style={{ position:'absolute', top:t, bottom:b, left:l, right:r, width:32, height:32,
+                  borderTop:    i<2  ? '3px solid white' : undefined, borderBottom: i>=2 ? '3px solid white' : undefined,
+                  borderLeft:   i%2===0 ? '3px solid white' : undefined, borderRight: i%2===1 ? '3px solid white' : undefined }} />
+              ))}
+              {qrFound && (
+                <div style={{ position:'absolute', inset:0, border:'2px solid #34d399', background:'rgba(52,211,153,0.2)',
+                               display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <Check size={48} color="#34d399" strokeWidth={3} />
+                </div>
+              )}
+            </div>
+          </div>
+          <div style={{ padding:'16px 24px 52px', background:'linear-gradient(to top,rgba(0,0,0,0.65),transparent)', display:'flex', flexDirection:'column', gap:12 }}>
+            <p style={{ textAlign:'center', color:'rgba(255,255,255,0.7)', fontSize:14, margin:0 }}>
+              {qrFound ? 'Detected — loading…' : 'Point camera at the QR code'}
+            </p>
+            {zoomSupported && (
+              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <ZoomOut size={16} color="rgba(255,255,255,0.6)" />
+                <input type="range" min={zoomMin} max={zoomMax} step={0.1} value={zoom}
+                  onChange={e => applyZoom(Number(e.target.value))} style={{ flex:1, accentColor:'#818cf8' }} />
+                <ZoomIn size={16} color="rgba(255,255,255,0.6)" />
+                <span style={{ color:'rgba(255,255,255,0.6)', fontSize:12, width:32, textAlign:'right' }}>{zoom.toFixed(1)}×</span>
+              </div>
+            )}
+            {torchSupported && (
+              <button onClick={toggleTorch}
+                style={{ width:'100%', padding:'12px', borderRadius:16, border:'none', cursor:'pointer',
+                         background: torchOn ? '#facc15' : 'rgba(255,255,255,0.15)',
+                         color: torchOn ? '#111' : 'white', fontWeight:600, fontSize:14,
+                         display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                {torchOn ? <Zap size={16} /> : <ZapOff size={16} />}
+                {torchOn ? 'Flash On' : 'Flash Off'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {!parsed && (
         <div className="space-y-3">
 
-          {/* ① Paste URL */}
+          {/* ── Clipboard auto-detected URL ── */}
+          {clipboardUrl && (
+            <section className="bg-emerald-50 dark:bg-emerald-950 rounded-2xl border border-emerald-200 dark:border-emerald-800 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <ClipboardPaste size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Receipt URL detected in clipboard</p>
+              </div>
+              <p className="text-xs text-emerald-700 dark:text-emerald-300 font-mono truncate">{clipboardUrl}</p>
+              <div className="flex gap-2">
+                <button onClick={() => { handleSufUrl(clipboardUrl); setClipboardUrl(null) }}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors">
+                  Parse this receipt
+                </button>
+                <button onClick={() => setClipboardUrl(null)}
+                  className="px-4 py-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-sm">
+                  Dismiss
+                </button>
+              </div>
+            </section>
+          )}
+
+          {/* ── Primary: paste URL (+ instructions for iPhone) ── */}
           <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
@@ -362,32 +437,48 @@ export default function ScanPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Paste receipt URL</p>
-                <p className="text-[11px] text-gray-400">Scan QR with iPhone Camera → tap banner → copy URL from address bar</p>
+                <p className="text-[11px] text-gray-400 leading-relaxed">
+                  iPhone: open Camera → point at QR → <strong>long-press</strong> the banner → Copy → paste here
+                </p>
               </div>
             </div>
             <input
               value={manualUrl}
-              onChange={e => setManualUrl(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && manualUrl.trim() && handleSufUrl(manualUrl.trim())}
+              onChange={e => {
+                setManualUrl(e.target.value)
+                // auto-trigger as soon as it looks like a valid URL
+                if (isSufUrl(e.target.value.trim())) handleSufUrl(e.target.value.trim())
+              }}
+              onPaste={e => {
+                const text = e.clipboardData.getData('text')
+                if (isSufUrl(text.trim())) {
+                  e.preventDefault()
+                  setManualUrl(text.trim())
+                  handleSufUrl(text.trim())
+                }
+              }}
               placeholder="https://suf.purs.gov.rs/v/?vl=..."
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <button
-              onClick={() => handleSufUrl(manualUrl.trim())}
-              disabled={!manualUrl.trim() || loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors">
-              {loading ? 'Parsing…' : 'Parse Receipt'}
-            </button>
+            {manualUrl && !isSufUrl(manualUrl) && (
+              <button onClick={() => handleSufUrl(manualUrl.trim())} disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors">
+                {loading ? 'Parsing…' : 'Parse Receipt'}
+              </button>
+            )}
           </section>
 
-          {/* ② Scan QR code */}
-          <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+          {/* ── QR camera scanner (desktop / Android, won't work well on iPhone) ── */}
+          <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
                   <QrCode size={14} className="text-indigo-600 dark:text-indigo-400" />
                 </div>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Scan QR code</p>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Scan QR with camera</p>
+                  <p className="text-[11px] text-gray-400">Works best on Android / desktop</p>
+                </div>
               </div>
               {mode !== 'qr' && (
                 <button onClick={startQr}
@@ -395,10 +486,16 @@ export default function ScanPage() {
                   Start
                 </button>
               )}
+              {mode === 'qr' && (
+                <button onClick={stopQr}
+                  className="px-4 py-1.5 rounded-xl border border-red-200 dark:border-red-900 text-red-500 text-sm font-medium">
+                  Stop
+                </button>
+              )}
             </div>
           </section>
 
-          {/* ③ Scan / enter PFR broj */}
+          {/* ── PFR number ── */}
           <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -407,7 +504,7 @@ export default function ScanPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">PFR broj</p>
-                  <p className="text-[11px] text-gray-400">Printed above the QR code on the receipt</p>
+                  <p className="text-[11px] text-gray-400">Printed above the QR code</p>
                 </div>
               </div>
               {mode !== 'pfr' && (
@@ -418,20 +515,13 @@ export default function ScanPage() {
               )}
             </div>
 
-            {/* Manual PFR input — always visible */}
             {mode !== 'pfr' && (
               <div className="flex gap-2">
-                <input
-                  value={pfrInput}
-                  onChange={e => setPfrInput(e.target.value.toUpperCase())}
+                <input value={pfrInput} onChange={e => setPfrInput(e.target.value.toUpperCase())}
                   onKeyDown={e => e.key === 'Enter' && isPfrBroj(pfrInput) && confirmPfr()}
-                  placeholder="XXXXXXXX-XXXXXXXX-XXXX"
-                  spellCheck={false} autoCorrect="off" autoCapitalize="characters"
-                  className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm font-mono bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 tracking-wider focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-                <button
-                  onClick={confirmPfr}
-                  disabled={!isPfrBroj(pfrInput)}
+                  placeholder="XXXXXXXX-XXXXXXXX-XXXX" spellCheck={false} autoCorrect="off" autoCapitalize="characters"
+                  className="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm font-mono bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 tracking-wider focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                <button onClick={confirmPfr} disabled={!isPfrBroj(pfrInput)}
                   className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-sm font-semibold transition-colors">
                   <Check size={16} />
                 </button>
@@ -452,34 +542,25 @@ export default function ScanPage() {
                   </div>
                 </div>
                 <canvas ref={pfrCanvasRef} className="hidden" />
-                <div className="space-y-2">
-                  <input
-                    value={pfrInput}
-                    onChange={e => setPfrInput(e.target.value.toUpperCase())}
-                    placeholder="Detecting… XXXXXXXX-XXXXXXXX-XXXX"
-                    spellCheck={false} autoCorrect="off" autoCapitalize="characters"
-                    className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm font-mono bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 tracking-wider focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                  <div className="flex gap-2">
-                    {ocrDone && (
-                      <button onClick={restartOcr}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium">
-                        <RotateCcw size={13} /> Scan again
-                      </button>
-                    )}
-                    <button
-                      onClick={confirmPfr}
-                      disabled={!isPfrBroj(pfrInput)}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-sm font-semibold transition-colors ${ocrDone ? 'flex-1' : 'w-full'}`}>
-                      <Check size={15} /> Confirm PFR
+                <input value={pfrInput} onChange={e => setPfrInput(e.target.value.toUpperCase())}
+                  placeholder="Detecting… XXXXXXXX-XXXXXXXX-XXXX" spellCheck={false} autoCorrect="off" autoCapitalize="characters"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm font-mono bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 tracking-wider focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                <div className="flex gap-2">
+                  {ocrDone && (
+                    <button onClick={() => { setPfrInput(''); setOcrDone(false); ocrActiveRef.current = true; runOcrLoop() }}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium">
+                      <RotateCcw size={13} /> Again
                     </button>
-                  </div>
+                  )}
+                  <button onClick={confirmPfr} disabled={!isPfrBroj(pfrInput)}
+                    className={`flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white text-sm font-semibold transition-colors ${ocrDone ? 'flex-1' : 'w-full'}`}>
+                    <Check size={15} /> Confirm
+                  </button>
                 </div>
-                <CameraControls onStop={stopPfr} />
+                <CamControls onStop={stopPfr} />
               </div>
             )}
           </section>
-
         </div>
       )}
 
@@ -504,40 +585,31 @@ export default function ScanPage() {
               {parsed.warning}
             </div>
           )}
-
           {parsed.pfrRef && (
-            <div className="text-xs text-gray-400">PFR reference: <span className="font-mono text-gray-600 dark:text-gray-300">{parsed.pfrRef}</span></div>
+            <p className="text-xs text-gray-400">PFR: <span className="font-mono text-gray-600 dark:text-gray-300">{parsed.pfrRef}</span></p>
           )}
 
           <div className="space-y-3">
             <div>
               <label className="text-xs text-gray-400 block mb-1">Merchant</label>
-              <input
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <input className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={parsed.merchantName ?? ''}
                 onChange={e => setParsed(p => p && ({ ...p, merchantName: e.target.value }))}
-                placeholder="e.g. Maxi, Lidl…"
-              />
+                placeholder="e.g. Maxi, Lidl, DM…" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Amount (RSD)</label>
-                <input
-                  type="number"
-                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <input type="number" className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={parsed.total ?? ''}
                   onChange={e => setParsed(p => p && ({ ...p, total: parseFloat(e.target.value) || null }))}
-                  placeholder="0.00"
-                />
+                  placeholder="0.00" />
               </div>
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Date</label>
-                <input
-                  type="date"
-                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <input type="date" className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={parsed.date ? new Date(parsed.date).toISOString().split('T')[0] : ''}
-                  onChange={e => setParsed(p => p && ({ ...p, date: e.target.value ? new Date(e.target.value).toISOString() : null }))}
-                />
+                  onChange={e => setParsed(p => p && ({ ...p, date: e.target.value ? new Date(e.target.value).toISOString() : null }))} />
               </div>
             </div>
           </div>
@@ -551,118 +623,39 @@ export default function ScanPage() {
                     expenseType === t
                       ? t === 'personal' ? 'bg-red-600 text-white border-red-600' : 'bg-purple-600 text-white border-purple-600'
                       : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}>
-                  {t}
-                </button>
+                  }`}>{t}</button>
               ))}
             </div>
           </div>
 
           <button
             onClick={() => {
-              const params = new URLSearchParams({
+              const p = new URLSearchParams({
                 merchantName: parsed.merchantName || '',
                 merchantPib:  parsed.merchantPib  || '',
                 sufUrl:       parsed.sufUrl        || '',
                 amount:       String(parsed.total  || ''),
                 date:         parsed.date ? new Date(parsed.date).toISOString().split('T')[0] : '',
               })
-              router.push(`/finance/expenses/${expenseType}?${params.toString()}`)
+              router.push(`/finance/expenses/${expenseType}?${p.toString()}`)
             }}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-colors">
             Continue → Add Expense
           </button>
-          <button
-            onClick={() => { setParsed(null); setManualUrl('') }}
+          <button onClick={() => { setParsed(null); setManualUrl('') }}
             className="w-full border border-gray-200 dark:border-gray-700 py-2.5 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             Start Over
           </button>
         </div>
       )}
-
-      {/* QR video — always in DOM so ref is ready before getUserMedia resolves */}
-      {/* It's visually hidden until mode=qr; the fullscreen overlay sits on top */}
-      <video
-        ref={qrVideoRef}
-        playsInline
-        muted
-        autoPlay
-        style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-                 objectFit: 'cover', zIndex: mode === 'qr' ? 50 : -1,
-                 opacity: mode === 'qr' ? 1 : 0, pointerEvents: 'none' }}
-      />
-
-      {/* QR UI overlay — corner guide + controls */}
-      {mode === 'qr' && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 51, display: 'flex', flexDirection: 'column' }}>
-          {/* Top bar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '48px 20px 16px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)' }}>
-            <span style={{ color: 'white', fontWeight: 600, fontSize: 18 }}>Scan QR Code</span>
-            <button onClick={stopQr}
-              style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.2)',
-                       border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <X size={20} />
-            </button>
-          </div>
-
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ position: 'relative', width: 260, height: 260,
-                          boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }}>
-              {/* Corner brackets */}
-              {[['top-0 left-0','borderTop','borderLeft'],['top-0 right-0','borderTop','borderRight'],
-                ['bottom-0 left-0','borderBottom','borderLeft'],['bottom-0 right-0','borderBottom','borderRight']]
-                .map(([pos], i) => {
-                  const t = i < 2 ? 0 : 'auto'; const b = i >= 2 ? 0 : 'auto'
-                  const l = i % 2 === 0 ? 0 : 'auto'; const r = i % 2 === 1 ? 0 : 'auto'
-                  return (
-                    <span key={i} style={{
-                      position: 'absolute', top: t, bottom: b, left: l, right: r,
-                      width: 32, height: 32,
-                      borderTop:    i < 2  ? '3px solid white' : undefined,
-                      borderBottom: i >= 2 ? '3px solid white' : undefined,
-                      borderLeft:   i % 2 === 0 ? '3px solid white' : undefined,
-                      borderRight:  i % 2 === 1 ? '3px solid white' : undefined,
-                    }} />
-                  )
-                })
-              }
-              {qrStatus === 'found' && (
-                <div style={{ position: 'absolute', inset: 0, border: '2px solid #34d399',
-                              background: 'rgba(52,211,153,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Check size={48} color="#34d399" strokeWidth={3} />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Bottom controls */}
-          <div style={{ padding: '16px 24px 48px', background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontSize: 14, margin: 0 }}>
-              {qrStatus === 'found' ? 'Detected — loading…' : 'Point camera at the QR code'}
-            </p>
-            {zoomSupported && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <ZoomOut size={16} color="rgba(255,255,255,0.6)" />
-                <input type="range" min={zoomMin} max={zoomMax} step={0.1} value={zoom}
-                  onChange={e => applyZoom(Number(e.target.value))} style={{ flex: 1, accentColor: '#818cf8' }} />
-                <ZoomIn size={16} color="rgba(255,255,255,0.6)" />
-                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, width: 32, textAlign: 'right' }}>{zoom.toFixed(1)}×</span>
-              </div>
-            )}
-            {torchSupported && (
-              <button onClick={toggleTorch}
-                style={{ width: '100%', padding: '12px', borderRadius: 16, border: 'none', cursor: 'pointer',
-                         background: torchOn ? '#facc15' : 'rgba(255,255,255,0.15)',
-                         color: torchOn ? '#111' : 'white', fontWeight: 600, fontSize: 14,
-                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                {torchOn ? <Zap size={16} /> : <ZapOff size={16} />}
-                {torchOn ? 'Flash On' : 'Flash Off'}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
     </div>
+  )
+}
+
+export default function ScanPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-gray-400 animate-pulse">Loading…</div>}>
+      <ScanInner />
+    </Suspense>
   )
 }
