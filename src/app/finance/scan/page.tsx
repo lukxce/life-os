@@ -223,7 +223,7 @@ export default function ScanPage() {
         try {
           const blob: Blob = await new Promise(res => canvas.toBlob(b => res(b!), 'image/jpeg', 0.8))
           const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' })
-          const text = await Html5Qrcode.scanFile(file, false)
+          const text = await (Html5Qrcode as any).scanFile(file, false)
           if (text) {
             setQrStatus('found')
             stopQr()
