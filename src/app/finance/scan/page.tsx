@@ -159,66 +159,81 @@ export default function ScanPage() {
 
   const startQr = () => {
     setError('')
-    const hasNative = typeof window !== 'undefined' && 'BarcodeDetector' in window
-    flushSync(() => setMode('qr'))
-    void (hasNative ? initQrNative() : initQrHtml5())
+    // video element is always in DOM — ref is ready before we request the stream
+    setMode('qr')
+    void initQrNative()
   }
 
   const initQrNative = async () => {
+    // getUserMedia + attach stream directly to the always-mounted video element
+    let stream: MediaStream
     try {
-      qrStreamRef.current = await startCamera(qrVideoRef)
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      })
     } catch (e: any) {
       setMode('idle')
       setError(/permission|denied/i.test(String(e)) ? 'Camera permission denied.' : 'Could not start camera.')
       return
     }
+    qrStreamRef.current = stream
+    const vid = qrVideoRef.current!
+    vid.srcObject = stream
+    try { await vid.play() } catch {}
+    applyTrackCaps(stream.getVideoTracks()[0])
 
-    const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] })
-    qrActiveRef.current = true
-
-    // Sequential loop — wait for each detect() before scheduling next
-    const loop = async () => {
-      while (qrActiveRef.current) {
-        const vid = qrVideoRef.current
-        if (vid && vid.videoWidth > 0 && !vid.paused) {
-          try {
-            const codes = await detector.detect(vid)
-            if (codes.length > 0) {
-              const text: string = codes[0].rawValue
-              setQrStatus('found')
-              await stopQr()
-              handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
-              return
-            }
-          } catch {}
+    // If BarcodeDetector available, use it for fast native detection
+    if ('BarcodeDetector' in window) {
+      const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] })
+      qrActiveRef.current = true
+      const loop = async () => {
+        while (qrActiveRef.current) {
+          if (vid.videoWidth > 0 && !vid.paused) {
+            try {
+              const codes = await detector.detect(vid)
+              if (codes.length > 0) {
+                const text: string = codes[0].rawValue
+                setQrStatus('found')
+                stopQr()
+                handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
+                return
+              }
+            } catch {}
+          }
+          await new Promise(r => setTimeout(r, 100))
         }
-        await new Promise(r => setTimeout(r, 120))
       }
+      loop()
+    } else {
+      // Fallback: html5-qrcode decoder on canvas frames from our stream
+      void initQrHtml5Decode(vid)
     }
-    loop()
   }
 
-  const initQrHtml5 = async () => {
+  const initQrHtml5Decode = async (vid: HTMLVideoElement) => {
     const { Html5Qrcode } = await import('html5-qrcode')
-    const scanner = new Html5Qrcode('qr-reader-box', { verbose: false })
-    qrScannerRef.current = scanner
-    try {
-      await scanner.start(
-        { facingMode: 'environment' },
-        // No qrbox = scans the entire camera frame
-        { fps: 15, disableFlip: false } as any,
-        (text: string) => {
-          setQrStatus('found')
-          stopQr().then(() => handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text)))
-        },
-        () => {},
-      )
-      await new Promise(r => setTimeout(r, 800))
-      const vid = document.querySelector('#qr-reader-box video') as HTMLVideoElement | null
-      if (vid?.srcObject) applyTrackCaps((vid.srcObject as MediaStream).getVideoTracks()[0])
-    } catch (e: any) {
-      qrScannerRef.current = null; setMode('idle')
-      setError(/permission|denied/i.test(String(e)) ? 'Camera permission denied.' : 'Could not start camera.')
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')!
+    qrActiveRef.current = true
+    while (qrActiveRef.current) {
+      if (vid.videoWidth > 0 && !vid.paused) {
+        canvas.width = vid.videoWidth; canvas.height = vid.videoHeight
+        ctx.drawImage(vid, 0, 0)
+        try {
+          const blob: Blob = await new Promise(res => canvas.toBlob(b => res(b!), 'image/jpeg', 0.8))
+          const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' })
+          const result = await Html5Qrcode.scanFileV2(file, false)
+          if (result?.decodedText) {
+            const text = result.decodedText
+            setQrStatus('found')
+            stopQr()
+            handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
+            return
+          }
+        } catch {}
+      }
+      await new Promise(r => setTimeout(r, 200))
     }
   }
 
@@ -366,7 +381,7 @@ export default function ScanPage() {
             </button>
           </section>
 
-          {/* ② Scan QR code — fullscreen overlay when active */}
+          {/* ② Scan QR code */}
           <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -375,92 +390,14 @@ export default function ScanPage() {
                 </div>
                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Scan QR code</p>
               </div>
-              <button onClick={startQr}
-                className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors">
-                Start
-              </button>
+              {mode !== 'qr' && (
+                <button onClick={startQr}
+                  className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors">
+                  Start
+                </button>
+              )}
             </div>
           </section>
-
-          {/* QR fullscreen overlay */}
-          {mode === 'qr' && (
-            <div className="fixed inset-0 z-50 bg-black flex flex-col">
-              {/* Camera view — fills entire screen */}
-              {'BarcodeDetector' in (typeof window !== 'undefined' ? window : {})
-                ? (
-                  <video
-                    ref={qrVideoRef}
-                    playsInline muted
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : (
-                  <div
-                    id="qr-reader-box"
-                    className="absolute inset-0
-                      [&_video]:absolute [&_video]:inset-0 [&_video]:w-full [&_video]:h-full [&_video]:object-cover
-                      [&_img]:hidden [&_select]:hidden [&_button]:hidden [&_p]:hidden [&_span]:hidden
-                      [&_div[id*=qr-shaded]]:hidden"
-                  />
-                )
-              }
-
-              {/* Dimmed border around a center scan zone (purely visual guide) */}
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-0 bg-black/40" />
-                {/* Cut-out: clear centre square */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="relative w-64 h-64 bg-transparent" style={{ boxShadow: '0 0 0 9999px rgba(0,0,0,0.45)' }}>
-                    {/* Corner brackets */}
-                    <span className="absolute top-0 left-0 w-8 h-8 border-t-[3px] border-l-[3px] border-white" />
-                    <span className="absolute top-0 right-0 w-8 h-8 border-t-[3px] border-r-[3px] border-white" />
-                    <span className="absolute bottom-0 left-0 w-8 h-8 border-b-[3px] border-l-[3px] border-white" />
-                    <span className="absolute bottom-0 right-0 w-8 h-8 border-b-[3px] border-r-[3px] border-white" />
-                    {qrStatus === 'found' && (
-                      <div className="absolute inset-0 border-2 border-emerald-400 bg-emerald-400/20 flex items-center justify-center">
-                        <Check size={48} className="text-emerald-400" strokeWidth={3} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Top bar */}
-              <div className="relative z-10 flex items-center justify-between px-5 pt-12 pb-4">
-                <span className="text-white font-semibold text-lg">Scan QR Code</span>
-                <button onClick={stopQr}
-                  className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white">
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="flex-1" />
-
-              {/* Bottom controls */}
-              <div className="relative z-10 px-6 pb-12 space-y-3">
-                <p className="text-center text-white/70 text-sm">
-                  {qrStatus === 'found' ? 'QR detected — loading…' : 'Point camera at the QR code on the receipt'}
-                </p>
-                {zoomSupported && (
-                  <div className="flex items-center gap-3">
-                    <ZoomOut size={16} className="text-white/60 shrink-0" />
-                    <input type="range" min={zoomMin} max={zoomMax} step={0.1} value={zoom}
-                      onChange={e => applyZoom(Number(e.target.value))}
-                      className="flex-1 accent-indigo-400" />
-                    <ZoomIn size={16} className="text-white/60 shrink-0" />
-                    <span className="text-white/60 text-xs w-8 tabular-nums">{zoom.toFixed(1)}×</span>
-                  </div>
-                )}
-                {torchSupported && (
-                  <button onClick={toggleTorch}
-                    className={`w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors
-                      ${torchOn ? 'bg-yellow-400 text-gray-900' : 'bg-white/15 backdrop-blur-sm text-white'}`}>
-                    {torchOn ? <Zap size={16} /> : <ZapOff size={16} />}
-                    {torchOn ? 'Flash On' : 'Flash Off'}
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* ③ Scan / enter PFR broj */}
           <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
@@ -644,16 +581,89 @@ export default function ScanPage() {
         </div>
       )}
 
-      <style>{`
-        @keyframes qrScan {
-          0%   { transform: translateY(0);    opacity: 1; }
-          45%  { transform: translateY(192px); opacity: 1; }
-          50%  { opacity: 0; }
-          55%  { transform: translateY(0);    opacity: 0; }
-          60%  { opacity: 1; }
-          100% { transform: translateY(192px); opacity: 1; }
-        }
-      `}</style>
+      {/* QR video — always in DOM so ref is ready before getUserMedia resolves */}
+      {/* It's visually hidden until mode=qr; the fullscreen overlay sits on top */}
+      <video
+        ref={qrVideoRef}
+        playsInline
+        muted
+        autoPlay
+        style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                 objectFit: 'cover', zIndex: mode === 'qr' ? 50 : -1,
+                 opacity: mode === 'qr' ? 1 : 0, pointerEvents: 'none' }}
+      />
+
+      {/* QR UI overlay — corner guide + controls */}
+      {mode === 'qr' && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 51, display: 'flex', flexDirection: 'column' }}>
+          {/* Top bar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '48px 20px 16px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)' }}>
+            <span style={{ color: 'white', fontWeight: 600, fontSize: 18 }}>Scan QR Code</span>
+            <button onClick={stopQr}
+              style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.2)',
+                       border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <X size={20} />
+            </button>
+          </div>
+
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'relative', width: 260, height: 260,
+                          boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }}>
+              {/* Corner brackets */}
+              {[['top-0 left-0','borderTop','borderLeft'],['top-0 right-0','borderTop','borderRight'],
+                ['bottom-0 left-0','borderBottom','borderLeft'],['bottom-0 right-0','borderBottom','borderRight']]
+                .map(([pos], i) => {
+                  const t = i < 2 ? 0 : 'auto'; const b = i >= 2 ? 0 : 'auto'
+                  const l = i % 2 === 0 ? 0 : 'auto'; const r = i % 2 === 1 ? 0 : 'auto'
+                  return (
+                    <span key={i} style={{
+                      position: 'absolute', top: t, bottom: b, left: l, right: r,
+                      width: 32, height: 32,
+                      borderTop:    i < 2  ? '3px solid white' : undefined,
+                      borderBottom: i >= 2 ? '3px solid white' : undefined,
+                      borderLeft:   i % 2 === 0 ? '3px solid white' : undefined,
+                      borderRight:  i % 2 === 1 ? '3px solid white' : undefined,
+                    }} />
+                  )
+                })
+              }
+              {qrStatus === 'found' && (
+                <div style={{ position: 'absolute', inset: 0, border: '2px solid #34d399',
+                              background: 'rgba(52,211,153,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Check size={48} color="#34d399" strokeWidth={3} />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom controls */}
+          <div style={{ padding: '16px 24px 48px', background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontSize: 14, margin: 0 }}>
+              {qrStatus === 'found' ? 'Detected — loading…' : 'Point camera at the QR code'}
+            </p>
+            {zoomSupported && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <ZoomOut size={16} color="rgba(255,255,255,0.6)" />
+                <input type="range" min={zoomMin} max={zoomMax} step={0.1} value={zoom}
+                  onChange={e => applyZoom(Number(e.target.value))} style={{ flex: 1, accentColor: '#818cf8' }} />
+                <ZoomIn size={16} color="rgba(255,255,255,0.6)" />
+                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, width: 32, textAlign: 'right' }}>{zoom.toFixed(1)}×</span>
+              </div>
+            )}
+            {torchSupported && (
+              <button onClick={toggleTorch}
+                style={{ width: '100%', padding: '12px', borderRadius: 16, border: 'none', cursor: 'pointer',
+                         background: torchOn ? '#facc15' : 'rgba(255,255,255,0.15)',
+                         color: torchOn ? '#111' : 'white', fontWeight: 600, fontSize: 14,
+                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                {torchOn ? <Zap size={16} /> : <ZapOff size={16} />}
+                {torchOn ? 'Flash On' : 'Flash Off'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
