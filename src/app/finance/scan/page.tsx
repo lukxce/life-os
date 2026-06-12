@@ -205,7 +205,8 @@ export default function ScanPage() {
     try {
       await scanner.start(
         { facingMode: 'environment' },
-        { fps: 15, qrbox: { width: 250, height: 250 }, disableFlip: false } as any,
+        // No qrbox = scans the entire camera frame
+        { fps: 15, disableFlip: false } as any,
         (text: string) => {
           setQrStatus('found')
           stopQr().then(() => handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text)))
@@ -365,8 +366,8 @@ export default function ScanPage() {
             </button>
           </section>
 
-          {/* ② Scan QR code */}
-          <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+          {/* ② Scan QR code — fullscreen overlay when active */}
+          <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
@@ -374,60 +375,92 @@ export default function ScanPage() {
                 </div>
                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Scan QR code</p>
               </div>
-              {mode !== 'qr' && (
-                <button onClick={startQr}
-                  className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors">
-                  Start
-                </button>
-              )}
+              <button onClick={startQr}
+                className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors">
+                Start
+              </button>
             </div>
-
-            {mode === 'qr' && (
-              <div className="space-y-3">
-                {/* Native BarcodeDetector uses our video element; html5-qrcode uses its own */}
-                {'BarcodeDetector' in (typeof window !== 'undefined' ? window : {})
-                  ? (
-                    <div className="relative rounded-xl overflow-hidden bg-black">
-                      <video ref={qrVideoRef} playsInline muted className="w-full" />
-                      {/* Targeting overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="relative w-56 h-56">
-                          <span className="absolute top-0 left-0 w-8 h-8 border-t-[3px] border-l-[3px] border-white rounded-tl" />
-                          <span className="absolute top-0 right-0 w-8 h-8 border-t-[3px] border-r-[3px] border-white rounded-tr" />
-                          <span className="absolute bottom-0 left-0 w-8 h-8 border-b-[3px] border-l-[3px] border-white rounded-bl" />
-                          <span className="absolute bottom-0 right-0 w-8 h-8 border-b-[3px] border-r-[3px] border-white rounded-br" />
-                          {qrStatus === 'scanning' && (
-                            <span className="absolute left-3 right-3 h-0.5 top-4 bg-indigo-400/90 rounded-full" style={{ animation: 'qrScan 2s ease-in-out infinite' }} />
-                          )}
-                          {qrStatus === 'found' && (
-                            <span className="absolute inset-0 rounded border-2 border-emerald-400 bg-emerald-400/10 flex items-center justify-center">
-                              <Check size={36} className="text-emerald-400" />
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="absolute bottom-3 inset-x-0 flex justify-center pointer-events-none">
-                        <span className="bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-                          Point camera at QR code
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    /* html5-qrcode renders into this div — hide its UI chrome */
-                    <div
-                      id="qr-reader-box"
-                      className="w-full overflow-hidden rounded-xl
-                        [&_video]:w-full [&_video]:rounded-xl
-                        [&_img]:hidden [&_select]:hidden [&_button]:hidden
-                        [&_span[id*=status]]:hidden [&_p]:hidden"
-                    />
-                  )
-                }
-                <CameraControls onStop={stopQr} />
-              </div>
-            )}
           </section>
+
+          {/* QR fullscreen overlay */}
+          {mode === 'qr' && (
+            <div className="fixed inset-0 z-50 bg-black flex flex-col">
+              {/* Camera view — fills entire screen */}
+              {'BarcodeDetector' in (typeof window !== 'undefined' ? window : {})
+                ? (
+                  <video
+                    ref={qrVideoRef}
+                    playsInline muted
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <div
+                    id="qr-reader-box"
+                    className="absolute inset-0
+                      [&_video]:absolute [&_video]:inset-0 [&_video]:w-full [&_video]:h-full [&_video]:object-cover
+                      [&_img]:hidden [&_select]:hidden [&_button]:hidden [&_p]:hidden [&_span]:hidden
+                      [&_div[id*=qr-shaded]]:hidden"
+                  />
+                )
+              }
+
+              {/* Dimmed border around a center scan zone (purely visual guide) */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 bg-black/40" />
+                {/* Cut-out: clear centre square */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="relative w-64 h-64 bg-transparent" style={{ boxShadow: '0 0 0 9999px rgba(0,0,0,0.45)' }}>
+                    {/* Corner brackets */}
+                    <span className="absolute top-0 left-0 w-8 h-8 border-t-[3px] border-l-[3px] border-white" />
+                    <span className="absolute top-0 right-0 w-8 h-8 border-t-[3px] border-r-[3px] border-white" />
+                    <span className="absolute bottom-0 left-0 w-8 h-8 border-b-[3px] border-l-[3px] border-white" />
+                    <span className="absolute bottom-0 right-0 w-8 h-8 border-b-[3px] border-r-[3px] border-white" />
+                    {qrStatus === 'found' && (
+                      <div className="absolute inset-0 border-2 border-emerald-400 bg-emerald-400/20 flex items-center justify-center">
+                        <Check size={48} className="text-emerald-400" strokeWidth={3} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Top bar */}
+              <div className="relative z-10 flex items-center justify-between px-5 pt-12 pb-4">
+                <span className="text-white font-semibold text-lg">Scan QR Code</span>
+                <button onClick={stopQr}
+                  className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1" />
+
+              {/* Bottom controls */}
+              <div className="relative z-10 px-6 pb-12 space-y-3">
+                <p className="text-center text-white/70 text-sm">
+                  {qrStatus === 'found' ? 'QR detected — loading…' : 'Point camera at the QR code on the receipt'}
+                </p>
+                {zoomSupported && (
+                  <div className="flex items-center gap-3">
+                    <ZoomOut size={16} className="text-white/60 shrink-0" />
+                    <input type="range" min={zoomMin} max={zoomMax} step={0.1} value={zoom}
+                      onChange={e => applyZoom(Number(e.target.value))}
+                      className="flex-1 accent-indigo-400" />
+                    <ZoomIn size={16} className="text-white/60 shrink-0" />
+                    <span className="text-white/60 text-xs w-8 tabular-nums">{zoom.toFixed(1)}×</span>
+                  </div>
+                )}
+                {torchSupported && (
+                  <button onClick={toggleTorch}
+                    className={`w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors
+                      ${torchOn ? 'bg-yellow-400 text-gray-900' : 'bg-white/15 backdrop-blur-sm text-white'}`}>
+                    {torchOn ? <Zap size={16} /> : <ZapOff size={16} />}
+                    {torchOn ? 'Flash On' : 'Flash Off'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ③ Scan / enter PFR broj */}
           <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
