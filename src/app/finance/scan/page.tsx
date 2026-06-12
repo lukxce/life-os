@@ -55,7 +55,6 @@ function ScanInner() {
   type Mode = 'idle' | 'qr' | 'pfr'
   const [mode,           setMode]           = useState<Mode>('idle')
   const [manualUrl,      setManualUrl]      = useState('')
-  const [clipboardUrl,   setClipboardUrl]   = useState<string | null>(null)
   const [parsed,         setParsed]         = useState<Parsed | null>(null)
   const [loading,        setLoading]        = useState(false)
   const [error,          setError]          = useState('')
@@ -110,31 +109,30 @@ function ScanInner() {
     }
   }, [params, handleSufUrl])
 
-  // ── Clipboard auto-detect ─────────────────────────────────────────────────
-  // When user copies the URL from Safari and switches back to Life OS, detect it.
+  // ── Clipboard paste (user-gesture triggered — required for iOS Safari) ────
 
-  const checkClipboard = useCallback(async () => {
-    if (!navigator.clipboard?.readText) return
-    try {
-      const text = await navigator.clipboard.readText()
-      if (text && isSufUrl(text) && !parsed && !loading) {
-        setClipboardUrl(text.trim())
-      }
-    } catch {}
-  }, [parsed, loading])
+  const [pasteError, setPasteError] = useState('')
 
-  useEffect(() => {
-    // Check on mount and whenever the page regains focus (user switches back from Safari)
-    checkClipboard()
-    const onFocus = () => checkClipboard()
-    const onVisible = () => { if (document.visibilityState === 'visible') checkClipboard() }
-    window.addEventListener('focus', onFocus)
-    document.addEventListener('visibilitychange', onVisible)
-    return () => {
-      window.removeEventListener('focus', onFocus)
-      document.removeEventListener('visibilitychange', onVisible)
+  const pasteFromClipboard = async () => {
+    setPasteError('')
+    if (!navigator.clipboard?.readText) {
+      setPasteError('Clipboard not available — paste manually into the field below.')
+      return
     }
-  }, [checkClipboard])
+    try {
+      const text = (await navigator.clipboard.readText()).trim()
+      if (!text) { setPasteError('Clipboard is empty.'); return }
+      if (isSufUrl(text)) {
+        setManualUrl(text)
+        handleSufUrl(text)
+      } else {
+        setPasteError('No receipt URL found in clipboard. Copy the URL from Safari first.')
+      }
+    } catch {
+      // iOS: user denied the "Allow Paste" prompt, or API unavailable
+      setPasteError('Paste permission denied. Use the field below to paste manually.')
+    }
+  }
 
   // ── Camera helpers ─────────────────────────────────────────────────────────
 
@@ -408,58 +406,61 @@ function ScanInner() {
       {!parsed && (
         <div className="space-y-3">
 
-          {/* ── Clipboard auto-detected URL ── */}
-          {clipboardUrl && (
-            <section className="bg-emerald-50 dark:bg-emerald-950 rounded-2xl border border-emerald-200 dark:border-emerald-800 p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <ClipboardPaste size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Receipt URL detected in clipboard</p>
-              </div>
-              <p className="text-xs text-emerald-700 dark:text-emerald-300 font-mono truncate">{clipboardUrl}</p>
-              <div className="flex gap-2">
-                <button onClick={() => { handleSufUrl(clipboardUrl); setClipboardUrl(null) }}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors">
-                  Parse this receipt
-                </button>
-                <button onClick={() => setClipboardUrl(null)}
-                  className="px-4 py-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-sm">
-                  Dismiss
-                </button>
-              </div>
-            </section>
-          )}
-
-          {/* ── Primary: paste URL (+ instructions for iPhone) ── */}
+          {/* ── Primary: paste receipt URL ── */}
           <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
                 <Link2 size={14} className="text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Paste receipt URL</p>
-                <p className="text-[11px] text-gray-400 leading-relaxed">
-                  iPhone: open Camera → point at QR → <strong>long-press</strong> the banner → Copy → paste here
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Receipt URL</p>
+                <p className="text-[11px] text-gray-400 leading-snug">
+                  iPhone Camera → tap QR banner → copy URL in Safari → come back and tap Paste
                 </p>
               </div>
             </div>
-            <input
-              value={manualUrl}
-              onChange={e => {
-                setManualUrl(e.target.value)
-                // auto-trigger as soon as it looks like a valid URL
-                if (isSufUrl(e.target.value.trim())) handleSufUrl(e.target.value.trim())
-              }}
-              onPaste={e => {
-                const text = e.clipboardData.getData('text')
-                if (isSufUrl(text.trim())) {
-                  e.preventDefault()
-                  setManualUrl(text.trim())
-                  handleSufUrl(text.trim())
-                }
-              }}
-              placeholder="https://suf.purs.gov.rs/v/?vl=..."
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+
+            {/* Big paste button — needs user tap for iOS clipboard permission */}
+            <button
+              onClick={pasteFromClipboard}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 text-white font-semibold text-base transition-colors"
+            >
+              <ClipboardPaste size={18} />
+              Paste from Clipboard
+            </button>
+
+            {pasteError && (
+              <p className="text-xs text-red-500 dark:text-red-400">{pasteError}</p>
+            )}
+
+            {/* Fallback: manual type/paste into text field */}
+            <div className="relative">
+              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center px-3 pointer-events-none">
+                <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
+                <span className="mx-2 text-[10px] text-gray-400 shrink-0">or type/paste below</span>
+                <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
+              </div>
+              <div className="pt-6">
+                <input
+                  value={manualUrl}
+                  onChange={e => {
+                    setManualUrl(e.target.value)
+                    if (isSufUrl(e.target.value.trim())) handleSufUrl(e.target.value.trim())
+                  }}
+                  onPaste={e => {
+                    const text = e.clipboardData.getData('text')
+                    if (isSufUrl(text.trim())) {
+                      e.preventDefault()
+                      setManualUrl(text.trim())
+                      handleSufUrl(text.trim())
+                    }
+                  }}
+                  placeholder="https://suf.purs.gov.rs/v/?vl=..."
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
             {manualUrl && !isSufUrl(manualUrl) && (
               <button onClick={() => handleSufUrl(manualUrl.trim())} disabled={loading}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors">
