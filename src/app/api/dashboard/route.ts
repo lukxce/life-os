@@ -9,11 +9,12 @@ export async function GET() {
   const range = getDateRange('month', today)
   const where = range ? { date: { gte: range.start, lte: range.end } } : {}
 
-  const [settings, liveRate, accounts, incomeThisMonth, expensesThisMonth, bills] = await Promise.all([
+  const [settings, liveRate, accounts, incomeRSD, incomeEUR, expensesThisMonth, bills] = await Promise.all([
     prisma.settings.findFirst(),
     getLiveRate(),
     prisma.account.findMany(),
-    prisma.incomeEntry.aggregate({ where, _sum: { netAmount: true } }),
+    prisma.incomeEntry.aggregate({ where: { ...where, currency: 'RSD' }, _sum: { netAmount: true } }),
+    prisma.incomeEntry.aggregate({ where: { ...where, currency: 'EUR' }, _sum: { netAmount: true } }),
     prisma.expenseEntry.aggregate({ where, _sum: { amountRSD: true } }),
     prisma.bill.findMany({ where: { active: true }, take: 5, orderBy: { dayOfMonth: 'asc' } }),
   ])
@@ -47,7 +48,7 @@ export async function GET() {
   return NextResponse.json({
     finance: {
       totalBalanceEUR,
-      incomeThisMonthRSD: incomeThisMonth._sum.netAmount ?? 0,
+      incomeThisMonthRSD: (incomeRSD._sum.netAmount ?? 0) + (incomeEUR._sum.netAmount ?? 0) * manualRate,
       expensesThisMonthRSD: expensesThisMonth._sum.amountRSD ?? 0,
       upcomingBills: bills,
       manualRate,
