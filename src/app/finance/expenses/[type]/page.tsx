@@ -149,14 +149,14 @@ function ExpensesContent({ params }: { params: { type: string } }) {
   const uploadPhoto = async (file: File) => {
     setUploading(true)
     try {
-      const res = await fetch('/api/finance/upload', {
-        method: 'POST',
-        headers: { 'x-filename': file.name, 'Content-Type': file.type },
-        body: file,
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
       })
-      const { url } = await res.json()
-      setForm(p => ({ ...p, photoUrl: url }))
-      toast.success('Photo uploaded')
+      setForm(p => ({ ...p, photoUrl: dataUrl }))
+      toast.success('Photo attached')
     } catch {
       toast.error('Upload failed')
     } finally {
