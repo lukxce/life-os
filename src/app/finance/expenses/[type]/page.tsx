@@ -86,26 +86,42 @@ function ExpensesContent({ params }: { params: { type: string } }) {
     }))
     setShowForm(true)
 
-    // Look up saved nickname for this PIB and override description if found
-    if (merchantPib) {
-      fetch(`/api/finance/merchants`)
-        .then(r => r.json())
-        .then((nicknames: { pib: string; customName: string }[]) => {
-          const match = nicknames.find(n => n.pib === merchantPib)
-          if (match) {
-            setForm(p => ({ ...p, description: match.customName, merchantName: match.customName }))
-          }
-        })
-        .catch(() => {})
+    // Look up merchant memory: PIB-exact first, then name-fuzzy fallback
+    fetch(`/api/finance/merchants`)
+      .then(r => r.json())
+      .then((nicknames: { pib: string; customName: string; category: string | null; subcategory: string | null }[]) => {
+        const norm = (s: string) => s.toLowerCase().replace(/\s+/g, '')
+        const curName = norm(merchantName || '')
 
-      fetch(`/api/finance/suggest-category?pib=${merchantPib}`)
-        .then(r => r.json())
-        .then(data => {
-          if (data.category) {
-            setForm(p => ({ ...p, category: data.category, subcategory: data.subcategory || '' }))
-          }
-        })
-    }
+        const match =
+          // 1. exact PIB match
+          (merchantPib ? nicknames.find(n => n.pib === merchantPib) : null) ??
+          // 2. name-fuzzy: stored name is substring of current, or vice versa (min 3 chars)
+          nicknames.find(n => {
+            const stored = norm(n.customName)
+            return stored.length >= 3 && curName.length >= 3 &&
+              (curName.includes(stored) || stored.includes(curName))
+          })
+
+        if (match) {
+          setForm(p => ({
+            ...p,
+            description:  match.customName,
+            merchantName: match.customName,
+            ...(match.category    && { category:    match.category }),
+            ...(match.subcategory && { subcategory: match.subcategory }),
+          }))
+        } else if (merchantPib) {
+          // Fallback: look at historical expenses for this PIB
+          fetch(`/api/finance/suggest-category?pib=${merchantPib}`)
+            .then(r => r.json())
+            .then(data => {
+              if (data.category) setForm(p => ({ ...p, category: data.category, subcategory: data.subcategory || '' }))
+            })
+            .catch(() => {})
+        }
+      })
+      .catch(() => {})
 
     setTimeout(() => router.replace(`/finance/expenses/${type}`), 100)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -224,13 +240,18 @@ function ExpensesContent({ params }: { params: { type: string } }) {
       })
     }
 
-    // Save merchant nickname: if user typed a description and we have a PIB, remember it
+    // Remember merchant: save name + category for future prefill
     const nicknameToSave = form.description.trim() || form.merchantName.trim()
     if (form.merchantPib && nicknameToSave) {
       fetch('/api/finance/merchants', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pib: form.merchantPib, customName: nicknameToSave }),
+        body: JSON.stringify({
+          pib:         form.merchantPib,
+          customName:  nicknameToSave,
+          category:    form.category    || null,
+          subcategory: form.subcategory || null,
+        }),
       }).catch(() => {})
     }
 

@@ -403,10 +403,12 @@ model ICSCalendar {
 }
 
 model MerchantNickname {
-  pib        String   @id
-  userId     String   @default("default")
-  customName String
-  updatedAt  DateTime @updatedAt
+  pib         String   @id
+  userId      String   @default("default")
+  customName  String
+  category    String?
+  subcategory String?
+  updatedAt   DateTime @updatedAt
 }
 
 model AppConfig {
