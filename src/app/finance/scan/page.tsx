@@ -95,7 +95,11 @@ function ScanInner() {
     let stream: MediaStream
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        video: {
+          facingMode: { ideal: 'environment' },
+          width:  { min: 1280, ideal: 3840 },
+          height: { min: 720,  ideal: 2160 },
+        },
         audio: false,
       })
     } catch (e: any) {
@@ -110,41 +114,47 @@ function ScanInner() {
     applyTrackCaps(stream.getVideoTracks()[0])
     activeRef.current = true
 
+    // Always capture frames to an offscreen canvas at native camera resolution.
+    // Detecting on the video element uses the CSS-scaled display size (low res);
+    // drawing to canvas first gives the full sensor resolution to the decoder.
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+
+    const grabFrame = () => {
+      canvas.width  = vid.videoWidth
+      canvas.height = vid.videoHeight
+      ctx.drawImage(vid, 0, 0)
+      return canvas
+    }
+
     if ('BarcodeDetector' in window) {
       const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] })
-      const loop = async () => {
-        while (activeRef.current) {
-          if (vid.videoWidth > 0 && !vid.paused) {
-            try {
-              const codes = await detector.detect(vid)
-              if (codes.length > 0) {
-                const text: string = codes[0].rawValue
-                setQrFound(true); stopScanner()
-                handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
-                return
-              }
-            } catch {}
-          }
-          await new Promise(r => setTimeout(r, 100))
-        }
-      }
-      loop()
-    } else {
-      const { Html5Qrcode } = await import('html5-qrcode')
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')!
       while (activeRef.current) {
         if (vid.videoWidth > 0 && !vid.paused) {
-          canvas.width = vid.videoWidth; canvas.height = vid.videoHeight
-          ctx.drawImage(vid, 0, 0)
           try {
-            const blob: Blob = await new Promise(res => canvas.toBlob(b => res(b!), 'image/jpeg', 0.8))
+            const codes = await detector.detect(grabFrame())
+            if (codes.length > 0) {
+              const text: string = codes[0].rawValue
+              setQrFound(true); stopScanner()
+              handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
+              return
+            }
+          } catch {}
+        }
+        await new Promise(r => setTimeout(r, 80))
+      }
+    } else {
+      const { Html5Qrcode } = await import('html5-qrcode')
+      while (activeRef.current) {
+        if (vid.videoWidth > 0 && !vid.paused) {
+          try {
+            const blob: Blob = await new Promise(res => grabFrame().toBlob(b => res(b!), 'image/jpeg', 0.92))
             const file = new File([blob], 'f.jpg', { type: 'image/jpeg' })
             const text = await (Html5Qrcode as any).scanFile(file, false)
             if (text) { setQrFound(true); stopScanner(); handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text)); return }
           } catch {}
         }
-        await new Promise(r => setTimeout(r, 200))
+        await new Promise(r => setTimeout(r, 150))
       }
     }
   }
