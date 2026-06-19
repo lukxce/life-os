@@ -114,13 +114,20 @@ function ScanInner() {
     applyTrackCaps(stream.getVideoTracks()[0])
     activeRef.current = true
 
-    // Always capture frames to an offscreen canvas at native camera resolution.
-    // Detecting on the video element uses the CSS-scaled display size (low res);
-    // drawing to canvas first gives the full sensor resolution to the decoder.
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+    const track = stream.getVideoTracks()[0]
+    // ImageCapture.grabFrame() pulls a full-res still from the sensor (Chrome/Android).
+    // Falls back to drawing from the video element on browsers that don't support it.
+    const imageCapture = ('ImageCapture' in window)
+      ? new (window as any).ImageCapture(track)
+      : null
 
-    const grabFrame = () => {
+    const canvas = document.createElement('canvas')
+    const ctx    = canvas.getContext('2d', { willReadFrequently: true })!
+
+    const getFrame = async (): Promise<ImageBitmap | HTMLCanvasElement> => {
+      if (imageCapture) {
+        try { return await imageCapture.grabFrame() } catch {}
+      }
       canvas.width  = vid.videoWidth
       canvas.height = vid.videoHeight
       ctx.drawImage(vid, 0, 0)
@@ -132,7 +139,8 @@ function ScanInner() {
       while (activeRef.current) {
         if (vid.videoWidth > 0 && !vid.paused) {
           try {
-            const codes = await detector.detect(grabFrame())
+            const frame = await getFrame()
+            const codes = await detector.detect(frame)
             if (codes.length > 0) {
               const text: string = codes[0].rawValue
               setQrFound(true); stopScanner()
@@ -148,7 +156,13 @@ function ScanInner() {
       while (activeRef.current) {
         if (vid.videoWidth > 0 && !vid.paused) {
           try {
-            const blob: Blob = await new Promise(res => grabFrame().toBlob(b => res(b!), 'image/jpeg', 0.92))
+            const frame = await getFrame()
+            // Convert ImageBitmap to canvas if needed
+            if (frame instanceof ImageBitmap) {
+              canvas.width = frame.width; canvas.height = frame.height
+              ctx.drawImage(frame, 0, 0)
+            }
+            const blob: Blob = await new Promise(res => canvas.toBlob(b => res(b!), 'image/jpeg', 0.95))
             const file = new File([blob], 'f.jpg', { type: 'image/jpeg' })
             const text = await (Html5Qrcode as any).scanFile(file, false)
             if (text) { setQrFound(true); stopScanner(); handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text)); return }

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getLiveRate, getDateRange } from '@/lib/utils'
+import { computeCryptoPortfolioEUR } from '@/lib/crypto'
 import { startOfDay, endOfDay } from 'date-fns'
 
 export async function GET() {
@@ -21,8 +22,15 @@ export async function GET() {
 
   const manualRate = settings?.manualRate ?? 117.5
 
-  // Compute actual current balance per account (same logic as accounts route)
+  // Crypto portfolio (only compute once if needed)
+  const hasCrypto = accounts.some(a => a.name.toLowerCase().includes('crypto'))
+  const cryptoEUR = hasCrypto ? await computeCryptoPortfolioEUR() : 0
+
+  // Compute actual current balance per account (mirrors accounts route logic)
   const accountBalances = await Promise.all(accounts.map(async (acc) => {
+    if (acc.name.toLowerCase().includes('crypto')) {
+      return { currency: 'EUR', balance: cryptoEUR }
+    }
     const overrideWhere = acc.overrideDate ? { date: { gte: acc.overrideDate } } : {}
     const [incomeSum, expenseSum, convIn, convOut, trfIn, trfOut] = await Promise.all([
       prisma.incomeEntry.aggregate({ where: { accountId: acc.id, ...overrideWhere }, _sum: { netAmount: true } }),
@@ -32,10 +40,10 @@ export async function GET() {
       prisma.transfer.aggregate({ where: { toAccountId: acc.id, ...overrideWhere }, _sum: { amountReceived: true } }),
       prisma.transfer.aggregate({ where: { fromAccountId: acc.id, ...overrideWhere }, _sum: { amountSent: true } }),
     ])
-    const base    = (acc.manualOverride ?? acc.startingBalance)
+    const base    = acc.manualOverride ?? acc.startingBalance
     const balance = base
-      + (incomeSum._sum.netAmount  ?? 0)
-      - (expenseSum._sum.amount    ?? 0)
+      + (incomeSum._sum.netAmount   ?? 0)
+      - (expenseSum._sum.amount     ?? 0)
       + (convIn._sum.amountReceived ?? 0) - (convOut._sum.amountSent ?? 0)
       + (trfIn._sum.amountReceived  ?? 0) - (trfOut._sum.amountSent  ?? 0)
     return { currency: acc.currency, balance }
