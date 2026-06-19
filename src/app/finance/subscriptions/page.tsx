@@ -81,8 +81,11 @@ export default function SubscriptionsPage() {
 
   const logPayment = async () => {
     if (!logSub || !logAmount) return
-    const acc = accounts.find(a => a.id === logSub.accountId)
-    await fetch('/api/finance/expenses', {
+    if (!logSub.accountId) {
+      toast.error('Set an account on this subscription first')
+      return
+    }
+    const res = await fetch('/api/finance/expenses', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         date: new Date().toISOString().split('T')[0],
@@ -91,14 +94,16 @@ export default function SubscriptionsPage() {
         subcategory: logSub.subcategory || '',
         description: logSub.name,
         amount: +logAmount,
-        currency: acc?.currency || 'RSD',
-        accountId: logSub.accountId || '',
+        currency: logSub.billingCurrency || 'EUR',
+        accountId: logSub.accountId,
         subscriptionId: logSub.id,
         notes: '',
       })
     })
+    if (!res.ok) { toast.error('Failed to log payment'); return }
     toast.success(`${logSub.name} payment logged`)
     setLogSub(null); setLogAmount('')
+    load()
   }
 
   const selectedCat = categories.find(c => c.name === form.category)

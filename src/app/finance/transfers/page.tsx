@@ -112,19 +112,19 @@ export default function TransfersPage() {
                 className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">From (Company)</label>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">From</label>
               <select value={form.fromAccountId} onChange={e => setForm(p => ({ ...p, fromAccountId: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm">
                 <option value="">Select account</option>
-                {companyAccounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                {accounts.filter(a => a.id !== form.toAccountId).map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">To (Personal)</label>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">To</label>
               <select value={form.toAccountId} onChange={e => setForm(p => ({ ...p, toAccountId: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm">
                 <option value="">Select account</option>
-                {personalAccounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                {accounts.filter(a => a.id !== form.fromAccountId).map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
             <div className="md:col-span-2">

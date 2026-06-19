@@ -21,10 +21,28 @@ export async function GET() {
 
   const manualRate = settings?.manualRate ?? 117.5
 
-  // Total balance across all accounts in EUR
-  const totalBalanceEUR = accounts.reduce((sum, acc) => {
-    const bal = acc.startingBalance
-    return sum + (acc.currency === 'RSD' ? bal / liveRate : bal)
+  // Compute actual current balance per account (same logic as accounts route)
+  const accountBalances = await Promise.all(accounts.map(async (acc) => {
+    const overrideWhere = acc.overrideDate ? { date: { gte: acc.overrideDate } } : {}
+    const [incomeSum, expenseSum, convIn, convOut, trfIn, trfOut] = await Promise.all([
+      prisma.incomeEntry.aggregate({ where: { accountId: acc.id, ...overrideWhere }, _sum: { netAmount: true } }),
+      prisma.expenseEntry.aggregate({ where: { accountId: acc.id, ...overrideWhere }, _sum: { amount: true } }),
+      prisma.conversion.aggregate({ where: { toAccountId: acc.id, ...overrideWhere }, _sum: { amountReceived: true } }),
+      prisma.conversion.aggregate({ where: { fromAccountId: acc.id, ...overrideWhere }, _sum: { amountSent: true } }),
+      prisma.transfer.aggregate({ where: { toAccountId: acc.id, ...overrideWhere }, _sum: { amountReceived: true } }),
+      prisma.transfer.aggregate({ where: { fromAccountId: acc.id, ...overrideWhere }, _sum: { amountSent: true } }),
+    ])
+    const base    = (acc.manualOverride ?? acc.startingBalance)
+    const balance = base
+      + (incomeSum._sum.netAmount  ?? 0)
+      - (expenseSum._sum.amount    ?? 0)
+      + (convIn._sum.amountReceived ?? 0) - (convOut._sum.amountSent ?? 0)
+      + (trfIn._sum.amountReceived  ?? 0) - (trfOut._sum.amountSent  ?? 0)
+    return { currency: acc.currency, balance }
+  }))
+
+  const totalBalanceEUR = accountBalances.reduce((sum, acc) => {
+    return sum + (acc.currency === 'RSD' ? acc.balance / liveRate : acc.balance)
   }, 0)
 
   // Today's habit log
