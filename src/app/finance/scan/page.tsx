@@ -19,10 +19,9 @@ function ScanInner() {
   const router = useRouter()
   const params = useSearchParams()
 
-  const videoRef    = useRef<HTMLVideoElement>(null)
-  const streamRef   = useRef<MediaStream | null>(null)
-  const activeRef   = useRef(false)
-  const trackRef    = useRef<MediaStreamTrack | null>(null)
+  const videoRef        = useRef<HTMLVideoElement>(null)
+  const zxingRef        = useRef<{ stop: () => void } | null>(null)
+  const trackRef        = useRef<MediaStreamTrack | null>(null)
 
   const [scanning,       setScanning]       = useState(false)
   const [qrFound,        setQrFound]        = useState(false)
@@ -59,19 +58,22 @@ function ScanInner() {
     setLoading(false)
   }, [])
 
-  // Handle ?url= from bookmarklet
   useEffect(() => {
     const shared = params.get('url') || params.get('text') || ''
     if (shared && isSufUrl(shared)) handleSufUrl(shared.trim())
   }, [params, handleSufUrl])
 
-  // Camera helpers
-  function applyTrackCaps(track: MediaStreamTrack) {
+  const applyTrackCaps = (track: MediaStreamTrack) => {
     trackRef.current = track
     const caps = track.getCapabilities() as any
     if (caps?.torch) setTorchSupported(true)
-    if (caps?.zoom) { setZoomSupported(true); setZoomMin(caps.zoom.min ?? 1); setZoomMax(Math.min(caps.zoom.max ?? 5, 5)) }
+    if (caps?.zoom) {
+      setZoomSupported(true)
+      setZoomMin(caps.zoom.min ?? 1)
+      setZoomMax(Math.min(caps.zoom.max ?? 5, 5))
+    }
   }
+
   const toggleTorch = async () => {
     const t = trackRef.current; if (!t) return
     try { await t.applyConstraints({ advanced: [{ torch: !torchOn } as any] }); setTorchOn(v => !v) } catch {}
@@ -82,9 +84,8 @@ function ScanInner() {
   }
 
   const stopScanner = useCallback(() => {
-    activeRef.current = false
-    streamRef.current?.getTracks().forEach(t => t.stop())
-    streamRef.current = null
+    zxingRef.current?.stop()
+    zxingRef.current = null
     trackRef.current = null
     setScanning(false); setQrFound(false)
     setTorchOn(false); setTorchSupported(false); setZoomSupported(false); setZoom(1)
@@ -92,84 +93,42 @@ function ScanInner() {
 
   const startScanner = async () => {
     setError(''); setQrFound(false); setScanning(true)
-    let stream: MediaStream
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          width:  { min: 1280, ideal: 3840 },
-          height: { min: 720,  ideal: 2160 },
+      const { BrowserQRCodeReader } = await import('@zxing/browser')
+      const reader = new BrowserQRCodeReader()
+
+      const controls = await reader.decodeFromConstraints(
+        {
+          video: {
+            facingMode: { ideal: 'environment' },
+            width:  { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
         },
-        audio: false,
-      })
+        videoRef.current!,
+        (result, err, ctrl) => {
+          if (result) {
+            const text = result.getText()
+            setQrFound(true)
+            ctrl.stop()
+            zxingRef.current = null
+            trackRef.current = null
+            setScanning(false)
+            handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
+          }
+        }
+      )
+
+      zxingRef.current = controls
+
+      // Grab track for torch/zoom after ZXing has set srcObject
+      const stream = videoRef.current?.srcObject as MediaStream | null
+      const track  = stream?.getVideoTracks()[0]
+      if (track) applyTrackCaps(track)
+
     } catch (e: any) {
       setScanning(false)
       setError(/permission|denied/i.test(String(e)) ? 'Camera permission denied.' : 'Could not start camera.')
-      return
-    }
-    streamRef.current = stream
-    const vid = videoRef.current!
-    vid.srcObject = stream
-    try { await vid.play() } catch {}
-    applyTrackCaps(stream.getVideoTracks()[0])
-    activeRef.current = true
-
-    const track = stream.getVideoTracks()[0]
-    // ImageCapture.grabFrame() pulls a full-res still from the sensor (Chrome/Android).
-    // Falls back to drawing from the video element on browsers that don't support it.
-    const imageCapture = ('ImageCapture' in window)
-      ? new (window as any).ImageCapture(track)
-      : null
-
-    const canvas = document.createElement('canvas')
-    const ctx    = canvas.getContext('2d', { willReadFrequently: true })!
-
-    const getFrame = async (): Promise<ImageBitmap | HTMLCanvasElement> => {
-      if (imageCapture) {
-        try { return await imageCapture.grabFrame() } catch {}
-      }
-      canvas.width  = vid.videoWidth
-      canvas.height = vid.videoHeight
-      ctx.drawImage(vid, 0, 0)
-      return canvas
-    }
-
-    if ('BarcodeDetector' in window) {
-      const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] })
-      while (activeRef.current) {
-        if (vid.videoWidth > 0 && !vid.paused) {
-          try {
-            const frame = await getFrame()
-            const codes = await detector.detect(frame)
-            if (codes.length > 0) {
-              const text: string = codes[0].rawValue
-              setQrFound(true); stopScanner()
-              handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
-              return
-            }
-          } catch {}
-        }
-        await new Promise(r => setTimeout(r, 80))
-      }
-    } else {
-      const { Html5Qrcode } = await import('html5-qrcode')
-      while (activeRef.current) {
-        if (vid.videoWidth > 0 && !vid.paused) {
-          try {
-            const frame = await getFrame()
-            // Convert ImageBitmap to canvas if needed
-            if (frame instanceof ImageBitmap) {
-              canvas.width = frame.width; canvas.height = frame.height
-              ctx.drawImage(frame, 0, 0)
-            }
-            const blob: Blob = await new Promise(res => canvas.toBlob(b => res(b!), 'image/jpeg', 0.95))
-            const file = new File([blob], 'f.jpg', { type: 'image/jpeg' })
-            const text = await (Html5Qrcode as any).scanFile(file, false)
-            if (text) { setQrFound(true); stopScanner(); handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text)); return }
-          } catch {}
-        }
-        await new Promise(r => setTimeout(r, 150))
-      }
     }
   }
 
@@ -179,61 +138,82 @@ function ScanInner() {
     <div className="max-w-lg mx-auto space-y-4 pb-8">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Scan Receipt</h2>
 
-      {/* QR video — always mounted */}
-      <video ref={videoRef} playsInline muted autoPlay
-        style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-                 objectFit: 'cover', zIndex: scanning ? 50 : -1,
-                 opacity: scanning ? 1 : 0, pointerEvents: 'none' }} />
+      {/* Video element — ZXing manages srcObject */}
+      <video ref={videoRef} playsInline muted
+        style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          objectFit: 'cover',
+          zIndex:   scanning ? 50 : -1,
+          opacity:  scanning ? 1  : 0,
+          pointerEvents: 'none',
+        }} />
 
-      {/* QR fullscreen overlay */}
+      {/* Fullscreen overlay */}
       {scanning && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 51, display: 'flex', flexDirection: 'column' }}>
+          {/* Top bar */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '52px 20px 16px', background: 'linear-gradient(to bottom,rgba(0,0,0,0.65),transparent)' }}>
+                        padding: '52px 20px 16px',
+                        background: 'linear-gradient(to bottom, rgba(0,0,0,0.65), transparent)' }}>
             <span style={{ color: 'white', fontWeight: 600, fontSize: 18 }}>Scan QR Code</span>
             <button onClick={stopScanner}
               style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.2)',
-                       border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                       border: 'none', color: 'white', display: 'flex', alignItems: 'center',
+                       justifyContent: 'center', cursor: 'pointer' }}>
               <X size={20} />
             </button>
           </div>
+
+          {/* Viewfinder */}
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ position: 'relative', width: 260, height: 260, boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }}>
-              {/* Corner brackets */}
-              {[{t:0,b:'auto',l:0,r:'auto'},{t:0,b:'auto',l:'auto',r:0},{t:'auto',b:0,l:0,r:'auto'},{t:'auto',b:0,l:'auto',r:0}].map((pos,i) => (
-                <span key={i} style={{ position:'absolute', top:pos.t, bottom:pos.b, left:pos.l, right:pos.r, width:32, height:32,
-                  borderTop:    i<2  ? '3px solid white' : undefined,
-                  borderBottom: i>=2 ? '3px solid white' : undefined,
-                  borderLeft:   i%2===0 ? '3px solid white' : undefined,
-                  borderRight:  i%2===1 ? '3px solid white' : undefined }} />
+            <div style={{ position: 'relative', width: 260, height: 260,
+                          boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }}>
+              {[{t:0,b:'auto',l:0,r:'auto'},{t:0,b:'auto',l:'auto',r:0},
+                {t:'auto',b:0,l:0,r:'auto'},{t:'auto',b:0,l:'auto',r:0}].map((p, i) => (
+                <span key={i} style={{
+                  position: 'absolute', top: p.t, bottom: p.b, left: p.l, right: p.r,
+                  width: 32, height: 32,
+                  borderTop:    i < 2  ? '3px solid white' : undefined,
+                  borderBottom: i >= 2 ? '3px solid white' : undefined,
+                  borderLeft:   i % 2 === 0 ? '3px solid white' : undefined,
+                  borderRight:  i % 2 === 1 ? '3px solid white' : undefined,
+                }} />
               ))}
               {qrFound && (
-                <div style={{ position:'absolute', inset:0, border:'2px solid #34d399', background:'rgba(52,211,153,0.2)',
-                               display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <div style={{ position: 'absolute', inset: 0, border: '2px solid #34d399',
+                               background: 'rgba(52,211,153,0.2)',
+                               display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Check size={48} color="#34d399" strokeWidth={3} />
                 </div>
               )}
             </div>
           </div>
-          <div style={{ padding:'16px 24px 52px', background:'linear-gradient(to top,rgba(0,0,0,0.65),transparent)', display:'flex', flexDirection:'column', gap:12 }}>
-            <p style={{ textAlign:'center', color:'rgba(255,255,255,0.7)', fontSize:14, margin:0 }}>
-              {qrFound ? 'Detected — loading…' : 'Point camera at the QR code'}
+
+          {/* Bottom controls */}
+          <div style={{ padding: '16px 24px 52px',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.65), transparent)',
+                        display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontSize: 14, margin: 0 }}>
+              {qrFound ? 'Detected — loading…' : 'Point camera at the QR code on your receipt'}
             </p>
             {zoomSupported && (
-              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <ZoomOut size={16} color="rgba(255,255,255,0.6)" />
                 <input type="range" min={zoomMin} max={zoomMax} step={0.1} value={zoom}
-                  onChange={e => applyZoom(Number(e.target.value))} style={{ flex:1, accentColor:'#818cf8' }} />
+                  onChange={e => applyZoom(Number(e.target.value))}
+                  style={{ flex: 1, accentColor: '#818cf8' }} />
                 <ZoomIn size={16} color="rgba(255,255,255,0.6)" />
-                <span style={{ color:'rgba(255,255,255,0.6)', fontSize:12, width:32, textAlign:'right' }}>{zoom.toFixed(1)}×</span>
+                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, width: 32, textAlign: 'right' }}>
+                  {zoom.toFixed(1)}×
+                </span>
               </div>
             )}
             {torchSupported && (
               <button onClick={toggleTorch}
-                style={{ width:'100%', padding:'12px', borderRadius:16, border:'none', cursor:'pointer',
+                style={{ width: '100%', padding: 12, borderRadius: 16, border: 'none', cursor: 'pointer',
                          background: torchOn ? '#facc15' : 'rgba(255,255,255,0.15)',
-                         color: torchOn ? '#111' : 'white', fontWeight:600, fontSize:14,
-                         display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                         color: torchOn ? '#111' : 'white', fontWeight: 600, fontSize: 14,
+                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 {torchOn ? <Zap size={16} /> : <ZapOff size={16} />}
                 {torchOn ? 'Flash On' : 'Flash Off'}
               </button>
@@ -244,7 +224,6 @@ function ScanInner() {
 
       {!parsed && (
         <div className="space-y-3">
-          {/* QR scanner */}
           <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
             <button onClick={startScanner} disabled={scanning}
               className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white py-3 rounded-xl font-semibold transition-colors">
@@ -252,7 +231,6 @@ function ScanInner() {
             </button>
           </section>
 
-          {/* URL paste */}
           <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-2">
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Paste URL</p>
             <input
@@ -306,24 +284,30 @@ function ScanInner() {
           <div className="space-y-3">
             <div>
               <label className="text-xs text-gray-400 block mb-1">Merchant</label>
-              <input className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <input
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={parsed.merchantName ?? ''}
                 onChange={e => setParsed(p => p && ({ ...p, merchantName: e.target.value }))}
-                placeholder="e.g. Maxi, Lidl, DM…" />
+                placeholder="e.g. Maxi, Lidl, DM…"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Amount (RSD)</label>
-                <input type="number" className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <input type="number"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={parsed.total ?? ''}
                   onChange={e => setParsed(p => p && ({ ...p, total: parseFloat(e.target.value) || null }))}
-                  placeholder="0.00" />
+                  placeholder="0.00"
+                />
               </div>
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Date</label>
-                <input type="date" className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <input type="date"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={parsed.date ? new Date(parsed.date).toISOString().split('T')[0] : ''}
-                  onChange={e => setParsed(p => p && ({ ...p, date: e.target.value ? new Date(e.target.value).toISOString() : null }))} />
+                  onChange={e => setParsed(p => p && ({ ...p, date: e.target.value ? new Date(e.target.value).toISOString() : null }))}
+                />
               </div>
             </div>
           </div>
