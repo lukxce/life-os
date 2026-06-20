@@ -30,6 +30,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
   const [hasHandledScan, setHasHandledScan] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ category: '', subcategory: '', merchant: '' })
+  const [photoViewer, setPhotoViewer] = useState<string | null>(null)
 
   const [form, setForm] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -285,6 +286,15 @@ function ExpensesContent({ params }: { params: { type: string } }) {
 
   return (
     <PullToRefresh onRefresh={load}>
+    <>
+    {photoViewer && (
+      <div
+        className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+        onClick={() => setPhotoViewer(null)}
+      >
+        <img src={photoViewer} alt="receipt" className="max-w-full max-h-full object-contain rounded-lg" />
+      </div>
+    )}
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100">{title}</h2>
@@ -454,9 +464,9 @@ function ExpensesContent({ params }: { params: { type: string } }) {
                   {uploading ? 'Uploading...' : 'Choose photo'}
                 </button>
                 {form.photoUrl && (
-                  <a href={form.photoUrl} target="_blank" rel="noopener noreferrer">
+                  <button type="button" onClick={() => setPhotoViewer(form.photoUrl)}>
                     <img src={form.photoUrl} alt="receipt" className="h-10 w-10 object-cover rounded border border-gray-200 dark:border-gray-700" />
-                  </a>
+                  </button>
                 )}
                 {form.photoUrl && (
                   <button type="button" onClick={() => setForm(p => ({ ...p, photoUrl: '' }))} className="text-gray-400 hover:text-red-500">
@@ -513,7 +523,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
                   {e.category}
                   {e.hasWarranty && <span title={`${e.warrantyMonths}mo warranty${e.warrantyNotes ? `: ${e.warrantyNotes}` : ''}`} className="ml-1">🛡️</span>}
                   {e.sufUrl ? <a href={e.sufUrl} target="_blank" rel="noopener noreferrer" title="View receipt" className="ml-1">📄</a> : null}
-                  {e.photoUrl ? <a href={e.photoUrl} target="_blank" rel="noopener noreferrer" title="View photo" className="ml-1">📷</a> : null}
+                  {e.photoUrl ? <button onClick={() => setPhotoViewer(e.photoUrl)} title="View photo" className="ml-1">📷</button> : null}
                   {e.tags?.length > 0 && e.tags.map((t: string) => <span key={t} className="ml-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded-full">{t}</span>)}
                 </td>
                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">{e.subcategory || '-'}</td>
@@ -580,6 +590,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
         ))}
       </div>
     </div>
+    </>
     </PullToRefresh>
   )
 }
