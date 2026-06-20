@@ -5,7 +5,7 @@ import { Plus, X, TrendingUp, ShoppingCart, ArrowLeftRight, ScanLine } from 'luc
 
 const actions = [
   { label: 'Scan Receipt', icon: ScanLine,      href: '/scan',             color: 'bg-blue-500' },
-  { label: 'Add Expense',  icon: ShoppingCart,  href: '/expenses/personal', color: 'bg-red-500' },
+  { label: 'Add Expense',  icon: ShoppingCart,  href: '/expenses/personal?open=1', color: 'bg-red-500' },
   { label: 'Add Income',   icon: TrendingUp,    href: '/income',            color: 'bg-green-500' },
   { label: 'Transfer',     icon: ArrowLeftRight, href: '/transfers',        color: 'bg-teal-500' },
 ]

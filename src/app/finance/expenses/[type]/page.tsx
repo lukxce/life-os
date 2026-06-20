@@ -65,6 +65,14 @@ function ExpensesContent({ params }: { params: { type: string } }) {
   useEffect(() => { load() }, [type])
 
   useEffect(() => {
+    if (searchParams.get('open') === '1') {
+      setShowForm(true)
+      router.replace(`/finance/expenses/${type}`)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
     if (hasHandledScan) return
     const merchantName = searchParams.get('merchantName')
     const merchantPib = searchParams.get('merchantPib')

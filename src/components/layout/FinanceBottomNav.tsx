@@ -43,7 +43,7 @@ const MORE_ITEMS = [
 
 const ADD_ACTIONS = [
   { href: '/finance/scan',              label: 'Scan Receipt',   icon: ScanLine,       color: 'bg-blue-600' },
-  { href: '/finance/expenses/personal', label: 'Add Expense',    icon: Receipt,        color: 'bg-red-500' },
+  { href: '/finance/expenses/personal?open=1', label: 'Add Expense',    icon: Receipt,        color: 'bg-red-500' },
   { href: '/finance/income',            label: 'Add Income',     icon: DollarSign,     color: 'bg-green-500' },
   { href: '/finance/transfers',         label: 'Transfer',       icon: ArrowLeftRight, color: 'bg-teal-500' },
 ]
