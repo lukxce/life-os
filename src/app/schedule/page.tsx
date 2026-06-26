@@ -11,7 +11,7 @@ type ScheduleBlock = {
 type ScheduleDay = { id: string; day: string; label: string | null; summary: string | null }
 type ApiResponse = { blocks: Record<string, ScheduleBlock[]>; days: Record<string, ScheduleDay> }
 interface ICSCalendarConfig { id: string; name: string; url: string; color: string }
-interface ICSEvent { uid: string; summary: string; start: string; end: string; location?: string; allDay: boolean; calendarColor?: string; calendarName?: string; calendarId?: string }
+interface ICSEvent { uid: string; summary: string; start: string; end: string; location?: string; description?: string; url?: string; allDay: boolean; calendarColor?: string; calendarName?: string; calendarId?: string }
 
 const DAYS = [
   { key: 'mon', short: 'Mon', full: 'Monday' },
@@ -114,6 +114,7 @@ function toLocalDateStr(d: Date): string {
 }
 
 function ScheduleBlock_({ block, editMode, onEdit, onDelete, col = 0, colCount = 1 }: { block: ScheduleBlock; editMode: boolean; onEdit: (b: ScheduleBlock) => void; onDelete: (b: ScheduleBlock) => void; col?: number; colCount?: number }) {
+  const [tip, setTip] = useState(false)
   const colors = CATEGORY_COLORS[block.category] ?? CATEGORY_COLORS.ritual
   const startMin = timeToMinutes(block.startTime)
   const endMin = block.endTime ? timeToMinutes(block.endTime) : startMin + 30
@@ -125,7 +126,15 @@ function ScheduleBlock_({ block, editMode, onEdit, onDelete, col = 0, colCount =
   const width = `calc(${pct}% - ${col > 0 ? 2 : 0}px)`
 
   return (
-    <div style={{ position:'absolute',top,left,width,height,background:colors.bg,borderLeft:`3px solid ${colors.border}`,borderRadius:6,padding:isShort?'3px 8px':'6px 10px',overflow:'hidden',boxSizing:'border-box' }}>
+    <div style={{ position:'absolute',top,left,width,height,background:colors.bg,borderLeft:`3px solid ${colors.border}`,borderRadius:6,padding:isShort?'3px 8px':'6px 10px',overflow:'visible',boxSizing:'border-box' }}
+      onMouseEnter={() => setTip(true)} onMouseLeave={() => setTip(false)}>
+      {tip && colCount > 1 && (
+        <div style={{ position:'absolute',bottom:'calc(100% + 6px)',left:0,zIndex:999,background:'#1f2937',color:'#f9fafb',borderRadius:8,padding:'8px 10px',minWidth:160,maxWidth:240,boxShadow:'0 4px 16px rgba(0,0,0,0.25)',pointerEvents:'none' }}>
+          <div style={{ fontSize:12,fontWeight:700,lineHeight:1.4 }}>{block.name}</div>
+          <div style={{ fontSize:11,color:'#9ca3af',marginTop:2 }}>{block.startTime}{block.endTime ? ` – ${block.endTime}` : ''}</div>
+          {block.note && <div style={{ fontSize:11,color:'#d1d5db',marginTop:3,lineHeight:1.4 }}>{block.note}</div>}
+        </div>
+      )}
       <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',gap:4,overflow:'hidden' }}>
         <div style={{ display:'flex',alignItems:'center',gap:6,overflow:'hidden',flex:1,minWidth:0 }}>
           <span style={{ fontSize:11,fontWeight:600,color:colors.timeColor,whiteSpace:'nowrap',flexShrink:0 }}>
@@ -148,6 +157,7 @@ function ScheduleBlock_({ block, editMode, onEdit, onDelete, col = 0, colCount =
 }
 
 function ICSBlock({ ev, col = 0, colCount = 1 }: { ev: ICSEvent; col?: number; colCount?: number }) {
+  const [tip, setTip] = useState(false)
   const color = ev.calendarColor ?? '#6366f1'
   const start = new Date(ev.start)
   const end = new Date(ev.end)
@@ -160,14 +170,47 @@ function ICSBlock({ ev, col = 0, colCount = 1 }: { ev: ICSEvent; col?: number; c
   const height = Math.max(minutesToPx(clampedEnd) - minutesToPx(clampedStart), 22)
   const isShort = height < 44
   const timeStr = `${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`
+  const endStr  = `${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`
   const pct = 100 / colCount
   const left = `calc(${col * pct}% + ${col > 0 ? 2 : 0}px)`
   const width = `calc(${pct}% - ${col > 0 ? 2 : 0}px)`
 
-  return (
-    <div style={{ position:'absolute',top,left,width,height,background:color+'18',borderLeft:`3px solid ${color}`,borderRadius:6,padding:isShort?'2px 8px':'5px 10px',overflow:'hidden',boxSizing:'border-box' }}>
+  const inner = (
+    <>
       <div style={{ fontSize:11,fontWeight:600,color,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis' }}>{timeStr} {ev.summary}</div>
       {!isShort && ev.location && <div style={{ fontSize:10,color:color+'cc',marginTop:2,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis' }}>📍 {ev.location}</div>}
+      {/* Hover tooltip */}
+      {tip && (
+        <div style={{ position:'absolute',bottom:'calc(100% + 6px)',left:0,zIndex:999,background:'#1f2937',color:'#f9fafb',borderRadius:8,padding:'8px 10px',minWidth:180,maxWidth:260,boxShadow:'0 4px 16px rgba(0,0,0,0.25)',pointerEvents:'none' }}>
+          <div style={{ fontSize:12,fontWeight:700,lineHeight:1.4,marginBottom:ev.location?4:0 }}>{ev.summary}</div>
+          <div style={{ fontSize:11,color:'#9ca3af' }}>{timeStr} – {endStr}</div>
+          {ev.location && <div style={{ fontSize:11,color:'#9ca3af',marginTop:3 }}>📍 {ev.location}</div>}
+          {ev.url && <div style={{ fontSize:11,color:'#60a5fa',marginTop:4 }}>🔗 Click to join</div>}
+        </div>
+      )}
+    </>
+  )
+
+  const baseStyle: React.CSSProperties = {
+    position:'absolute',top,left,width,height,
+    background:color+'18',borderLeft:`3px solid ${color}`,borderRadius:6,
+    padding:isShort?'2px 8px':'5px 10px',overflow:'visible',boxSizing:'border-box',
+    cursor: ev.url ? 'pointer' : 'default',
+  }
+
+  if (ev.url) {
+    return (
+      <a href={ev.url} target="_blank" rel="noopener noreferrer"
+        style={{ ...baseStyle, textDecoration:'none', display:'block' }}
+        onMouseEnter={() => setTip(true)} onMouseLeave={() => setTip(false)}>
+        {inner}
+      </a>
+    )
+  }
+
+  return (
+    <div style={baseStyle} onMouseEnter={() => setTip(true)} onMouseLeave={() => setTip(false)}>
+      {inner}
     </div>
   )
 }

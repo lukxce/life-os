@@ -5,7 +5,17 @@ export interface ICSEvent {
   end: string
   location?: string
   description?: string
+  url?: string
   allDay: boolean
+}
+
+const MEET_URL_RE = /https?:\/\/(?:meet\.google\.com|zoom\.us|teams\.microsoft\.com|us\d+\.zoom\.us|meet\.jit\.si|whereby\.com)[^\s<>"]*/i
+
+function extractMeetingUrl(description?: string, url?: string): string | undefined {
+  if (url?.trim()) return url.trim()
+  if (!description) return undefined
+  const m = description.match(MEET_URL_RE)
+  return m?.[0]
 }
 
 // ── Windows timezone name → IANA mapping ──────────────────────────────────────
@@ -429,11 +439,13 @@ export function parseICS(text: string): ICSEvent[] {
         : startDate
       const durationMs = endDate.getTime() - startDate.getTime()
 
+      const descriptionRaw = raw['DESCRIPTION']?.replace(/\\n/g, '\n').replace(/\\,/g, ',')
       const baseEvent = {
         uid:         raw['UID'] || `${Date.now()}-${Math.random()}`,
         summary:     (raw['SUMMARY']     || '(No title)').replace(/\\n/g, ' ').replace(/\\,/g, ','),
         location:    raw['LOCATION']?.replace(/\\n/g, ', ').replace(/\\,/g, ',')  || undefined,
-        description: raw['DESCRIPTION']?.replace(/\\n/g, '\n').replace(/\\,/g, ',') || undefined,
+        description: descriptionRaw || undefined,
+        url:         extractMeetingUrl(descriptionRaw, raw['URL']),
         allDay,
       }
 
