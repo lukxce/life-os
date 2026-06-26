@@ -29,7 +29,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [hasHandledScan, setHasHandledScan] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
-  const [filters, setFilters] = useState({ category: '', subcategory: '', merchant: '' })
+  const [filters, setFilters] = useState({ category: '', subcategory: '', merchant: '', account: '' })
   const [photoViewer, setPhotoViewer] = useState<string | null>(null)
 
   const [form, setForm] = useState({
@@ -147,6 +147,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
     return entries.filter(e => {
       if (filters.category && e.category !== filters.category) return false
       if (filters.subcategory && e.subcategory !== filters.subcategory) return false
+      if (filters.account && e.accountId !== filters.account) return false
       if (filters.merchant) {
         const q = filters.merchant.toLowerCase().trim()
         const name = (e.merchantName || '').toLowerCase()
@@ -158,8 +159,8 @@ function ExpensesContent({ params }: { params: { type: string } }) {
     })
   }, [entries, filters])
 
-  const activeFilterCount = [filters.category, filters.subcategory, filters.merchant].filter(Boolean).length
-  const clearFilters = () => setFilters({ category: '', subcategory: '', merchant: '' })
+  const activeFilterCount = [filters.category, filters.subcategory, filters.merchant, filters.account].filter(Boolean).length
+  const clearFilters = () => setFilters({ category: '', subcategory: '', merchant: '', account: '' })
 
   const defaultForm = {
     date: new Date().toISOString().split('T')[0],
@@ -323,29 +324,37 @@ function ExpensesContent({ params }: { params: { type: string } }) {
               </button>
             )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Category</label>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Category</label>
               <select value={filters.category} onChange={e => setFilters(f => ({ ...f, category: e.target.value, subcategory: '' }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800">
                 <option value="">All categories</option>
                 {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Subcategory</label>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Subcategory</label>
               <select value={filters.subcategory} onChange={e => setFilters(f => ({ ...f, subcategory: e.target.value }))}
                 disabled={!filters.category}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 disabled:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400 dark:bg-gray-800">
                 <option value="">All subcategories</option>
                 {filterSubcats.map((s: string) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Merchant (name, PIB, or description)</label>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Account</label>
+              <select value={filters.account} onChange={e => setFilters(f => ({ ...f, account: e.target.value }))}
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800">
+                <option value="">All accounts</option>
+                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Merchant / description</label>
               <input type="text" value={filters.merchant} onChange={e => setFilters(f => ({ ...f, merchant: e.target.value }))}
                 placeholder="e.g. MAXI, 100000139, milk"
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800" />
             </div>
           </div>
           {activeFilterCount > 0 && (
@@ -564,7 +573,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
                   {e.subcategory && <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">· {e.subcategory}</span>}
                   {e.hasWarranty && <span title={`${e.warrantyMonths}mo warranty${e.warrantyNotes ? `: ${e.warrantyNotes}` : ''}`}>🛡️</span>}
                   {e.sufUrl ? <a href={e.sufUrl} target="_blank" rel="noopener noreferrer" title="View receipt">📄</a> : null}
-                  {e.photoUrl ? <a href={e.photoUrl} target="_blank" rel="noopener noreferrer" title="View photo">📷</a> : null}
+                  {e.photoUrl ? <button onClick={() => setPhotoViewer(e.photoUrl)} title="View photo">📷</button> : null}
                 </div>
                 {e.tags?.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-1">
