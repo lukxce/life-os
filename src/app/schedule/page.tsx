@@ -47,6 +47,38 @@ function timeToMinutes(t: string): number {
 }
 function minutesToPx(m: number): number { return (m - DAY_START) * PX_PER_MIN }
 
+// Greedy column-layout for overlapping events. Returns each item with its
+// assigned column index and the total number of columns in its cluster.
+function computeColumns<T>(
+  items: T[],
+  getStart: (t: T) => number,
+  getEnd:   (t: T) => number,
+): { item: T; col: number; colCount: number }[] {
+  if (items.length === 0) return []
+  const sorted = items.map((item, i) => ({ item, i, s: getStart(item), e: getEnd(item) }))
+    .sort((a, b) => a.s - b.s)
+  const cols    = new Array(sorted.length).fill(0)
+  const counts  = new Array(sorted.length).fill(1)
+  let ci = 0
+  while (ci < sorted.length) {
+    let clEnd = sorted[ci].e
+    let cj = ci + 1
+    while (cj < sorted.length && sorted[cj].s < clEnd) {
+      clEnd = Math.max(clEnd, sorted[cj].e); cj++
+    }
+    const colEnds: number[] = []
+    for (let k = ci; k < cj; k++) {
+      let assigned = colEnds.findIndex(end => end <= sorted[k].s)
+      if (assigned === -1) { assigned = colEnds.length; colEnds.push(sorted[k].e) }
+      else colEnds[assigned] = sorted[k].e
+      cols[k] = assigned
+    }
+    for (let k = ci; k < cj; k++) counts[k] = colEnds.length
+    ci = cj
+  }
+  return sorted.map((x, k) => ({ item: x.item, col: cols[k], colCount: counts[k] }))
+}
+
 function getISOWeekParity(monday: Date): number {
   const d = new Date(monday)
   d.setHours(0, 0, 0, 0)
@@ -81,16 +113,19 @@ function toLocalDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
-function ScheduleBlock_({ block, editMode, onEdit, onDelete }: { block: ScheduleBlock; editMode: boolean; onEdit: (b: ScheduleBlock) => void; onDelete: (b: ScheduleBlock) => void }) {
+function ScheduleBlock_({ block, editMode, onEdit, onDelete, col = 0, colCount = 1 }: { block: ScheduleBlock; editMode: boolean; onEdit: (b: ScheduleBlock) => void; onDelete: (b: ScheduleBlock) => void; col?: number; colCount?: number }) {
   const colors = CATEGORY_COLORS[block.category] ?? CATEGORY_COLORS.ritual
   const startMin = timeToMinutes(block.startTime)
   const endMin = block.endTime ? timeToMinutes(block.endTime) : startMin + 30
   const top = minutesToPx(startMin)
   const height = Math.max(minutesToPx(endMin) - minutesToPx(startMin), 24)
   const isShort = height < 50
+  const pct = 100 / colCount
+  const left = `calc(${col * pct}% + ${col > 0 ? 2 : 0}px)`
+  const width = `calc(${pct}% - ${col > 0 ? 2 : 0}px)`
 
   return (
-    <div style={{ position:'absolute',top,left:0,right:0,height,background:colors.bg,borderLeft:`3px solid ${colors.border}`,borderRadius:6,padding:isShort?'3px 8px':'6px 10px',overflow:'hidden',boxSizing:'border-box' }}>
+    <div style={{ position:'absolute',top,left,width,height,background:colors.bg,borderLeft:`3px solid ${colors.border}`,borderRadius:6,padding:isShort?'3px 8px':'6px 10px',overflow:'hidden',boxSizing:'border-box' }}>
       <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',gap:4,overflow:'hidden' }}>
         <div style={{ display:'flex',alignItems:'center',gap:6,overflow:'hidden',flex:1,minWidth:0 }}>
           <span style={{ fontSize:11,fontWeight:600,color:colors.timeColor,whiteSpace:'nowrap',flexShrink:0 }}>
@@ -112,7 +147,7 @@ function ScheduleBlock_({ block, editMode, onEdit, onDelete }: { block: Schedule
   )
 }
 
-function ICSBlock({ ev }: { ev: ICSEvent }) {
+function ICSBlock({ ev, col = 0, colCount = 1 }: { ev: ICSEvent; col?: number; colCount?: number }) {
   const color = ev.calendarColor ?? '#6366f1'
   const start = new Date(ev.start)
   const end = new Date(ev.end)
@@ -125,9 +160,12 @@ function ICSBlock({ ev }: { ev: ICSEvent }) {
   const height = Math.max(minutesToPx(clampedEnd) - minutesToPx(clampedStart), 22)
   const isShort = height < 44
   const timeStr = `${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`
+  const pct = 100 / colCount
+  const left = `calc(${col * pct}% + ${col > 0 ? 2 : 0}px)`
+  const width = `calc(${pct}% - ${col > 0 ? 2 : 0}px)`
 
   return (
-    <div style={{ position:'absolute',top,left:0,right:0,height,background:color+'18',borderLeft:`3px solid ${color}`,borderRadius:6,padding:isShort?'2px 8px':'5px 10px',overflow:'hidden',boxSizing:'border-box' }}>
+    <div style={{ position:'absolute',top,left,width,height,background:color+'18',borderLeft:`3px solid ${color}`,borderRadius:6,padding:isShort?'2px 8px':'5px 10px',overflow:'hidden',boxSizing:'border-box' }}>
       <div style={{ fontSize:11,fontWeight:600,color,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis' }}>{timeStr} {ev.summary}</div>
       {!isShort && ev.location && <div style={{ fontSize:10,color:color+'cc',marginTop:2,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis' }}>📍 {ev.location}</div>}
     </div>
@@ -288,11 +326,16 @@ export default function SchedulePage() {
   ))
 
   // The "Your Plan" blocks column
+  const planLayout = computeColumns(
+    blocks,
+    b => timeToMinutes(b.startTime),
+    b => b.endTime ? timeToMinutes(b.endTime) : timeToMinutes(b.startTime) + 30,
+  )
   const yourPlanCol = (
     <div style={{ width: isMobile ? '100%' : COL_WIDTH, flexShrink:0, position:'relative', height:totalHeight }}>
       {gridLines}
-      {blocks.map(block => (
-        <ScheduleBlock_ key={block.id} block={block} editMode={editMode}
+      {planLayout.map(({ item: block, col, colCount }) => (
+        <ScheduleBlock_ key={block.id} block={block} editMode={editMode} col={col} colCount={colCount}
           onEdit={b => setModal({ mode:'edit', block:b })}
           onDelete={b => handleDeleteBlock(b)} />
       ))}
@@ -302,6 +345,11 @@ export default function SchedulePage() {
   // Render ICS column content for a given calendar
   function renderICSCol(cal: ICSCalendarConfig) {
     const evs = eventsForCalendar(cal.id)
+    const layout = computeColumns(
+      evs,
+      ev => { const d = new Date(ev.start); return d.getHours() * 60 + d.getMinutes() },
+      ev => { const d = new Date(ev.end); return d.getHours() * 60 + d.getMinutes() || new Date(ev.start).getHours() * 60 + new Date(ev.start).getMinutes() + 60 },
+    )
     return (
       <div key={cal.id} style={{ display:'flex', alignItems:'flex-start', flexShrink:0 }}>
         <div style={{ width:1, background:'#e5e7eb', margin:'0 12px', height:totalHeight, flexShrink:0 }} />
@@ -312,7 +360,7 @@ export default function SchedulePage() {
           ) : evs.length === 0 ? (
             <div style={{ position:'absolute',top:60,left:0,right:0,textAlign:'center',color:'#D1D5DB',fontSize:12 }}>No events</div>
           ) : (
-            evs.map(ev => <ICSBlock key={ev.uid + ev.start} ev={ev} />)
+            layout.map(({ item: ev, col, colCount }) => <ICSBlock key={ev.uid + ev.start} ev={ev} col={col} colCount={colCount} />)
           )}
         </div>
       </div>
@@ -550,7 +598,11 @@ export default function SchedulePage() {
                   ) : eventsForCalendar(activeMobileCal.id).length === 0 ? (
                     <div style={{ position:'absolute',top:60,left:0,right:0,textAlign:'center',color:'#D1D5DB',fontSize:12 }}>No events</div>
                   ) : (
-                    eventsForCalendar(activeMobileCal.id).map(ev => <ICSBlock key={ev.uid + ev.start} ev={ev} />)
+                    computeColumns(
+                      eventsForCalendar(activeMobileCal.id),
+                      ev => { const d = new Date(ev.start); return d.getHours() * 60 + d.getMinutes() },
+                      ev => { const d = new Date(ev.end); return d.getHours() * 60 + d.getMinutes() || new Date(ev.start).getHours() * 60 + new Date(ev.start).getMinutes() + 60 },
+                    ).map(({ item: ev, col, colCount }) => <ICSBlock key={ev.uid + ev.start} ev={ev} col={col} colCount={colCount} />)
                   )}
                 </div>
               ) : null
