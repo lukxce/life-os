@@ -12,6 +12,7 @@ interface Habit {
   id: string; name: string; category: string; type: string
   icon?: string | null; color?: string | null; unit?: string | null; target?: number | null
   frequency: string; frequencyDays: number[]; timeOfDay: string; createdAt: string
+  active: boolean; paused: boolean
   subTasks: SubTask[]
 }
 interface HabitLog {
