@@ -3,16 +3,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ThemeToggle } from './ThemeToggle'
 import { GlobalSearch } from './GlobalSearch'
-import { Dumbbell, Scale, UtensilsCrossed, ListChecks, LayoutDashboard, MoreHorizontal, X } from 'lucide-react'
-import { useState } from 'react'
+import { Dumbbell, Scale, UtensilsCrossed, LayoutDashboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV = [
-  { href: '/fitness',          label: 'Today',      icon: LayoutDashboard },
-  { href: '/fitness/meal-plan', label: 'Meal Plan',  icon: UtensilsCrossed },
-  { href: '/fitness/body',     label: 'Body',       icon: Scale           },
-  { href: '/fitness/workouts', label: 'Workouts',   icon: Dumbbell        },
-  { href: '/fitness/habits',   label: 'Habits',     icon: ListChecks      },
+  { href: '/fitness',           label: 'Today',     icon: LayoutDashboard },
+  { href: '/fitness/meal-plan', label: 'Meal Plan', icon: UtensilsCrossed },
+  { href: '/fitness/body',      label: 'Body',      icon: Scale           },
+  { href: '/fitness/workouts',  label: 'Workouts',  icon: Dumbbell        },
 ]
 
 function Sidebar() {
@@ -46,48 +44,19 @@ function Sidebar() {
 
 function BottomNav() {
   const path = usePathname()
-  const [sheet, setSheet] = useState(false)
-  const primary = NAV.slice(0, 4)
-  const more    = NAV.slice(4)
-
   return (
-    <>
-      {sheet && (
-        <>
-          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setSheet(false)} />
-          <div className="fixed bottom-16 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 rounded-t-2xl p-4 pb-6">
-            <div className="flex justify-between items-center mb-4">
-              <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">More</span>
-              <button onClick={() => setSheet(false)}><X size={18} className="text-gray-400" /></button>
-            </div>
-            {more.map(({ href, label, icon: Icon }) => (
-              <Link key={href} href={href} onClick={() => setSheet(false)}
-                className="flex items-center gap-3 py-3 border-b border-gray-100 dark:border-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <Icon size={18} className="text-green-600" /> {label}
-              </Link>
-            ))}
-          </div>
-        </>
-      )}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-center">
-          {primary.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href}
-              className={cn('flex-1 flex flex-col items-center gap-0.5 py-3 text-xs font-medium transition-colors',
-                path === href ? 'text-green-600' : 'text-gray-400 dark:text-gray-500')}>
-              <Icon size={22} />
-              <span className="text-[10px]">{label}</span>
-            </Link>
-          ))}
-          <button onClick={() => setSheet(s => !s)}
-            className={cn('flex-1 flex flex-col items-center gap-0.5 py-3 text-xs font-medium',
-              sheet ? 'text-green-600' : 'text-gray-400 dark:text-gray-500')}>
-            <MoreHorizontal size={22} />
-            <span className="text-[10px]">More</span>
-          </button>
-        </div>
-      </nav>
-    </>
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex items-center">
+        {NAV.map(({ href, label, icon: Icon }) => (
+          <Link key={href} href={href}
+            className={cn('flex-1 flex flex-col items-center gap-0.5 py-3 text-xs font-medium transition-colors',
+              path === href ? 'text-green-600' : 'text-gray-400 dark:text-gray-500')}>
+            <Icon size={22} />
+            <span className="text-[10px]">{label}</span>
+          </Link>
+        ))}
+      </div>
+    </nav>
   )
 }
 
