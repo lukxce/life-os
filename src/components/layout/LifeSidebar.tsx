@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarDays, BarChart2, ListChecks, History, Plus, CalendarCheck, Home, Target, Activity, Menu } from 'lucide-react'
+import { CalendarDays, BarChart2, ListChecks, History, Plus, CalendarCheck, Home, Target, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV_GROUPS = [
@@ -10,7 +10,6 @@ const NAV_GROUPS = [
     { href: '/life/weekly',  label: 'Weekly',    icon: CalendarCheck },
   ]},
   { title: 'Track',  links: [
-    { href: '/life/body',    label: 'Body',      icon: Activity  },
     { href: '/life/goals',   label: 'Goals',     icon: Target    },
   ]},
   { title: 'Review', links: [
