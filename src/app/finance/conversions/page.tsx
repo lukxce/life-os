@@ -21,7 +21,7 @@ export default function ConversionsPage() {
   const load = async () => {
     const [conv, acc, set] = await Promise.all([
       fetch('/api/finance/conversions').then(r => r.json()),
-      fetch('/api/finance/accounts').then(r => r.json()),
+      fetch('/api/finance/accounts?simple=1').then(r => r.json()),
       fetch('/api/settings').then(r => r.json()),
     ])
     setEntries(conv); setAccounts(acc); setSettings(set)

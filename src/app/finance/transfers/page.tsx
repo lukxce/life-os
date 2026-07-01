@@ -20,7 +20,7 @@ export default function TransfersPage() {
   const load = async () => {
     const [tr, acc, set] = await Promise.all([
       fetch('/api/finance/transfers').then(r => r.json()),
-      fetch('/api/finance/accounts').then(r => r.json()),
+      fetch('/api/finance/accounts?simple=1').then(r => r.json()),
       fetch('/api/settings').then(r => r.json()),
     ])
     setEntries(tr); setAccounts(acc); setSettings(set)

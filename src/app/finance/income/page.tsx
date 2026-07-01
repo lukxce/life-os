@@ -21,7 +21,7 @@ export default function IncomePage() {
   const load = async () => {
     const [inc, acc] = await Promise.all([
       fetch('/api/finance/income').then(r => r.json()),
-      fetch('/api/finance/accounts').then(r => r.json()),
+      fetch('/api/finance/accounts?simple=1').then(r => r.json()),
     ])
     setEntries(inc); setAccounts(acc)
   }

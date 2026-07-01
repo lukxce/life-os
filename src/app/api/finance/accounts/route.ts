@@ -3,11 +3,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { computeCryptoPortfolioEUR } from '@/lib/crypto'
 
-export async function GET() {
-  const [accounts, settings] = await Promise.all([
-    prisma.account.findMany({ orderBy: { createdAt: 'asc' } }),
-    prisma.settings.findFirst(),
-  ])
+export async function GET(req: NextRequest) {
+  // ?simple=1 → just names/ids/currency, no balance computation (for dropdowns)
+  const simple = new URL(req.url).searchParams.get('simple') === '1'
+
+  const accounts = await prisma.account.findMany({ orderBy: { createdAt: 'asc' } })
+  if (simple) return NextResponse.json(accounts)
+
+  const settings = await prisma.settings.findFirst()
 
   const rate = settings?.manualRate ?? 117.5
   const hasCrypto = accounts.some(a => a.name.toLowerCase().includes('crypto'))

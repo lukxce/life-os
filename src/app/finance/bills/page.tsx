@@ -51,7 +51,7 @@ export default function BillsPage() {
   const load = async () => {
     const [b, a, c, s] = await Promise.all([
       fetch('/api/finance/bills').then(r => r.json()),
-      fetch('/api/finance/accounts').then(r => r.json()),
+      fetch('/api/finance/accounts?simple=1').then(r => r.json()),
       fetch('/api/finance/categories').then(r => r.json()),
       fetch('/api/settings').then(r => r.json()),
     ])

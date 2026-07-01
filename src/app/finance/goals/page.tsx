@@ -84,7 +84,7 @@ export default function GoalsPage() {
   const load = async () => {
     const [g, a] = await Promise.all([
       fetch('/api/finance/goals').then(r => r.json()),
-      fetch('/api/finance/accounts').then(r => r.json()),
+      fetch('/api/finance/accounts?simple=1').then(r => r.json()),
     ])
     setGoals(Array.isArray(g) ? g : [])
     setAccounts(Array.isArray(a) ? a : [])

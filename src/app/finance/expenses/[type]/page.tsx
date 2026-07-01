@@ -52,7 +52,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
     } catch (e) { console.error('expenses fetch failed', e) }
 
     try {
-      const acc = await fetch('/api/finance/accounts').then(r => r.json())
+      const acc = await fetch('/api/finance/accounts?simple=1').then(r => r.json())
       setAccounts(Array.isArray(acc) ? acc.filter((a: any) => type === 'personal' ? a.type === 'personal' : a.type === 'company') : [])
     } catch (e) { console.error('accounts fetch failed', e) }
 
