@@ -1,10 +1,12 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { Dumbbell, Plus, Trash2, X, Timer } from 'lucide-react'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 interface WorkoutLog {
-  id: string; userId: string; date: string; type: string; duration: number | null; notes: string | null; createdAt: string
+  id: string; date: string; type: string; duration: number | null; notes: string | null
+  source: 'manual' | 'habit'; habitName?: string
 }
 
 const TYPES = [
@@ -15,7 +17,21 @@ const TYPES = [
   { value: 'other',        label: 'Other',          icon: '⚡', color: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' },
 ]
 
+// Maps habit name keywords → workout type
+function habitToWorkoutType(name: string): string {
+  const n = name.toLowerCase()
+  if (n.includes('pt') || n.includes('gym') || n.includes('train') || n.includes('lift') || n.includes('weight')) return 'pt'
+  if (n.includes('bike') || n.includes('cycl') || n.includes('ride')) return 'cardio_bike'
+  if (n.includes('run') || n.includes('cardio') || n.includes('jog') || n.includes('swim')) return 'cardio_other'
+  if (n.includes('walk') || n.includes('rest') || n.includes('yoga') || n.includes('stretch') || n.includes('mobility')) return 'rest'
+  return 'other'
+}
+
 const typeOf = (v: string) => TYPES.find(t => t.value === v) ?? TYPES[4]
+
+function toLocalDate(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 function groupByDate(logs: WorkoutLog[]) {
   const groups: Record<string, WorkoutLog[]> = {}
@@ -27,19 +43,72 @@ function groupByDate(logs: WorkoutLog[]) {
   return groups
 }
 
+// Fetch last N days of habit-based workout completions from /api/life/today
+async function fetchHabitWorkouts(days = 30): Promise<WorkoutLog[]> {
+  const results: WorkoutLog[] = []
+  const fetches: Promise<void>[] = []
+
+  for (let i = 0; i < days; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i)
+    const dateStr = toLocalDate(d)
+    fetches.push(
+      fetch(`/api/life/today?date=${dateStr}`)
+        .then(r => r.json())
+        .then((items: { habit: { id: string; name: string; category: string }; log: { completed: boolean } | null; isScheduled: boolean }[]) => {
+          for (const item of items) {
+            if (!item.isScheduled) continue
+            if (!item.log?.completed) continue
+            const cat = (item.habit.category ?? '').toLowerCase()
+            const isFitness = cat.includes('fitness') || cat.includes('exercise') || cat.includes('sport') || cat.includes('workout') || cat.includes('training')
+            if (!isFitness) continue
+            results.push({
+              id: `habit-${item.habit.id}-${dateStr}`,
+              date: dateStr,
+              type: habitToWorkoutType(item.habit.name),
+              duration: null,
+              notes: null,
+              source: 'habit',
+              habitName: item.habit.name,
+            })
+          }
+        })
+        .catch(() => {})
+    )
+  }
+
+  await Promise.all(fetches)
+  return results
+}
+
 export default function WorkoutsPage() {
-  const [logs, setLogs]       = useState<WorkoutLog[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ type: 'pt', duration: '', notes: '', date: new Date().toISOString().slice(0, 10) })
-  const [saving, setSaving]   = useState(false)
+  const [manualLogs, setManualLogs] = useState<WorkoutLog[]>([])
+  const [habitLogs,  setHabitLogs]  = useState<WorkoutLog[]>([])
+  const [loading,    setLoading]    = useState(true)
+  const [showForm,   setShowForm]   = useState(false)
+  const [form, setForm] = useState({ type: 'pt', duration: '', notes: '', date: toLocalDate(new Date()) })
+  const [saving, setSaving] = useState(false)
+
+  const loadManual = useCallback(async () => {
+    const res = await fetch('/api/fitness/workouts?limit=60')
+    const data: WorkoutLog[] = await res.json()
+    setManualLogs(data.map(l => ({ ...l, source: 'manual' as const })))
+  }, [])
+
+  const loadHabits = useCallback(async () => {
+    const data = await fetchHabitWorkouts(30)
+    setHabitLogs(data)
+  }, [])
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/fitness/workouts?limit=60')
-    setLogs(await res.json())
+    setLoading(true)
+    await Promise.all([loadManual(), loadHabits()])
     setLoading(false)
-  }, [])
+  }, [loadManual, loadHabits])
+
   useEffect(() => { load() }, [load])
+
+  // Merge: manual wins over habit for same date+type (deduplicate)
+  const allLogs = [...manualLogs, ...habitLogs].sort((a, b) => b.date.localeCompare(a.date))
 
   async function addLog(e: React.FormEvent) {
     e.preventDefault()
@@ -51,23 +120,21 @@ export default function WorkoutsPage() {
     })
     setSaving(false)
     setShowForm(false)
-    setForm({ type: 'pt', duration: '', notes: '', date: new Date().toISOString().slice(0, 10) })
-    load()
+    setForm({ type: 'pt', duration: '', notes: '', date: toLocalDate(new Date()) })
+    loadManual()
   }
 
   async function del(id: string) {
     await fetch('/api/fitness/workouts', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
-    setLogs(l => l.filter(x => x.id !== id))
+    setManualLogs(l => l.filter(x => x.id !== id))
   }
 
-  const thisWeek = logs.filter(l => {
-    const d = new Date(l.date); const now = new Date()
-    const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay())
-    return d >= startOfWeek
-  })
-  const ptCount    = thisWeek.filter(l => l.type === 'pt').length
-  const bikeCount  = thisWeek.filter(l => l.type === 'cardio_bike').length
-  const groups     = groupByDate(logs)
+  const now = new Date()
+  const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay())
+  const thisWeek = allLogs.filter(l => new Date(l.date) >= startOfWeek)
+  const ptCount   = thisWeek.filter(l => l.type === 'pt').length
+  const bikeCount = thisWeek.filter(l => l.type === 'cardio_bike').length
+  const groups    = groupByDate(allLogs)
 
   if (loading) return <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse" />)}</div>
 
@@ -76,7 +143,7 @@ export default function WorkoutsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Workouts</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Track your training sessions</p>
+          <p className="text-sm text-gray-400 mt-0.5">From habits + manual logs</p>
         </div>
         <button onClick={() => setShowForm(s => !s)}
           className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors">
@@ -87,8 +154,8 @@ export default function WorkoutsPage() {
       {/* This week stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'PT sessions',   value: ptCount,              icon: '🏋️', target: 3 },
-          { label: 'Bike rides',    value: bikeCount,             icon: '🚴', target: 2 },
+          { label: 'PT sessions',   value: ptCount,        icon: '🏋️', target: 3 },
+          { label: 'Bike rides',    value: bikeCount,      icon: '🚴', target: 2 },
           { label: 'Total this wk', value: thisWeek.length, icon: '📊', target: 5 },
         ].map(s => (
           <div key={s.label} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 text-center">
@@ -101,11 +168,19 @@ export default function WorkoutsPage() {
         ))}
       </div>
 
+      {/* Hint banner */}
+      {habitLogs.length === 0 && !loading && (
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-2xl px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+          Tip: habits in a <strong>Fitness</strong>, <strong>Exercise</strong>, or <strong>Workout</strong> category will appear here automatically when you mark them done.{' '}
+          <Link href="/life/habits" className="underline font-semibold">Manage habits →</Link>
+        </div>
+      )}
+
       {/* Log form */}
       {showForm && (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
           <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <Dumbbell size={16} className="text-green-600" /> Log workout
+            <Dumbbell size={16} className="text-green-600" /> Log workout manually
           </h2>
           <form onSubmit={addLog} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -145,7 +220,7 @@ export default function WorkoutsPage() {
       {Object.keys(groups).length === 0 ? (
         <div className="text-center py-16">
           <Dumbbell size={40} className="text-gray-300 dark:text-gray-700 mx-auto mb-3" />
-          <p className="text-gray-400">No workouts logged yet.</p>
+          <p className="text-gray-400 text-sm">No workouts yet. Mark a Fitness habit done or log manually.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -163,18 +238,25 @@ export default function WorkoutsPage() {
                     <span className="text-xl w-8 text-center shrink-0">{t.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', t.color)}>{t.label}</span>
+                        <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', t.color)}>
+                          {log.source === 'habit' && log.habitName ? log.habitName : t.label}
+                        </span>
                         {log.duration && (
                           <span className="text-xs text-gray-400 flex items-center gap-1">
                             <Timer size={10} /> {log.duration} min
                           </span>
                         )}
+                        {log.source === 'habit' && (
+                          <span className="text-[10px] text-gray-400 italic">from habits</span>
+                        )}
                       </div>
                       {log.notes && <p className="text-xs text-gray-500 mt-1 truncate">{log.notes}</p>}
                     </div>
-                    <button onClick={() => del(log.id)} className="text-gray-300 hover:text-red-400 transition-colors shrink-0">
-                      <Trash2 size={14} />
-                    </button>
+                    {log.source === 'manual' && (
+                      <button onClick={() => del(log.id)} className="text-gray-300 hover:text-red-400 transition-colors shrink-0">
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 )
               })}

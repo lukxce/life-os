@@ -1,14 +1,12 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { Flame, Beef, Dumbbell, ChevronRight, Scale, Droplets, Footprints, Moon } from 'lucide-react'
+import { Flame, Beef, ChevronRight, Scale, Droplets, Footprints, Moon } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 interface MealSlot { id: string; dayOfWeek: number; mealType: string; name: string; calories: number; protein: number }
-interface WorkoutLog { id: string; date: string; type: string; duration: number | null; notes: string | null }
-interface BodyRow  { id: string; date: string; metric: string; value: number }
-interface HabitLog { habitId: string; completed: boolean }
-interface HabitItem { id: string; name: string; frequency: string; frequencyDays: number[]; active: boolean }
+interface WorkoutLog { id: string; date: string; type: string; duration: number | null }
+interface BodyRow   { id: string; date: string; metric: string; value: number }
 
 const DAY_PLAN: Record<number, { activity: string; emoji: string; desc: string }> = {
   1: { activity: 'PT Session',  emoji: '🏋️', desc: 'Mon · 60 min gym' },
@@ -31,8 +29,6 @@ export default function FitnessTodayPage() {
   const [meals,    setMeals]    = useState<MealSlot[]>([])
   const [workouts, setWorkouts] = useState<WorkoutLog[]>([])
   const [weight,   setWeight]   = useState<BodyRow | null>(null)
-  const [habits,   setHabits]   = useState<HabitItem[]>([])
-  const [logs,     setLogs]     = useState<HabitLog[]>([])
   const [loading,  setLoading]  = useState(true)
 
   const todayDow = (new Date().getDay() || 7)
@@ -40,24 +36,18 @@ export default function FitnessTodayPage() {
   const plan     = DAY_PLAN[todayDow]
 
   const load = useCallback(async () => {
-    const [mRes, wRes, bRes, hRes, hlRes] = await Promise.all([
+    const [mRes, wRes, bRes] = await Promise.all([
       fetch('/api/fitness/meal-plan'),
       fetch('/api/fitness/workouts?limit=7'),
       fetch('/api/life/body-metrics?metrics=weight'),
-      fetch('/api/life/habits'),
-      fetch(`/api/life/habit-logs?date=${todayStr}`),
     ])
-    const [mData, wData, bData, hData, hlData] = await Promise.all([
-      mRes.json(), wRes.json(), bRes.json(), hRes.json(), hlRes.json(),
-    ])
+    const [mData, wData, bData] = await Promise.all([mRes.json(), wRes.json(), bRes.json()])
     setMeals(mData)
     setWorkouts(wData)
     const weightRows = (bData as BodyRow[]).filter(r => r.metric === 'weight')
     setWeight(weightRows.at(-1) ?? null)
-    setHabits(hData)
-    setLogs(hlData)
     setLoading(false)
-  }, [todayStr])
+  }, [])
 
   useEffect(() => { load() }, [load])
 
@@ -66,29 +56,17 @@ export default function FitnessTodayPage() {
   const totalProt    = todayMeals.reduce((a, m) => a + m.protein, 0)
   const todayWorkout = workouts.find(w => w.date.slice(0, 10) === todayStr)
 
-  const dow = new Date().getDay()
-  const scheduledHabits = habits.filter(h => {
-    if (!h.active) return false
-    if (h.frequency === 'daily') return true
-    if (h.frequency === 'weekdays') return dow >= 1 && dow <= 5
-    if (h.frequency === 'specific') return h.frequencyDays.includes(dow)
-    return true
-  })
-  const completedHabits = scheduledHabits.filter(h => logs.find(l => l.habitId === h.id)?.completed)
-  const habitPct = scheduledHabits.length > 0 ? Math.round((completedHabits.length / scheduledHabits.length) * 100) : 0
-
   const today = new Date()
   const greeting = today.getHours() < 12 ? 'Good morning' : today.getHours() < 17 ? 'Good afternoon' : 'Good evening'
 
   if (loading) return (
     <div className="space-y-4">
-      {[1,2,3,4].map(i => <div key={i} className="h-28 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
+      {[1,2,3].map(i => <div key={i} className="h-28 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
     </div>
   )
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{greeting} 💪</h1>
         <p className="text-sm text-gray-400 mt-0.5">
@@ -109,8 +87,8 @@ export default function FitnessTodayPage() {
           <span className="text-xs font-semibold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900 px-2.5 py-1 rounded-full">✓ Done</span>
         ) : (
           <Link href="/fitness/workouts"
-            className="text-xs font-semibold text-white bg-green-600 px-3 py-1.5 rounded-xl hover:bg-green-700 transition-colors">
-            Log
+            className="text-xs font-semibold text-white bg-green-600 px-3 py-1.5 rounded-xl hover:bg-green-700 transition-colors whitespace-nowrap">
+            Log it
           </Link>
         )}
       </div>
@@ -143,7 +121,7 @@ export default function FitnessTodayPage() {
           </Link>
         </div>
         {todayMeals.length === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-gray-400">Meal plan loading…</div>
+          <div className="px-4 py-6 text-center text-sm text-gray-400">No meal plan found.</div>
         ) : (
           <div className="divide-y divide-gray-50 dark:divide-gray-800">
             {MEAL_ORDER.map(mt => {
@@ -177,22 +155,6 @@ export default function FitnessTodayPage() {
         </div>
       </div>
 
-      {/* Habits progress */}
-      <Link href="/fitness/habits"
-        className="block bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">Habits today</span>
-          <span className={cn('text-sm font-bold', habitPct === 100 ? 'text-green-600' : 'text-gray-400')}>
-            {completedHabits.length}/{scheduledHabits.length}
-          </span>
-        </div>
-        <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2.5">
-          <div className={cn('h-2.5 rounded-full transition-all', habitPct === 100 ? 'bg-green-500' : 'bg-indigo-500')}
-            style={{ width: `${habitPct}%` }} />
-        </div>
-        <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">{habitPct === 100 ? '✓ All done!' : 'Tap to check in'} <ChevronRight size={11} /></p>
-      </Link>
-
       {/* Daily non-negotiables */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-800">
@@ -200,8 +162,8 @@ export default function FitnessTodayPage() {
         </div>
         <div className="divide-y divide-gray-50 dark:divide-gray-800">
           {[
-            { icon: <Footprints size={16} />, label: '10,000 steps', color: 'text-blue-500', target: 'min daily' },
-            { icon: <Droplets size={16} />,   label: '3L water',     color: 'text-cyan-500', target: 'stay hydrated' },
+            { icon: <Footprints size={16} />, label: '10,000 steps', color: 'text-blue-500',   target: 'min daily' },
+            { icon: <Droplets size={16} />,   label: '3L water',     color: 'text-cyan-500',   target: 'stay hydrated' },
             { icon: <Moon size={16} />,        label: '7.5h sleep',   color: 'text-indigo-500', target: 'lights out 23:30' },
           ].map(item => (
             <div key={item.label} className="flex items-center gap-3 px-4 py-3">
