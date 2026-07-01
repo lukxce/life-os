@@ -283,6 +283,29 @@ model BodyMetric {
   @@index([metric, date])
 }
 
+model MealPlanSlot {
+  id        String   @id @default(cuid())
+  userId    String   @default("default")
+  dayOfWeek Int      // 1=Mon … 7=Sun
+  mealType  String   // "breakfast" | "snack" | "dinner"
+  name      String
+  calories  Int      @default(0)
+  protein   Int      @default(0)
+  notes     String?
+  updatedAt DateTime @updatedAt
+  @@unique([userId, dayOfWeek, mealType])
+}
+
+model WorkoutLog {
+  id        String   @id @default(cuid())
+  userId    String   @default("default")
+  date      DateTime
+  type      String   // "pt" | "cardio_bike" | "cardio_other" | "rest" | "other"
+  duration  Int?
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
 model ScheduleBlock {
   id           String   @id @default(cuid())
   day          String
