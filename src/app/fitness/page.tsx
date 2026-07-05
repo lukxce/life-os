@@ -25,6 +25,10 @@ const MEAL_META: Record<string, { emoji: string; time: string }> = {
   dinner:    { emoji: '🍽️', time: '19:00' },
 }
 
+function toLocalDate(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export default function FitnessTodayPage() {
   const [meals,    setMeals]    = useState<MealSlot[]>([])
   const [workouts, setWorkouts] = useState<WorkoutLog[]>([])
@@ -32,18 +36,19 @@ export default function FitnessTodayPage() {
   const [loading,  setLoading]  = useState(true)
 
   const todayDow = (new Date().getDay() || 7)
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr = toLocalDate(new Date())
   const plan     = DAY_PLAN[todayDow]
 
   const load = useCallback(async () => {
-    const [mRes, wRes, bRes] = await Promise.all([
+    const [mRes, wRes, hRes, bRes] = await Promise.all([
       fetch('/api/fitness/meal-plan'),
       fetch('/api/fitness/workouts?limit=7'),
+      fetch('/api/fitness/habit-workouts?days=2'),
       fetch('/api/life/body-metrics?metrics=weight'),
     ])
-    const [mData, wData, bData] = await Promise.all([mRes.json(), wRes.json(), bRes.json()])
+    const [mData, wData, hData, bData] = await Promise.all([mRes.json(), wRes.json(), hRes.json(), bRes.json()])
     setMeals(mData)
-    setWorkouts(wData)
+    setWorkouts([...(wData as WorkoutLog[]), ...(hData as WorkoutLog[])])
     const weightRows = (bData as BodyRow[]).filter(r => r.metric === 'weight')
     setWeight(weightRows.at(-1) ?? null)
     setLoading(false)
@@ -54,7 +59,10 @@ export default function FitnessTodayPage() {
   const todayMeals   = meals.filter(m => m.dayOfWeek === todayDow)
   const totalCal     = todayMeals.reduce((a, m) => a + m.calories, 0)
   const totalProt    = todayMeals.reduce((a, m) => a + m.protein, 0)
-  const todayWorkout = workouts.find(w => w.date.slice(0, 10) === todayStr)
+  // Day is "done" when the planned workout type is logged (PT on PT days, bike on bike days; rest days accept anything)
+  const expectedType: Record<number, string | null> = { 1: 'pt', 2: 'cardio_bike', 3: 'pt', 4: null, 5: 'pt', 6: 'cardio_bike', 7: null }
+  const wanted = expectedType[todayDow]
+  const todayWorkout = workouts.find(w => w.date.slice(0, 10) === todayStr && (wanted == null || w.type === wanted))
 
   const today = new Date()
   const greeting = today.getHours() < 12 ? 'Good morning' : today.getHours() < 17 ? 'Good afternoon' : 'Good evening'

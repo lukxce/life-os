@@ -55,9 +55,16 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
   const { id, name, calories, protein, notes } = await req.json()
+  const cal  = Number(calories)
+  const prot = Number(protein)
   const slot = await prisma.mealPlanSlot.update({
     where: { id },
-    data: { name, calories: +calories, protein: +protein, notes: notes || null },
+    data: {
+      name,
+      calories: Number.isFinite(cal) ? Math.round(cal) : 0,
+      protein:  Number.isFinite(prot) ? Math.round(prot) : 0,
+      notes: notes || null,
+    },
   })
   return NextResponse.json(slot)
 }

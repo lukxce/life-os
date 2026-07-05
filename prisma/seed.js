@@ -82,6 +82,10 @@ async function main() {
     await prisma.habit.upsert({ where: { id: habit.id }, update: {}, create: habit })
   }
 
+  // One-off: the daily "Gym" habit is superseded by PT Session (3x/week).
+  // Remove this block if you ever want to re-enable it.
+  await prisma.habit.updateMany({ where: { id: 'habit-gym', active: true }, data: { active: false } })
+
   // ── Shared: Settings ─────────────────────────────────────────────────────
   await prisma.settings.upsert({
     where: { id: 'default' },

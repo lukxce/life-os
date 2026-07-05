@@ -447,7 +447,7 @@ export default function WeeklyPage() {
           <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
             📏 Body Metrics
           </h2>
-          <Link href="/life/body"
+          <Link href="/fitness/body"
             className="flex items-center gap-0.5 text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
             All charts <ChevronRight size={13} />
           </Link>
