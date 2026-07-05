@@ -1,4 +1,5 @@
 'use client'
+import { ModuleDock } from './ModuleDock'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { FinanceSidebar } from './FinanceSidebar'
@@ -21,7 +22,8 @@ export function FinanceShell({ children }: { children: React.ReactNode }) {
   })
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-800">
+    <div className="flex h-screen bg-[#f5f5f7] dark:bg-gray-950">
+      <ModuleDock />
       <FinanceSidebar collapsed={collapsed} onToggle={toggle} />
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">

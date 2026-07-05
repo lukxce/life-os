@@ -1,4 +1,5 @@
 'use client'
+import { ModuleDock } from './ModuleDock'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -25,6 +26,7 @@ export function LifeShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-gray-950">
+      <ModuleDock />
       <LifeSidebar onAdd={() => setShowAdd(true)} collapsed={collapsed} onToggle={toggle} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">

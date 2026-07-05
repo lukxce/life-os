@@ -1,4 +1,5 @@
 'use client'
+import { ModuleDock } from './ModuleDock'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Home, Menu, Tv, BookOpen } from 'lucide-react'
@@ -100,6 +101,7 @@ export function WatchlistShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-gray-950">
+      <ModuleDock />
       <WatchlistSidebar collapsed={collapsed} onToggle={toggle} />
 
       <div className="flex-1 flex flex-col min-w-0">

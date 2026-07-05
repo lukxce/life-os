@@ -1,4 +1,5 @@
 'use client'
+import { ModuleDock } from './ModuleDock'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Settings } from 'lucide-react'
@@ -21,6 +22,7 @@ export function JournalShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-gray-950">
+      <ModuleDock />
       <JournalSidebar collapsed={collapsed} onToggle={toggle} />
 
       <div className="flex-1 flex flex-col min-w-0">

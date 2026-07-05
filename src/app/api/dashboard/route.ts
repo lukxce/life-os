@@ -26,31 +26,58 @@ export async function GET() {
   const hasCrypto = accounts.some(a => a.name.toLowerCase().includes('crypto'))
   const cryptoEUR = hasCrypto ? await computeCryptoPortfolioEUR() : 0
 
+  // Grouped balance components — one query per table instead of 7 per account
+  const [incomeByAcc, expenseByAcc, convInByAcc, convOutByAcc, trfInByAcc, trfOutByAcc] = await Promise.all([
+    prisma.incomeEntry.groupBy({ by: ['accountId', 'currency'], _sum: { netAmount: true } }),
+    prisma.expenseEntry.groupBy({ by: ['accountId'], _sum: { amountRSD: true } }),
+    prisma.conversion.groupBy({ by: ['toAccountId'], _sum: { amountReceived: true } }),
+    prisma.conversion.groupBy({ by: ['fromAccountId'], _sum: { amountSent: true } }),
+    prisma.transfer.groupBy({ by: ['toAccountId'], _sum: { amountReceived: true } }),
+    prisma.transfer.groupBy({ by: ['fromAccountId'], _sum: { amountSent: true } }),
+  ])
+
   // Compute actual current balance per account (currency-aware)
   const accountBalances = await Promise.all(accounts.map(async (acc) => {
     if (acc.name.toLowerCase().includes('crypto')) {
       return { currency: 'EUR', balance: cryptoEUR }
     }
-    const overrideWhere = acc.overrideDate ? { date: { gte: acc.overrideDate } } : {}
-    const [accIncomeEUR, accIncomeRSD, expenseSum, convIn, convOut, trfIn, trfOut] = await Promise.all([
-      prisma.incomeEntry.aggregate({ where: { accountId: acc.id, currency: 'EUR', ...overrideWhere }, _sum: { netAmount: true } }),
-      prisma.incomeEntry.aggregate({ where: { accountId: acc.id, currency: 'RSD', ...overrideWhere }, _sum: { netAmount: true } }),
-      prisma.expenseEntry.aggregate({ where: { accountId: acc.id, ...overrideWhere }, _sum: { amountRSD: true } }),
-      prisma.conversion.aggregate({ where: { toAccountId: acc.id, ...overrideWhere }, _sum: { amountReceived: true } }),
-      prisma.conversion.aggregate({ where: { fromAccountId: acc.id, ...overrideWhere }, _sum: { amountSent: true } }),
-      prisma.transfer.aggregate({ where: { toAccountId: acc.id, ...overrideWhere }, _sum: { amountReceived: true } }),
-      prisma.transfer.aggregate({ where: { fromAccountId: acc.id, ...overrideWhere }, _sum: { amountSent: true } }),
-    ])
+
+    let incEUR: number, incRSD: number, expRSD: number, convIn: number, convOut: number, trfIn: number, trfOut: number
+
+    if (acc.overrideDate) {
+      // Rare path: only transactions after the override date count
+      const dateFilter = { date: { gte: acc.overrideDate } }
+      const [incGB, expAgg, cIn, cOut, tIn, tOut] = await Promise.all([
+        prisma.incomeEntry.groupBy({ by: ['currency'], where: { accountId: acc.id, ...dateFilter }, _sum: { netAmount: true } }),
+        prisma.expenseEntry.aggregate({ where: { accountId: acc.id, ...dateFilter }, _sum: { amountRSD: true } }),
+        prisma.conversion.aggregate({ where: { toAccountId: acc.id, ...dateFilter }, _sum: { amountReceived: true } }),
+        prisma.conversion.aggregate({ where: { fromAccountId: acc.id, ...dateFilter }, _sum: { amountSent: true } }),
+        prisma.transfer.aggregate({ where: { toAccountId: acc.id, ...dateFilter }, _sum: { amountReceived: true } }),
+        prisma.transfer.aggregate({ where: { fromAccountId: acc.id, ...dateFilter }, _sum: { amountSent: true } }),
+      ])
+      incEUR = incGB.find(r => r.currency === 'EUR')?._sum.netAmount ?? 0
+      incRSD = incGB.find(r => r.currency === 'RSD')?._sum.netAmount ?? 0
+      expRSD = expAgg._sum.amountRSD ?? 0
+      convIn  = cIn._sum.amountReceived ?? 0
+      convOut = cOut._sum.amountSent ?? 0
+      trfIn   = tIn._sum.amountReceived ?? 0
+      trfOut  = tOut._sum.amountSent ?? 0
+    } else {
+      incEUR = incomeByAcc.find(r => r.accountId === acc.id && r.currency === 'EUR')?._sum.netAmount ?? 0
+      incRSD = incomeByAcc.find(r => r.accountId === acc.id && r.currency === 'RSD')?._sum.netAmount ?? 0
+      expRSD = expenseByAcc.find(r => r.accountId === acc.id)?._sum.amountRSD ?? 0
+      convIn  = convInByAcc.find(r => r.toAccountId === acc.id)?._sum.amountReceived ?? 0
+      convOut = convOutByAcc.find(r => r.fromAccountId === acc.id)?._sum.amountSent ?? 0
+      trfIn   = trfInByAcc.find(r => r.toAccountId === acc.id)?._sum.amountReceived ?? 0
+      trfOut  = trfOutByAcc.find(r => r.fromAccountId === acc.id)?._sum.amountSent ?? 0
+    }
+
     const base = acc.manualOverride ?? acc.startingBalance
     const income = acc.currency === 'EUR'
-      ? (accIncomeEUR._sum.netAmount ?? 0) + (accIncomeRSD._sum.netAmount ?? 0) / manualRate
-      : (accIncomeEUR._sum.netAmount ?? 0) * manualRate + (accIncomeRSD._sum.netAmount ?? 0)
-    const expenses = acc.currency === 'EUR'
-      ? (expenseSum._sum.amountRSD ?? 0) / manualRate
-      : (expenseSum._sum.amountRSD ?? 0)
-    const balance = base + income - expenses
-      + (convIn._sum.amountReceived ?? 0) - (convOut._sum.amountSent ?? 0)
-      + (trfIn._sum.amountReceived  ?? 0) - (trfOut._sum.amountSent  ?? 0)
+      ? incEUR + incRSD / manualRate
+      : incEUR * manualRate + incRSD
+    const expenses = acc.currency === 'EUR' ? expRSD / manualRate : expRSD
+    const balance = base + income - expenses + (convIn - convOut) + (trfIn - trfOut)
     return { currency: acc.currency, balance }
   }))
 

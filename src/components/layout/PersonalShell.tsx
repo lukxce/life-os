@@ -1,4 +1,5 @@
 'use client'
+import { ModuleDock } from './ModuleDock'
 import { useEffect, useState } from 'react'
 import { PersonalSidebar } from './PersonalSidebar'
 import { PersonalBottomNav } from './PersonalBottomNav'
@@ -20,6 +21,7 @@ export function PersonalShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-gray-950">
+      <ModuleDock />
       <PersonalSidebar collapsed={collapsed} onToggle={toggle} />
 
       <div className="flex-1 flex flex-col min-w-0">

@@ -1,4 +1,5 @@
 'use client'
+import { ModuleDock } from './ModuleDock'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FoodSidebar } from './FoodSidebar'
@@ -22,7 +23,8 @@ export function FoodShell({ children }: { children: React.ReactNode }) {
   })
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-[#f5f5f7] dark:bg-gray-950">
+      <ModuleDock />
       <FoodSidebar onAdd={() => setShowAdd(true)} collapsed={collapsed} onToggle={toggle} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

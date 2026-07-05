@@ -1,4 +1,5 @@
 'use client'
+import { ModuleDock } from './ModuleDock'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ThemeToggle } from './ThemeToggle'
@@ -65,6 +66,7 @@ export function FitnessShell({ children }: { children: React.ReactNode }) {
   const pageLabel = NAV.find(n => n.href === path)?.label ?? 'Fitness'
   return (
     <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-gray-950">
+      <ModuleDock />
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <header className="md:hidden sticky top-0 z-30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-4 py-3 flex items-center justify-between shrink-0">
