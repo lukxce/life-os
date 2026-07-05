@@ -3,6 +3,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getDateRange, Period } from '@/lib/utils'
 
+const USD_TO_EUR = 0.92
+
+function toRSD(amount: number, currency: string, eurRate: number): number {
+  if (currency === 'EUR') return amount * eurRate
+  if (currency === 'USD') return amount * USD_TO_EUR * eurRate
+  return amount
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const period = (searchParams.get('period') || 'all') as Period
@@ -26,7 +34,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const settings = await prisma.settings.findFirst()
   const rate = settings?.manualRate ?? 117.5
-  const amountRSD = body.currency === 'EUR' ? body.amount * rate : body.amount
+  const amountRSD = toRSD(body.amount, body.currency, rate)
 
   const entry = await prisma.expenseEntry.create({
     data: {
@@ -60,7 +68,7 @@ export async function PATCH(req: NextRequest) {
   const settings = await prisma.settings.findFirst()
   const rate = settings?.manualRate ?? 117.5
   if (data.amount !== undefined && data.currency) {
-    data.amountRSD = data.currency === 'EUR' ? data.amount * rate : data.amount
+    data.amountRSD = toRSD(data.amount, data.currency, rate)
   }
   if (data.date) data.date = new Date(data.date)
   if (data.warrantyMonths === '') data.warrantyMonths = null
