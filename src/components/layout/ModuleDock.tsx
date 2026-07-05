@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 // Persistent module rail — visible on every screen (desktop), like a dock.
 // Jump between modules from anywhere without going back home.
 const MODULES = [
-  { href: '/',          emoji: '🏠', label: 'Home',      match: (p: string) => p === '/' },
+  { href: '/',          emoji: '🏠', label: 'Dashboard', match: (p: string) => p === '/' },
   { href: '/finance',   emoji: '💰', label: 'Finance',   match: (p: string) => p.startsWith('/finance') },
   { href: '/life',      emoji: '🧘', label: 'Habits',    match: (p: string) => p.startsWith('/life') },
   { href: '/fitness',   emoji: '💪', label: 'Fitness',   match: (p: string) => p.startsWith('/fitness') },

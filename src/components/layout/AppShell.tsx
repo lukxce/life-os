@@ -3,41 +3,42 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { LayoutGrid, Command, X } from 'lucide-react'
+import { LayoutGrid, Command, X, Home, Plus } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 import { GlobalSearch } from './GlobalSearch'
 import { ModuleDock } from './ModuleDock'
 import { cn } from '@/lib/utils'
 
-// ── Life OS navigation, v2 ────────────────────────────────────────────────────
-// Desktop: dock (modules) + one top bar (identity · page pills · action · search).
-//          No sidebars — content gets the full width.
-// Mobile:  header + bottom bar [⊞ Apps · context tabs · ⌘ Go]
-//          Apps = full module switcher sheet, Go = quick actions + all pages.
+// ── Life OS navigation, v3 ────────────────────────────────────────────────────
+// Desktop: dock (module switching) + sidebar (module pages) + slim header.
+// Mobile:  header + bottom bar [⊞ Apps · tab · (+) · tab · ⌘ Go]
+//          ⊞ Apps  = full module switcher sheet
+//          (+)     = raised center button → the module's quick actions
+//          ⌘ Go    = every page in the module
 
 export interface NavItem      { href: string; label: string; icon: LucideIcon }
 export interface NavGroup     { title?: string; items: NavItem[] }
-export interface ModuleAction { label: string; icon: LucideIcon; href?: string; onClick?: () => void }
+export interface ModuleAction { label: string; icon: LucideIcon; color?: string; href?: string; onClick?: () => void }
 
 export interface ModuleConfig {
   name: string
   emoji: string
   home: string
   /** Tailwind literal classes (JIT-safe) for the module accent */
-  accentActive: string   // active pill tint (mobile tabs / Go sheet)
+  accentActive: string
   accentText: string
-  accentFab: string      // solid accent, e.g. 'bg-blue-600 hover:bg-blue-700'
-  glow?: string          // accent as CSS rgb triplet — drives the aurora
-  groups: NavGroup[]     // full page list
-  tabs: NavItem[]        // mobile bottom-bar tabs (max 3, first = module home)
-  actions?: ModuleAction[]  // quick actions — first one surfaces in the top bar
+  accentFab: string
+  glow?: string
+  groups: NavGroup[]        // full page list — desktop sidebar + mobile Go sheet
+  tabs: NavItem[]           // mobile bottom-bar tabs (2 when actions exist, else up to 3)
+  actions?: ModuleAction[]  // quick actions → center (+) on mobile, sidebar footer on desktop
   headerExtra?: React.ReactNode
   contentClassName?: string
   fullBleed?: boolean
 }
 
 const APPS = [
-  { href: '/',          emoji: '🏠', title: 'Home',      gradient: 'from-gray-500 to-gray-700' },
+  { href: '/',          emoji: '🏠', title: 'Dashboard', gradient: 'from-gray-500 to-gray-700' },
   { href: '/finance',   emoji: '💰', title: 'Finance',   gradient: 'from-blue-500 to-blue-600' },
   { href: '/life',      emoji: '🧘', title: 'Habits',    gradient: 'from-indigo-500 to-violet-600' },
   { href: '/fitness',   emoji: '💪', title: 'Fitness',   gradient: 'from-green-500 to-emerald-600' },
@@ -48,7 +49,7 @@ const APPS = [
   { href: '/watchlist', emoji: '🎬', title: 'Watchlist', gradient: 'from-violet-500 to-purple-600' },
 ]
 
-/** Module-tinted aurora canvas — soft accent glow top-left, faint echo bottom-right */
+/** Module-tinted aurora canvas */
 export function Ambient({ glow = '99 102 241' }: { glow?: string }) {
   return (
     <>
@@ -66,12 +67,71 @@ function useIsActive(home: string) {
     href === home ? path === href : path === href || path.startsWith(href + '/')
 }
 
-/** Shared bottom-sheet chrome */
+// ── Desktop sidebar ───────────────────────────────────────────────────────────
+function Sidebar({ config }: { config: ModuleConfig }) {
+  const isActive = useIsActive(config.home)
+  const primary = config.actions?.[0]
+  return (
+    <aside className="relative z-10 hidden md:flex flex-col w-56 shrink-0 h-screen border-r border-black/5 dark:border-white/5 bg-white/60 dark:bg-white/[0.03] backdrop-blur-2xl">
+      <div className="px-5 pt-5 pb-3">
+        <Link href="/" className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+          <Home size={11} /> Dashboard
+        </Link>
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-xl">{config.emoji}</span>
+          <span className="font-bold text-gray-900 dark:text-white">{config.name}</span>
+        </div>
+      </div>
+      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
+        {config.groups.map((group, gi) => (
+          <div key={group.title ?? gi}>
+            {group.title && (
+              <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-600">
+                {group.title}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {group.items.map(({ href, label, icon: Icon }) => {
+                const active = isActive(href)
+                return (
+                  <Link key={href} href={href}
+                    className={cn('flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors',
+                      active ? config.accentActive
+                             : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5')}>
+                    <Icon size={17} strokeWidth={active ? 2.5 : 2} />
+                    {label}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+      {primary && (
+        <div className="px-3 pb-4 pt-3 border-t border-black/5 dark:border-white/5">
+          {primary.href ? (
+            <Link href={primary.href}
+              className={cn('flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-colors', config.accentFab)}>
+              <primary.icon size={16} /> {primary.label}
+            </Link>
+          ) : (
+            <button onClick={primary.onClick}
+              className={cn('flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-colors', config.accentFab)}>
+              <primary.icon size={16} /> {primary.label}
+            </button>
+          )}
+        </div>
+      )}
+    </aside>
+  )
+}
+
+// ── Mobile sheets ─────────────────────────────────────────────────────────────
 function Sheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
   return (
     <>
       <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl rounded-t-3xl px-4 pt-3 pb-24 max-h-[75vh] overflow-y-auto page-in">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl rounded-t-3xl px-4 pt-3 pb-28 max-h-[75vh] overflow-y-auto page-in">
         <div className="w-9 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto mb-3" />
         {children}
       </div>
@@ -79,7 +139,6 @@ function Sheet({ onClose, children }: { onClose: () => void; children: React.Rea
   )
 }
 
-/** ⊞ Apps — full module switcher, available from anywhere */
 function AppsSheet({ onClose }: { onClose: () => void }) {
   const path = usePathname()
   return (
@@ -109,7 +168,6 @@ function AppsSheet({ onClose }: { onClose: () => void }) {
   )
 }
 
-/** ⌘ Go — module quick actions + every page, one sheet */
 function GoSheet({ config, onClose }: { config: ModuleConfig; onClose: () => void }) {
   const isActive = useIsActive(config.home)
   return (
@@ -120,27 +178,6 @@ function GoSheet({ config, onClose }: { config: ModuleConfig; onClose: () => voi
           <X size={15} className="text-gray-500 dark:text-gray-400" />
         </button>
       </div>
-
-      {config.actions && config.actions.length > 0 && (
-        <div className="mb-5">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5 px-1">Quick actions</p>
-          <div className="grid grid-cols-2 gap-2">
-            {config.actions.map(a => {
-              const inner = (
-                <span className={cn('flex items-center gap-2.5 px-4 py-3.5 rounded-2xl text-sm font-semibold text-white w-full', config.accentFab)}>
-                  <a.icon size={18} /> {a.label}
-                </span>
-              )
-              return a.href ? (
-                <Link key={a.label} href={a.href} onClick={onClose}>{inner}</Link>
-              ) : (
-                <button key={a.label} onClick={() => { onClose(); a.onClick?.() }} className="text-left">{inner}</button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
       <div className="space-y-4">
         {config.groups.map((group, gi) => (
           <div key={group.title ?? gi}>
@@ -166,18 +203,61 @@ function GoSheet({ config, onClose }: { config: ModuleConfig; onClose: () => voi
   )
 }
 
+// ── Mobile bottom bar with raised center (+) ──────────────────────────────────
 function BottomBar({ config }: { config: ModuleConfig }) {
   const isActive = useIsActive(config.home)
-  const [sheet, setSheet] = useState<'apps' | 'go' | null>(null)
+  const [sheet, setSheet] = useState<'apps' | 'go' | 'actions' | null>(null)
   const path = usePathname()
+  const hasActions = (config.actions?.length ?? 0) > 0
 
-  // Close sheets on navigation
   useEffect(() => { setSheet(null) }, [path])
+
+  const tabs = config.tabs.slice(0, hasActions ? 2 : 3)
+  const [leftTab, ...rightTabs] = tabs
+
+  const TabLink = ({ href, label, icon: Icon }: NavItem) => {
+    const active = isActive(href)
+    return (
+      <Link href={href}
+        className={cn('flex-1 flex flex-col items-center gap-0.5 py-1.5 transition-colors',
+          active ? config.accentText : 'text-gray-400 dark:text-gray-500')}>
+        <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+        <span className="text-[10px] font-medium">{label}</span>
+      </Link>
+    )
+  }
 
   return (
     <>
       {sheet === 'apps' && <AppsSheet onClose={() => setSheet(null)} />}
       {sheet === 'go'   && <GoSheet config={config} onClose={() => setSheet(null)} />}
+
+      {/* Quick-action stack above the (+) */}
+      {sheet === 'actions' && config.actions && (
+        <>
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40" onClick={() => setSheet(null)} />
+          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3">
+            {config.actions.map((a, i) => {
+              const inner = (
+                <span className="flex items-center gap-3"
+                  style={{ animation: 'pageIn 0.18s ease both', animationDelay: `${i * 40}ms` }}>
+                  <span className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-semibold px-3 py-1.5 rounded-full shadow-md border border-black/5 dark:border-white/10 whitespace-nowrap">
+                    {a.label}
+                  </span>
+                  <span className={cn('w-12 h-12 rounded-full flex items-center justify-center shadow-lg text-white', a.color ?? config.accentFab)}>
+                    <a.icon size={20} />
+                  </span>
+                </span>
+              )
+              return a.href ? (
+                <Link key={a.label} href={a.href} onClick={() => setSheet(null)}>{inner}</Link>
+              ) : (
+                <button key={a.label} onClick={() => { setSheet(null); a.onClick?.() }}>{inner}</button>
+              )
+            })}
+          </div>
+        </>
+      )}
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 pb-4 pt-1.5 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-t border-black/5 dark:border-white/5">
         <div className="flex items-center">
@@ -188,17 +268,19 @@ function BottomBar({ config }: { config: ModuleConfig }) {
             <span className="text-[10px] font-medium">Apps</span>
           </button>
 
-          {config.tabs.map(({ href, label, icon: Icon }) => {
-            const active = isActive(href)
-            return (
-              <Link key={href} href={href}
-                className={cn('flex-1 flex flex-col items-center gap-0.5 py-1.5 transition-colors',
-                  active ? config.accentText : 'text-gray-400 dark:text-gray-500')}>
-                <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-                <span className="text-[10px] font-medium">{label}</span>
-              </Link>
-            )
-          })}
+          {leftTab && <TabLink {...leftTab} />}
+
+          {hasActions && (
+            <button onClick={() => setSheet(s => s === 'actions' ? null : 'actions')}
+              className="flex-1 flex flex-col items-center py-0.5">
+              <span className={cn('w-[52px] h-[52px] -mt-6 rounded-full flex items-center justify-center text-white shadow-lg shadow-black/20 transition-all duration-200',
+                sheet === 'actions' ? 'bg-gray-800 dark:bg-white dark:text-gray-900 rotate-45' : config.accentFab)}>
+                <Plus size={24} strokeWidth={2.5} />
+              </span>
+            </button>
+          )}
+
+          {rightTabs.map(t => <TabLink key={t.href} {...t} />)}
 
           <button onClick={() => setSheet(s => s === 'go' ? null : 'go')}
             className={cn('flex-1 flex flex-col items-center gap-0.5 py-1.5 transition-colors',
@@ -212,61 +294,13 @@ function BottomBar({ config }: { config: ModuleConfig }) {
   )
 }
 
-/** Desktop top bar: identity · page pills · primary action · search · theme */
-function TopBar({ config }: { config: ModuleConfig }) {
-  const isActive = useIsActive(config.home)
-  const pages = config.groups.flatMap(g => g.items)
-  const primary = config.actions?.[0]
-
-  return (
-    <header className="hidden md:flex items-center gap-4 px-5 py-2.5 bg-white/60 dark:bg-white/[0.03] backdrop-blur-2xl border-b border-black/5 dark:border-white/5 shrink-0 z-30">
-      <div className="flex items-center gap-2 shrink-0">
-        <span className="text-lg">{config.emoji}</span>
-        <span className="font-bold text-gray-900 dark:text-white text-sm">{config.name}</span>
-      </div>
-
-      <nav className="flex-1 flex items-center gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        {pages.map(({ href, label }) => {
-          const active = isActive(href)
-          return (
-            <Link key={href} href={href}
-              className={cn('shrink-0 px-3 py-1.5 rounded-full text-[13px] font-medium transition-all whitespace-nowrap',
-                active ? cn('text-white shadow-sm', config.accentFab)
-                       : 'text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-gray-800 dark:hover:text-gray-200')}>
-              {label}
-            </Link>
-          )
-        })}
-      </nav>
-
-      <div className="flex items-center gap-2 shrink-0">
-        {primary && (
-          primary.href ? (
-            <Link href={primary.href}
-              className={cn('flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-semibold text-white transition-colors', config.accentFab)}>
-              <primary.icon size={14} /> {primary.label}
-            </Link>
-          ) : (
-            <button onClick={primary.onClick}
-              className={cn('flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-semibold text-white transition-colors', config.accentFab)}>
-              <primary.icon size={14} /> {primary.label}
-            </button>
-          )
-        )}
-        <GlobalSearch />
-        <ThemeToggle />
-        {config.headerExtra}
-      </div>
-    </header>
-  )
-}
-
 export function AppShell({ config, children }: { config: ModuleConfig; children: React.ReactNode }) {
   const path = usePathname()
   return (
     <div className="relative flex h-screen overflow-hidden bg-[#f5f5f7] dark:bg-[#0a0a0f]">
       <Ambient glow={config.glow} />
       <ModuleDock />
+      <Sidebar config={config} />
 
       <div className="relative z-10 flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header */}
@@ -279,13 +313,18 @@ export function AppShell({ config, children }: { config: ModuleConfig; children:
           </div>
         </header>
 
-        <TopBar config={config} />
+        {/* Desktop header */}
+        <header className="hidden md:flex items-center justify-end px-6 py-3 bg-white/60 dark:bg-white/[0.03] backdrop-blur-2xl border-b border-black/5 dark:border-white/5 gap-2 shrink-0 z-30">
+          <GlobalSearch />
+          <ThemeToggle />
+          {config.headerExtra}
+        </header>
 
         {config.fullBleed ? (
           <main className="flex-1 overflow-hidden relative">{children}</main>
         ) : (
           <main className="flex-1 overflow-auto">
-            <div key={path} className={cn('page-in mx-auto w-full px-4 md:px-8 py-6 md:py-8 pb-32 md:pb-12', config.contentClassName ?? 'max-w-4xl')}>
+            <div key={path} className={cn('page-in mx-auto w-full px-4 md:px-6 py-6 md:py-8 pb-32 md:pb-10', config.contentClassName ?? 'max-w-3xl')}>
               {children}
             </div>
           </main>

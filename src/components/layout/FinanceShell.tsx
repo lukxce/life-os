@@ -53,7 +53,7 @@ const config: ModuleConfig = {
     ]},
   ],
   tabs: [
-    { href: '/finance',                   label: 'Home',     icon: LayoutDashboard },
+    { href: '/finance',                   label: 'Dashboard', icon: LayoutDashboard },
     { href: '/finance/expenses/personal', label: 'Expenses', icon: ShoppingCart },
     { href: '/finance/income',            label: 'Income',   icon: TrendingUp },
   ],
