@@ -1,64 +1,70 @@
 'use client'
-import { ModuleDock } from './ModuleDock'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { FinanceSidebar } from './FinanceSidebar'
-import { FinanceBottomNav } from './FinanceBottomNav'
-import { Toaster } from 'sonner'
-import { GlobalSearch } from './GlobalSearch'
-import { ThemeToggle } from './ThemeToggle'
-import { SlidersHorizontal } from 'lucide-react'
+import { AppShell, ModuleConfig } from './AppShell'
+import {
+  LayoutDashboard, TrendingUp, ShoppingCart, Briefcase, Building2, ArrowLeftRight,
+  RefreshCw, BarChart3, Tag, LineChart, Shield, SlidersHorizontal, Store, Bitcoin,
+  FileText, CreditCard, ScanLine, PiggyBank, Target, Lightbulb, ShoppingBag,
+} from 'lucide-react'
+
+const config: ModuleConfig = {
+  name: 'Finance',
+  emoji: '💰',
+  home: '/finance',
+  accentActive: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  accentText: 'text-blue-600 dark:text-blue-400',
+  accentFab: 'bg-blue-600 hover:bg-blue-700',
+  contentClassName: 'max-w-none',
+  groups: [
+    { items: [
+      { href: '/finance',      label: 'Finance Home', icon: LayoutDashboard },
+      { href: '/finance/scan', label: 'Scan Receipt', icon: ScanLine },
+    ]},
+    { title: 'Money Flow', items: [
+      { href: '/finance/income',            label: 'Income',            icon: TrendingUp },
+      { href: '/finance/expenses/personal', label: 'Personal Expenses', icon: ShoppingCart },
+      { href: '/finance/expenses/business', label: 'Business Expenses', icon: Briefcase },
+    ]},
+    { title: 'Recurring', items: [
+      { href: '/finance/subscriptions', label: 'Subscriptions', icon: CreditCard },
+      { href: '/finance/bills',         label: 'Bills & Loans', icon: FileText },
+    ]},
+    { title: 'Banking', items: [
+      { href: '/finance/accounts',    label: 'Accounts',    icon: Building2 },
+      { href: '/finance/transfers',   label: 'Transfers',   icon: ArrowLeftRight },
+      { href: '/finance/conversions', label: 'Conversions', icon: RefreshCw },
+      { href: '/finance/crypto',      label: 'Crypto',      icon: Bitcoin },
+    ]},
+    { title: 'Planning', items: [
+      { href: '/finance/budgets',   label: 'Budgets',       icon: Target },
+      { href: '/finance/goals',     label: 'Goals',         icon: PiggyBank },
+      { href: '/finance/planner',   label: 'Planner',       icon: LineChart },
+      { href: '/finance/purchases', label: 'Purchase List', icon: ShoppingBag },
+    ]},
+    { title: 'Reports', items: [
+      { href: '/finance/summaries',  label: 'Summaries',  icon: BarChart3 },
+      { href: '/finance/insights',   label: 'Insights',   icon: Lightbulb },
+      { href: '/finance/warranties', label: 'Warranties', icon: Shield },
+      { href: '/finance/merchants',  label: 'Merchants',  icon: Store },
+    ]},
+    { title: 'Settings', items: [
+      { href: '/finance/settings',   label: 'Preferences', icon: SlidersHorizontal },
+      { href: '/finance/categories', label: 'Categories',  icon: Tag },
+    ]},
+  ],
+  tabs: [
+    { href: '/finance',                   label: 'Home',     icon: LayoutDashboard },
+    { href: '/finance/expenses/personal', label: 'Expenses', icon: ShoppingCart },
+    { href: '/finance/income',            label: 'Income',   icon: TrendingUp },
+  ],
+  fab: { label: 'Scan receipt', icon: ScanLine, href: '/finance/scan' },
+  headerExtra: (
+    <Link href="/finance/settings" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg" title="Settings">
+      <SlidersHorizontal size={18} className="text-gray-600 dark:text-gray-300" />
+    </Link>
+  ),
+}
 
 export function FinanceShell({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false)
-
-  useEffect(() => {
-    setCollapsed(localStorage.getItem('sidebar-finance-collapsed') === 'true')
-  }, [])
-
-  const toggle = () => setCollapsed(v => {
-    localStorage.setItem('sidebar-finance-collapsed', String(!v))
-    return !v
-  })
-
-  return (
-    <div className="flex h-screen bg-[#f5f5f7] dark:bg-gray-950">
-      <ModuleDock />
-      <FinanceSidebar collapsed={collapsed} onToggle={toggle} />
-
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {/* Mobile header */}
-        <header className="md:hidden sticky top-0 z-30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-4 py-3 flex items-center justify-between shrink-0">
-          <span className="font-bold text-gray-900 dark:text-white text-lg">💰 Finance</span>
-          <div className="flex items-center gap-1">
-            <GlobalSearch mobileIconOnly />
-            <ThemeToggle />
-            <Link href="/finance/settings" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-              <SlidersHorizontal size={20} className="text-gray-600 dark:text-gray-300" />
-            </Link>
-          </div>
-        </header>
-
-        {/* Desktop header */}
-        <header className="hidden md:flex items-center justify-end px-6 py-3 sticky top-0 z-30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 gap-2 shrink-0">
-          <GlobalSearch />
-          <ThemeToggle />
-          <Link href="/finance/settings" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Settings">
-            <SlidersHorizontal size={18} className="text-gray-600 dark:text-gray-300" />
-          </Link>
-        </header>
-
-        <main className="flex-1 overflow-auto p-4 md:p-6 pb-24 md:pb-6">
-          {children}
-        </main>
-      </div>
-
-      <div className="md:hidden">
-        <FinanceBottomNav />
-      </div>
-
-      <Toaster position="top-right" richColors />
-      <GlobalSearch keyboardOnly />
-    </div>
-  )
+  return <AppShell config={config}>{children}</AppShell>
 }

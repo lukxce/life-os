@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
+import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
   title: 'Life OS',
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans antialiased">
         <ThemeProvider>
           {children}
+          <Toaster position="top-right" richColors />
         </ThemeProvider>
       </body>
     </html>

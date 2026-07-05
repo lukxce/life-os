@@ -1,59 +1,26 @@
 'use client'
-import { ModuleDock } from './ModuleDock'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { Settings } from 'lucide-react'
-import { JournalSidebar } from './JournalSidebar'
-import { JournalBottomNav } from './JournalBottomNav'
-import { GlobalSearch } from './GlobalSearch'
-import { ThemeToggle } from './ThemeToggle'
+import { AppShell, ModuleConfig } from './AppShell'
+import { BookOpen, Settings } from 'lucide-react'
+
+const config: ModuleConfig = {
+  name: 'Journal',
+  emoji: '📓',
+  home: '/journal',
+  accentActive: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  accentText: 'text-amber-600 dark:text-amber-400',
+  accentFab: 'bg-amber-500 hover:bg-amber-600',
+  groups: [
+    { items: [
+      { href: '/journal',          label: 'Journal',   icon: BookOpen },
+      { href: '/journal/settings', label: 'Questions', icon: Settings },
+    ]},
+  ],
+  tabs: [
+    { href: '/journal',          label: 'Journal',   icon: BookOpen },
+    { href: '/journal/settings', label: 'Questions', icon: Settings },
+  ],
+}
 
 export function JournalShell({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false)
-
-  useEffect(() => {
-    setCollapsed(localStorage.getItem('sidebar-journal-collapsed') === 'true')
-  }, [])
-
-  const toggle = () => setCollapsed(v => {
-    localStorage.setItem('sidebar-journal-collapsed', String(!v))
-    return !v
-  })
-
-  return (
-    <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-gray-950">
-      <ModuleDock />
-      <JournalSidebar collapsed={collapsed} onToggle={toggle} />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile header */}
-        <header className="md:hidden sticky top-0 z-30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-4 py-3 flex items-center justify-between shrink-0">
-          <span className="font-bold text-gray-900 dark:text-white text-lg">📓 Journal</span>
-          <div className="flex items-center gap-2">
-            <GlobalSearch mobileIconOnly />
-            <ThemeToggle />
-          </div>
-        </header>
-
-        {/* Desktop header */}
-        <header className="hidden md:flex items-center justify-end px-6 py-3 sticky top-0 z-30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 gap-2 shrink-0">
-          <GlobalSearch />
-          <ThemeToggle />
-          <Link href="/journal/settings" className="p-2 rounded-xl text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Manage questions">
-            <Settings size={16} />
-          </Link>
-        </header>
-
-        <main className="flex-1 overflow-auto pb-24 md:pb-0">
-          {children}
-        </main>
-      </div>
-
-      <div className="md:hidden">
-        <JournalBottomNav />
-      </div>
-
-      <GlobalSearch keyboardOnly />
-    </div>
-  )
+  return <AppShell config={config}>{children}</AppShell>
 }

@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
-import { LifeNav } from '@/components/layout/LifeNav'
 import { Check, Plus, Trash2, ChevronDown, Target, X, Search } from 'lucide-react'
 
 interface Milestone { id: string; name: string; completed: boolean; order: number }
@@ -253,7 +252,6 @@ export default function GoalsPage() {
 
   return (
     <div className="space-y-5">
-      <LifeNav />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Goals</h1>
         <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold">
