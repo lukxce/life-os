@@ -1,5 +1,4 @@
 'use client'
-import Link from 'next/link'
 import { AppShell, ModuleConfig } from './AppShell'
 import {
   LayoutDashboard, TrendingUp, ShoppingCart, Briefcase, Building2, ArrowLeftRight,
@@ -58,12 +57,12 @@ const config: ModuleConfig = {
     { href: '/finance/expenses/personal', label: 'Expenses', icon: ShoppingCart },
     { href: '/finance/income',            label: 'Income',   icon: TrendingUp },
   ],
-  fab: { label: 'Scan receipt', icon: ScanLine, href: '/finance/scan' },
-  headerExtra: (
-    <Link href="/finance/settings" className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg" title="Settings">
-      <SlidersHorizontal size={18} className="text-gray-600 dark:text-gray-300" />
-    </Link>
-  ),
+  actions: [
+    { label: 'Scan receipt', icon: ScanLine,     href: '/finance/scan' },
+    { label: 'Add expense',  icon: ShoppingCart, href: '/finance/expenses/personal' },
+    { label: 'Add income',   icon: TrendingUp,   href: '/finance/income' },
+    { label: 'Log transfer', icon: ArrowLeftRight, href: '/finance/transfers' },
+  ],
 }
 
 export function FinanceShell({ children }: { children: React.ReactNode }) {

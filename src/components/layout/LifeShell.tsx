@@ -43,7 +43,7 @@ export function LifeShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <AppShell config={{ ...baseConfig, fab: { label: 'Add', icon: Plus, onClick: () => setShowAdd(true) } }}>
+      <AppShell config={{ ...baseConfig, actions: [{ label: 'Add habit entry', icon: Plus, onClick: () => setShowAdd(true) }] }}>
         {children}
       </AppShell>
       {showAdd && (

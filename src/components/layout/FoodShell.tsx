@@ -32,7 +32,7 @@ export function FoodShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <AppShell config={{ ...baseConfig, fab: { label: 'Add place', icon: Plus, onClick: () => setShowAdd(true) } }}>
+      <AppShell config={{ ...baseConfig, actions: [{ label: 'Add place', icon: Plus, onClick: () => setShowAdd(true) }] }}>
         {children}
       </AppShell>
       {showAdd && (

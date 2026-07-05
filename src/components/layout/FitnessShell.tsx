@@ -23,7 +23,10 @@ const config: ModuleConfig = {
     { href: '/fitness/meal-plan', label: 'Meals',     icon: UtensilsCrossed },
     { href: '/fitness/workouts',  label: 'Workouts',  icon: Dumbbell },
   ],
-  fab: { label: 'Log weight', icon: Scale, href: '/fitness/body' },
+  actions: [
+    { label: 'Log weight',  icon: Scale,    href: '/fitness/body' },
+    { label: 'Log workout', icon: Dumbbell, href: '/fitness/workouts' },
+  ],
 }
 
 export function FitnessShell({ children }: { children: React.ReactNode }) {
