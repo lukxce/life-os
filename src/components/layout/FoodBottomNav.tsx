@@ -8,7 +8,7 @@ export function FoodBottomNav({ onAdd }: { onAdd: () => void }) {
   const pathname = usePathname()
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 pb-4 pt-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-t border-gray-100 dark:border-gray-800">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 pb-4 pt-2 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-t border-black/5 dark:border-white/5">
       <div className="flex items-center justify-around max-w-sm mx-auto px-2">
         <Link href="/food"
           className={cn('flex flex-col items-center gap-0.5 px-5 py-1 rounded-xl transition-colors',

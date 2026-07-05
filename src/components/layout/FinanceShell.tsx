@@ -26,7 +26,7 @@ export function FinanceShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Mobile header */}
-        <header className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between shrink-0">
+        <header className="md:hidden sticky top-0 z-30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-4 py-3 flex items-center justify-between shrink-0">
           <span className="font-bold text-gray-900 dark:text-white text-lg">💰 Finance</span>
           <div className="flex items-center gap-1">
             <GlobalSearch mobileIconOnly />
@@ -38,7 +38,7 @@ export function FinanceShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Desktop header */}
-        <header className="hidden md:flex items-center justify-end px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 gap-2 shrink-0">
+        <header className="hidden md:flex items-center justify-end px-6 py-3 sticky top-0 z-30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 gap-2 shrink-0">
           <GlobalSearch />
           <ThemeToggle />
           <Link href="/finance/settings" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Settings">

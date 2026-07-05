@@ -14,6 +14,31 @@ body {
   overflow-x: hidden;
 }
 
+/* ── Apple-feel refinements ── */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* SF-style tight tracking on display text */
+h1 { letter-spacing: -0.022em; }
+h2 { letter-spacing: -0.017em; }
+h3 { letter-spacing: -0.012em; }
+
+/* No rubber-band flash behind fixed chrome */
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* Soft focus rings instead of harsh outlines */
+:focus-visible {
+  outline: 2px solid rgb(99 102 241 / 0.5);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* force tailwind rebuild */
 
 /* ── html5-qrcode: hide injected chrome we don't want ── */

@@ -45,7 +45,7 @@ function Sidebar() {
 function BottomNav() {
   const path = usePathname()
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-t border-black/5 dark:border-white/5">
       <div className="flex items-center">
         {NAV.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href}
@@ -67,7 +67,7 @@ export function FitnessShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-white dark:bg-gray-950">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-between shrink-0">
+        <header className="md:hidden sticky top-0 z-30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-4 py-3 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <Dumbbell size={18} className="text-green-600" />
             <span className="font-bold text-gray-900 dark:text-white">{pageLabel}</span>
@@ -77,7 +77,7 @@ export function FitnessShell({ children }: { children: React.ReactNode }) {
             <ThemeToggle />
           </div>
         </header>
-        <header className="hidden md:flex items-center justify-end px-6 py-3 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 gap-2 shrink-0">
+        <header className="hidden md:flex items-center justify-end px-6 py-3 sticky top-0 z-30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 gap-2 shrink-0">
           <GlobalSearch />
           <ThemeToggle />
         </header>
