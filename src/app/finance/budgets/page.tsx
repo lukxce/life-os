@@ -90,7 +90,7 @@ export default function BudgetsPage() {
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{editingId ? 'Edit Budget' : 'New Budget'}</h3>
           <div className="grid grid-cols-1 gap-4">
             <div>
@@ -123,11 +123,11 @@ export default function BudgetsPage() {
 
       <div className="space-y-3">
         {budgets.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-8 text-center text-gray-400 dark:text-gray-500">No budgets yet</div>
+          <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-8 text-center text-gray-400 dark:text-gray-500">No budgets yet</div>
         ) : budgets.map(b => {
           const s = spent[b.category] ?? { rsd: 0, eur: 0 }
           return (
-            <div key={b.id} className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
+            <div key={b.id} className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <span className="font-semibold text-gray-900 dark:text-gray-100">{b.category}</span>

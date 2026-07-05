@@ -162,7 +162,7 @@ export default function MerchantsPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+      <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
         <div className="flex items-center gap-3 p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Sort by:</span>
           {[{ key: 'total', label: 'Total Spent' }, { key: 'count', label: 'Visits' }, { key: 'last', label: 'Last Visit' }].map(s => (

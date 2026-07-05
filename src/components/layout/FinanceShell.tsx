@@ -14,6 +14,7 @@ const config: ModuleConfig = {
   accentActive: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   accentText: 'text-blue-600 dark:text-blue-400',
   accentFab: 'bg-blue-600 hover:bg-blue-700',
+  glow: '59 130 246',
   contentClassName: 'max-w-none',
   groups: [
     { items: [

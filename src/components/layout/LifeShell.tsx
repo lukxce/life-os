@@ -12,6 +12,7 @@ const baseConfig: Omit<ModuleConfig, 'fab'> = {
   accentActive: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
   accentText: 'text-indigo-600 dark:text-indigo-400',
   accentFab: 'bg-indigo-600 hover:bg-indigo-700',
+  glow: '99 102 241',
   contentClassName: 'max-w-2xl md:max-w-3xl',
   groups: [
     { title: 'Daily', items: [

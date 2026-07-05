@@ -6,6 +6,7 @@ import { formatEUR, formatRSD } from '@/lib/utils'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { ModuleDock } from '@/components/layout/ModuleDock'
+import { Ambient } from '@/components/layout/AppShell'
 import { TrendingUp, TrendingDown, FileText, ArrowRight, ChevronRight } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
@@ -88,6 +89,7 @@ function greeting() {
 
 export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null)
+  const [name, setName] = useState('')
   const today = new Date()
   const dateStr = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
   const todayDow = today.getDay() || 7
@@ -95,17 +97,21 @@ export default function HomePage() {
 
   useEffect(() => {
     fetch('/api/dashboard').then(r => r.json()).then(setData).catch(() => {})
+    setName(localStorage.getItem('userName') ?? '')
   }, [])
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-gray-950">
+    <div className="relative flex min-h-screen bg-[#f5f5f7] dark:bg-[#0a0a0f]">
+      <Ambient glow="99 102 241" />
       <ModuleDock />
-      <div className="flex-1 min-w-0">
+      <div className="relative z-10 flex-1 min-w-0">
         {/* Large-title header */}
-        <header className="sticky top-0 z-30 bg-[#f5f5f7]/70 dark:bg-gray-950/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-5 md:px-8 py-4 flex items-end justify-between">
+        <header className="sticky top-0 z-30 bg-[#f5f5f7]/60 dark:bg-[#0a0a0f]/60 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-5 md:px-8 py-4 flex items-end justify-between">
           <div>
             <p className="text-xs font-semibold tracking-widest text-gray-400 dark:text-gray-500 uppercase">{dateStr}</p>
-            <h1 className="text-[28px] font-bold text-gray-900 dark:text-white leading-tight">{greeting()}</h1>
+            <h1 className="text-[28px] font-bold text-gray-900 dark:text-white leading-tight">
+              {greeting()}{name ? `, ${name}` : ''}
+            </h1>
           </div>
           <div className="flex items-center gap-2 pb-1">
             <div className="md:hidden"><GlobalSearch mobileIconOnly /></div>
@@ -114,14 +120,14 @@ export default function HomePage() {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-7 pb-16">
+        <main className="page-in max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-7 pb-16">
 
           {/* ── Widgets row ── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
 
             {/* Habits ring widget */}
             <Link href="/life"
-              className="bg-white dark:bg-gray-900 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col items-center justify-center gap-2">
+              className="bg-white/85 dark:bg-gray-900/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col items-center justify-center gap-2">
               {data ? (
                 <ActivityRing completed={data.life.habitsCompletedToday} total={data.life.habitsScheduledToday} />
               ) : (
@@ -132,7 +138,7 @@ export default function HomePage() {
 
             {/* Balance widget */}
             <Link href="/finance"
-              className="bg-white dark:bg-gray-900 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
+              className="bg-white/85 dark:bg-gray-900/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
               <span className="text-xl">💰</span>
               <div>
                 <p className="text-[10px] font-semibold tracking-wide text-gray-400 uppercase mb-0.5">Total balance</p>
@@ -146,7 +152,7 @@ export default function HomePage() {
 
             {/* Month flow widget */}
             <Link href="/finance/insights"
-              className="bg-white dark:bg-gray-900 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
+              className="bg-white/85 dark:bg-gray-900/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
               <span className="text-xl">📊</span>
               <div className="space-y-1.5">
                 <p className="text-[10px] font-semibold tracking-wide text-gray-400 uppercase">This month</p>
@@ -169,7 +175,7 @@ export default function HomePage() {
 
             {/* Today's training widget */}
             <Link href="/fitness"
-              className="bg-white dark:bg-gray-900 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
+              className="bg-white/85 dark:bg-gray-900/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
               <span className="text-xl">{plan.emoji}</span>
               <div>
                 <p className="text-[10px] font-semibold tracking-wide text-gray-400 uppercase mb-0.5">Today's training</p>
@@ -189,7 +195,7 @@ export default function HomePage() {
               { href: '/schedule', label: '📅 My schedule' },
             ].map(q => (
               <Link key={q.href} href={q.href}
-                className="shrink-0 bg-white dark:bg-gray-900 border border-black/5 dark:border-white/5 shadow-sm rounded-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:shadow-md active:scale-95 transition-all duration-300 ease-apple whitespace-nowrap">
+                className="shrink-0 bg-white/85 dark:bg-gray-900/70 border border-black/5 dark:border-white/5 shadow-sm rounded-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:shadow-md active:scale-95 transition-all duration-300 ease-apple whitespace-nowrap">
                 {q.label}
               </Link>
             ))}
@@ -197,7 +203,7 @@ export default function HomePage() {
 
           {/* ── Upcoming bills ── */}
           {data && data.finance.upcomingBills.length > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+            <div className="bg-white/85 dark:bg-gray-900/70 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
               <div className="px-5 py-3.5 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
                 <h2 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2">
                   <FileText size={15} className="text-gray-400" /> Upcoming bills

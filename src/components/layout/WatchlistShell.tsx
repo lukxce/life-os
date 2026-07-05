@@ -9,6 +9,7 @@ const config: ModuleConfig = {
   accentActive: 'bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
   accentText: 'text-violet-600 dark:text-violet-400',
   accentFab: 'bg-violet-600 hover:bg-violet-700',
+  glow: '139 92 246',
   contentClassName: 'max-w-5xl',
   groups: [
     { items: [

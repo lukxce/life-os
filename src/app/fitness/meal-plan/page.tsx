@@ -95,7 +95,7 @@ export default function MealPlanPage() {
 
               {/* Day header */}
               <div className={cn('px-4 py-3 flex items-center justify-between',
-                isToday ? 'bg-green-50 dark:bg-green-950/60' : 'bg-white dark:bg-gray-900')}>
+                isToday ? 'bg-green-50 dark:bg-green-950/60' : 'bg-white/85 dark:bg-gray-900/70')}>
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{DAY_EMOJI[dow]}</span>
                   <span className={cn('font-bold text-sm', isToday ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-gray-100')}>
@@ -109,7 +109,7 @@ export default function MealPlanPage() {
               </div>
 
               {/* Meals */}
-              <div className={cn('divide-y divide-black/5 dark:divide-white/5', isToday ? 'bg-green-50/30 dark:bg-green-950/20' : 'bg-white dark:bg-gray-900')}>
+              <div className={cn('divide-y divide-black/5 dark:divide-white/5', isToday ? 'bg-green-50/30 dark:bg-green-950/20' : 'bg-white/85 dark:bg-gray-900/70')}>
                 {MEALS.map(mealType => {
                   const slot = slots.find(s => s.dayOfWeek === dow && s.mealType === mealType)
                   if (!slot) return null

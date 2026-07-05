@@ -60,7 +60,7 @@ function DocModal({ doc, onClose, onSave }: { doc?: AdminDocument; onClose: () =
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-sm p-5 space-y-4">
+      <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl w-full max-w-sm p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold dark:text-white">{doc ? 'Edit document' : 'Add document'}</h2>
           <button onClick={onClose}><X size={18} className="text-gray-400" /></button>
@@ -176,7 +176,7 @@ export default function DocumentsPage() {
       </div>
 
       {docs.length === 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-12 text-center">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-12 text-center">
           <div className="text-5xl mb-3">🗂️</div>
           <p className="text-sm font-medium text-gray-600 dark:text-gray-300">No documents yet</p>
           <p className="text-xs text-gray-400 mt-1">Track passport, insurance, car registration — anything with an expiry date.</p>
@@ -221,7 +221,7 @@ export default function DocumentsPage() {
             {catDocs.map(doc => {
               const status = statusFor(doc)
               return (
-                <div key={doc.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 px-4 py-3.5 flex items-center gap-3">
+                <div key={doc.id} className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 px-4 py-3.5 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{doc.name}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">

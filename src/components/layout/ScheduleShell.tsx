@@ -9,6 +9,7 @@ const config: ModuleConfig = {
   accentActive: 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
   accentText: 'text-sky-600 dark:text-sky-400',
   accentFab: 'bg-sky-600 hover:bg-sky-700',
+  glow: '14 165 233',
   contentClassName: 'max-w-6xl',
   groups: [
     { items: [

@@ -69,7 +69,7 @@ export default function CryptoPage() {
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{editingId ? 'Edit Holding' : 'Add Holding'}</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -92,7 +92,7 @@ export default function CryptoPage() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+      <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
         {holdings.length === 0 ? (
           <p className="text-center text-gray-400 dark:text-gray-500 py-12">No holdings yet</p>
         ) : (

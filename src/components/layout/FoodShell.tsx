@@ -12,6 +12,7 @@ const baseConfig: Omit<ModuleConfig, 'fab'> = {
   accentActive: 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
   accentText: 'text-orange-600 dark:text-orange-400',
   accentFab: 'bg-orange-500 hover:bg-orange-600',
+  glow: '249 115 22',
   fullBleed: true,
   groups: [
     { items: [

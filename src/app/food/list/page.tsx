@@ -185,7 +185,7 @@ export default function FoodListPage() {
       {/* Detail sheet */}
       {selected && !editing && (
         <div className="fixed inset-x-0 bottom-0 z-30 md:inset-auto md:fixed md:bottom-6 md:right-6 md:w-80">
-          <div className="bg-white dark:bg-gray-900 rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-white/85 dark:bg-gray-900/70 rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
             <div className="h-1 w-full" style={{ background: CATEGORY_CONFIG[selected.category as keyof typeof CATEGORY_CONFIG]?.color }} />
             {selected.photoUrl && (
               // eslint-disable-next-line @next/next/no-img-element

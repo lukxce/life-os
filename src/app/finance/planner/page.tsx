@@ -128,7 +128,7 @@ export default function PlannerPage() {
       </div>
 
       {/* Currency + Income + Horizon */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4 space-y-4">
+      <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4 space-y-4">
         <div>
           <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Plan in</label>
           <div className="flex gap-2 mt-1">
@@ -182,7 +182,7 @@ export default function PlannerPage() {
       {loading ? (
         <div className="text-center text-gray-400 py-8 animate-pulse">Loading your data…</div>
       ) : (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 divide-y divide-black/5 dark:divide-white/5">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 divide-y divide-black/5 dark:divide-white/5">
           {rows.map((row, i) => (
             <div key={row.category} className="flex items-center gap-3 px-4 py-3">
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
@@ -227,7 +227,7 @@ export default function PlannerPage() {
 
           {/* Impact on current totals */}
           {currentTotals && monthlySurplus !== 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
+            <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                 Impact on your balance after {horizon} month{horizon > 1 ? 's' : ''}
               </h3>
@@ -262,7 +262,7 @@ export default function PlannerPage() {
 
           {/* Breakdown chart */}
           {chartData.length > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
+            <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Monthly breakdown</h3>
               <ResponsiveContainer width="100%" height={Math.max(160, chartData.length * 36)}>
                 <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 16 }}>
@@ -281,7 +281,7 @@ export default function PlannerPage() {
 
           {/* Savings + total projection over time */}
           {horizon > 1 && monthlySurplus > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
+            <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
                 Projected total balance over {horizon} months
               </h3>

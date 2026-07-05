@@ -26,12 +26,25 @@ export interface ModuleConfig {
   accentActive: string   // active nav pill, e.g. 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
   accentText: string     // active tab tint, e.g. 'text-blue-600 dark:text-blue-400'
   accentFab: string      // FAB / primary button, e.g. 'bg-blue-600 hover:bg-blue-700'
+  glow?: string          // accent as CSS rgb triplet, e.g. '59 130 246' — drives the ambient background
   groups: NavGroup[]     // full page list — desktop sidebar + mobile "More" sheet
   tabs: NavItem[]        // mobile bottom-nav tabs (2–3, first = module home)
   fab?: ModuleFab
   headerExtra?: React.ReactNode
   contentClassName?: string  // main width override, default max-w-3xl
   fullBleed?: boolean        // e.g. Food map: no scroll container, no padding
+}
+
+/** Module-tinted aurora canvas — soft accent glow top-left, faint echo bottom-right */
+export function Ambient({ glow = '99 102 241' }: { glow?: string }) {
+  return (
+    <>
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 dark:hidden"
+        style={{ background: `radial-gradient(900px 620px at 8% -12%, rgb(${glow} / 0.10), transparent 62%), radial-gradient(760px 540px at 108% 112%, rgb(${glow} / 0.07), transparent 60%)` }} />
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 hidden dark:block"
+        style={{ background: `radial-gradient(900px 620px at 8% -12%, rgb(${glow} / 0.16), transparent 62%), radial-gradient(760px 540px at 108% 112%, rgb(${glow} / 0.10), transparent 60%)` }} />
+    </>
+  )
 }
 
 function useIsActive(home: string) {
@@ -44,7 +57,7 @@ function Sidebar({ config }: { config: ModuleConfig }) {
   const isActive = useIsActive(config.home)
   const Fab = config.fab
   return (
-    <aside className="hidden md:flex flex-col w-56 shrink-0 h-screen border-r border-black/5 dark:border-white/5 bg-white dark:bg-gray-900">
+    <aside className="relative z-10 hidden md:flex flex-col w-56 shrink-0 h-screen border-r border-black/5 dark:border-white/5 bg-white/60 dark:bg-white/[0.03] backdrop-blur-2xl">
       <div className="px-5 pt-5 pb-3">
         <Link href="/" className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
           <Home size={11} /> Life OS
@@ -182,12 +195,14 @@ function BottomNav({ config }: { config: ModuleConfig }) {
 
 export function AppShell({ config, children }: { config: ModuleConfig; children: React.ReactNode }) {
   const Fab = config.fab
+  const path = usePathname()
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f5f5f7] dark:bg-gray-950">
+    <div className="relative flex h-screen overflow-hidden bg-[#f5f5f7] dark:bg-[#0a0a0f]">
+      <Ambient glow={config.glow} />
       <ModuleDock />
       <Sidebar config={config} />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="relative z-10 flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header */}
         <header className="md:hidden bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-4 py-3 flex items-center justify-between shrink-0 z-30">
           <span className="font-bold text-gray-900 dark:text-white text-lg">{config.emoji} {config.name}</span>
@@ -209,7 +224,7 @@ export function AppShell({ config, children }: { config: ModuleConfig; children:
           <main className="flex-1 overflow-hidden relative">{children}</main>
         ) : (
           <main className="flex-1 overflow-auto">
-            <div className={cn('mx-auto w-full px-4 md:px-6 py-6 md:py-8 pb-32 md:pb-10', config.contentClassName ?? 'max-w-3xl')}>
+            <div key={path} className={cn('page-in mx-auto w-full px-4 md:px-6 py-6 md:py-8 pb-32 md:pb-10', config.contentClassName ?? 'max-w-3xl')}>
               {children}
             </div>
           </main>

@@ -107,7 +107,7 @@ export default function WorkoutsPage() {
           { label: 'Bike rides',    value: bikeCount,       icon: '🚴', target: 2 },
           { label: 'Total this wk', value: thisWeek.length, icon: '📊', target: 5 },
         ].map(s => (
-          <div key={s.label} className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-4 text-center">
+          <div key={s.label} className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-4 text-center">
             <span className="text-xl">{s.icon}</span>
             <p className="text-2xl font-bold mt-1 text-gray-900 dark:text-white">
               {s.value}<span className="text-xs font-normal text-gray-400">/{s.target}</span>
@@ -126,7 +126,7 @@ export default function WorkoutsPage() {
 
       {/* Log form */}
       {showForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-5">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
           <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Dumbbell size={16} className="text-green-600" /> Log workout manually
           </h2>
@@ -173,7 +173,7 @@ export default function WorkoutsPage() {
       ) : (
         <div className="space-y-4">
           {Object.entries(groups).map(([date, entries]) => (
-            <div key={date} className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+            <div key={date} className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
               <div className="px-4 py-3 border-b border-black/5 dark:border-white/5">
                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                   {new Date(date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}

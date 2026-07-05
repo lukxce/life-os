@@ -9,6 +9,7 @@ const config: ModuleConfig = {
   accentActive: 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   accentText: 'text-green-600 dark:text-green-400',
   accentFab: 'bg-green-600 hover:bg-green-700',
+  glow: '34 197 94',
   groups: [
     { items: [
       { href: '/fitness',           label: 'Today',     icon: LayoutDashboard },

@@ -93,7 +93,7 @@ export default function IncomePage() {
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-4 md:p-6">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-4 md:p-6">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 dark:text-gray-100 mb-4">{editingId ? 'Edit Income Entry' : 'New Income Entry'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -153,7 +153,7 @@ export default function IncomePage() {
       )}
 
       {/* Desktop table */}
-      <div className="hidden md:block bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 overflow-hidden">
+      <div className="hidden md:block bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 dark:bg-gray-800 border-b border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700">
             <tr>
@@ -189,9 +189,9 @@ export default function IncomePage() {
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
         {entries.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">No income entries yet</div>
+          <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">No income entries yet</div>
         ) : entries.map(e => (
-          <div key={e.id} className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-4">
+          <div key={e.id} className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-4">
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeBadge(e.type)}`}>{e.type}</span>

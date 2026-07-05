@@ -22,7 +22,7 @@ function LocateMeButton() {
   }
   return (
     <button onClick={locate} title="Go to my location"
-      className="absolute bottom-24 md:bottom-6 left-4 md:left-6 z-10 w-10 h-10 bg-white dark:bg-gray-900 rounded-full shadow-lg border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+      className="absolute bottom-24 md:bottom-6 left-4 md:left-6 z-10 w-10 h-10 bg-white/85 dark:bg-gray-900/70 rounded-full shadow-lg border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
       <Crosshair size={17} className="text-gray-600 dark:text-gray-300" />
     </button>
   )
@@ -136,7 +136,7 @@ export function FoodMapView({ places, onReload }: Props) {
       {/* Detail sheet */}
       {selected && editing === undefined && (
         <div className="absolute bottom-0 left-0 right-0 z-20 md:bottom-6 md:left-6 md:right-auto md:w-80">
-          <div className="bg-white dark:bg-gray-900 rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-white/85 dark:bg-gray-900/70 rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
             <div className="h-1 w-full" style={{ background: CATEGORY_CONFIG[selected.category as keyof typeof CATEGORY_CONFIG]?.color ?? '#6366f1' }} />
             <div className="p-5 pb-28 md:pb-5">
               <div className="flex items-start justify-between gap-3 mb-3">

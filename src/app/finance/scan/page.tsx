@@ -283,7 +283,7 @@ function ScanInner() {
 
       {!parsed && (
         <div className="space-y-3">
-          <section className="bg-white dark:bg-gray-900 rounded-2xl border border-black/10 dark:border-white/10 p-4 space-y-3">
+          <section className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/10 dark:border-white/10 p-4 space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <button onClick={startScanner} disabled={scanning || loading}
                 className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white py-3 rounded-xl font-semibold transition-colors">
@@ -305,7 +305,7 @@ function ScanInner() {
               }} />
           </section>
 
-          <section className="bg-white dark:bg-gray-900 rounded-2xl border border-black/10 dark:border-white/10 p-4 space-y-2">
+          <section className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/10 dark:border-white/10 p-4 space-y-2">
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Paste URL</p>
             <input
               value={url}
@@ -340,13 +340,13 @@ function ScanInner() {
       )}
 
       {loading && !parsed && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/10 dark:border-white/10 p-8 text-center text-sm text-gray-400 animate-pulse">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/10 dark:border-white/10 p-8 text-center text-sm text-gray-400 animate-pulse">
           Fetching receipt details…
         </div>
       )}
 
       {parsed && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/10 dark:border-white/10 p-5 space-y-4">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/10 dark:border-white/10 p-5 space-y-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100">Receipt details</h3>
 
           {parsed.warning && (

@@ -104,7 +104,7 @@ export default async function CityGuidePage({ params }: Props) {
 
 function PlaceCard({ place }: { place: any }) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+    <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
       {/* Photo */}
       {place.photoUrl && (
         // eslint-disable-next-line @next/next/no-img-element

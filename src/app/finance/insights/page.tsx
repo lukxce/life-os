@@ -88,7 +88,7 @@ export default function InsightsPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">{thisLabel} (this month)</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{formatRSD(data.thisMonth.total)}</p>
           <div className="flex items-center gap-1 mt-1">
@@ -99,13 +99,13 @@ export default function InsightsPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">{prevLabel} (last month)</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{formatRSD(data.lastMonth.total)}</p>
           <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Baseline comparison</p>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Difference</p>
           <p className={cn('text-2xl font-bold mt-1', data.thisMonth.total > data.lastMonth.total ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400')}>
             {data.thisMonth.total > data.lastMonth.total ? '+' : ''}{formatRSD(data.thisMonth.total - data.lastMonth.total)}
@@ -119,7 +119,7 @@ export default function InsightsPage() {
         {([['all', 'All Categories'], ['movers', 'Top Movers']] as const).map(([key, label]) => (
           <button key={key} onClick={() => setView(key)}
             className={cn('px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
-              view === key ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200')}>
+              view === key ? 'bg-white/85 dark:bg-gray-900/70 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200')}>
             {label}
           </button>
         ))}
@@ -127,7 +127,7 @@ export default function InsightsPage() {
 
       {/* Category breakdown */}
       {shown.length === 0 ? (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-8 text-center text-gray-400">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-8 text-center text-gray-400">
           No expense data for {thisLabel} or {prevLabel}
         </div>
       ) : (
@@ -137,7 +137,7 @@ export default function InsightsPage() {
             const thisPct = Math.round((cat.current / maxVal) * 100)
             const lastPct = Math.round((cat.previous / maxVal) * 100)
             return (
-              <div key={cat.category} className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
+              <div key={cat.category} className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div>
                     <span className="font-semibold text-gray-900 dark:text-gray-100">{cat.category}</span>

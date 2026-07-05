@@ -9,6 +9,7 @@ const config: ModuleConfig = {
   accentActive: 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
   accentText: 'text-teal-600 dark:text-teal-400',
   accentFab: 'bg-teal-600 hover:bg-teal-700',
+  glow: '20 184 166',
   groups: [
     { items: [
       { href: '/personal', label: 'Overview', icon: LayoutDashboard },

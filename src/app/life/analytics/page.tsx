@@ -74,7 +74,7 @@ export default function AnalyticsPage() {
         <>
           {/* Stat cards */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-4">
+            <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Star size={14} className="text-indigo-500" />
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Completions</p>
@@ -82,7 +82,7 @@ export default function AnalyticsPage() {
               <p className="text-2xl font-bold text-indigo-600">{totalCompletions}</p>
               <p className="text-xs text-gray-400 mt-0.5">{periodLabel}</p>
             </div>
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-4">
+            <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-4">
               <div className="flex items-center gap-2 mb-1">
                 <TrendingUp size={14} className="text-blue-500" />
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Avg rate</p>
@@ -90,7 +90,7 @@ export default function AnalyticsPage() {
               <p className="text-2xl font-bold text-blue-600">{avgRate}%</p>
               <p className="text-xs text-gray-400 mt-0.5">across all habits</p>
             </div>
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-4">
+            <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Flame size={14} className="text-orange-500" />
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Best streak</p>
@@ -98,7 +98,7 @@ export default function AnalyticsPage() {
               <p className="text-2xl font-bold text-orange-500">{bestStreak?.longestStreak ?? 0}d</p>
               <p className="text-xs text-gray-400 mt-0.5 truncate">{bestStreak?.name ?? '—'}</p>
             </div>
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-4">
+            <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Trophy size={14} className="text-emerald-500" />
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Best day</p>
@@ -111,7 +111,7 @@ export default function AnalyticsPage() {
           {/* Per-habit completion rates */}
           <section>
             <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Completion rate</h2>
-            <div className="bg-white dark:bg-gray-900 border border-black/5 dark:border-white/5 rounded-2xl divide-y divide-black/5 dark:divide-white/5">
+            <div className="bg-white/85 dark:bg-gray-900/70 border border-black/5 dark:border-white/5 rounded-2xl divide-y divide-black/5 dark:divide-white/5">
               {sortedByRate.map(h => (
                 <div key={h.habitId} className="flex items-center gap-3 px-4 py-3">
                   <span className="text-xl shrink-0">{h.icon ?? '📋'}</span>
@@ -134,7 +134,7 @@ export default function AnalyticsPage() {
           {/* Current streaks */}
           <section>
             <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">🔥 Current streaks</h2>
-            <div className="bg-white dark:bg-gray-900 border border-black/5 dark:border-white/5 rounded-2xl divide-y divide-black/5 dark:divide-white/5">
+            <div className="bg-white/85 dark:bg-gray-900/70 border border-black/5 dark:border-white/5 rounded-2xl divide-y divide-black/5 dark:divide-white/5">
               {sorted.filter(h => h.currentStreak > 0).length === 0 ? (
                 <p className="text-sm text-gray-400 px-4 py-4">No active streaks yet</p>
               ) : sorted.filter(h => h.currentStreak > 0).map((h, i) => (
@@ -167,7 +167,7 @@ export default function AnalyticsPage() {
             return (
               <section>
                 <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Monthly view</h2>
-                <div className="bg-white dark:bg-gray-900 border border-black/5 dark:border-white/5 rounded-2xl p-4 space-y-4">
+                <div className="bg-white/85 dark:bg-gray-900/70 border border-black/5 dark:border-white/5 rounded-2xl p-4 space-y-4">
                   {Array.from(months.entries()).reverse().map(([month, days]) => {
                     const [y, m] = month.split('-').map(Number)
                     const label = new Date(y, m - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
@@ -197,7 +197,7 @@ export default function AnalyticsPage() {
           {data.trend.length > 1 && (
             <section>
               <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Daily trend</h2>
-              <div className="bg-white dark:bg-gray-900 border border-black/5 dark:border-white/5 rounded-2xl p-4">
+              <div className="bg-white/85 dark:bg-gray-900/70 border border-black/5 dark:border-white/5 rounded-2xl p-4">
                 <ResponsiveContainer width="100%" height={160}>
                   <LineChart data={data.trend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />

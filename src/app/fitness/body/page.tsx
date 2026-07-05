@@ -45,7 +45,7 @@ function MetricCard({ cfg, rows }: { cfg: typeof METRICS[number]; rows: BodyRow[
     : ['auto', 'auto']
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+    <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
       <div className="flex items-center justify-between px-5 pt-4 pb-3">
         <div className="flex items-center gap-2.5">
           <span className="text-2xl">{cfg.icon}</span>
@@ -168,7 +168,7 @@ export default function FitnessBodyPage() {
       </div>
 
       {showLog && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-5">
+        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <Scale size={16} className="text-green-600" /> Log measurement
