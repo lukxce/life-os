@@ -1,10 +1,22 @@
 'use client'
 import { useEffect, useRef, useState, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { X, Zap, ZapOff, ZoomIn, ZoomOut, Check } from 'lucide-react'
+import { X, Zap, ZapOff, ZoomIn, ZoomOut, Check, Camera } from 'lucide-react'
 
 function isSufUrl(s: string) { return s.includes('suf.purs.gov.rs') }
 function pfrToUrl(pfr: string) { return `https://suf.purs.gov.rs/v/?vl=${btoa(pfr.trim())}` }
+
+// Downscale + JPEG-compress a photo so the upload stays small
+async function compressImage(file: File, maxDim = 1600, quality = 0.85): Promise<{ base64: string; mediaType: string }> {
+  const bitmap = await createImageBitmap(file)
+  const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height))
+  const canvas = document.createElement('canvas')
+  canvas.width  = Math.round(bitmap.width * scale)
+  canvas.height = Math.round(bitmap.height * scale)
+  canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  const dataUrl = canvas.toDataURL('image/jpeg', quality)
+  return { base64: dataUrl.split(',')[1], mediaType: 'image/jpeg' }
+}
 
 type Parsed = {
   merchantName: string | null
@@ -22,6 +34,7 @@ function ScanInner() {
   const videoRef        = useRef<HTMLVideoElement>(null)
   const zxingRef        = useRef<{ stop: () => void } | null>(null)
   const trackRef        = useRef<MediaStreamTrack | null>(null)
+  const photoInputRef   = useRef<HTMLInputElement>(null)
 
   const [scanning,       setScanning]       = useState(false)
   const [qrFound,        setQrFound]        = useState(false)
@@ -62,6 +75,50 @@ function ScanInner() {
     const shared = params.get('url') || params.get('text') || ''
     if (shared && isSufUrl(shared)) handleSufUrl(shared.trim())
   }, [params, handleSufUrl])
+
+  // Photo flow: try exact QR decode from the still image first (fiscal data,
+  // no guessing) — only fall back to AI vision if there's no readable QR.
+  const handlePhoto = useCallback(async (file: File) => {
+    setLoading(true); setError('')
+    try {
+      const objectUrl = URL.createObjectURL(file)
+      try {
+        const { BrowserQRCodeReader } = await import('@zxing/browser')
+        const result = await new BrowserQRCodeReader().decodeFromImageUrl(objectUrl)
+        const text = result.getText()
+        URL.revokeObjectURL(objectUrl)
+        if (text) {
+          await handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
+          return
+        }
+      } catch {
+        URL.revokeObjectURL(objectUrl)
+        // No QR in the photo — fall through to AI extraction
+      }
+
+      const { base64, mediaType } = await compressImage(file)
+      const res = await fetch('/api/finance/scan-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64, mediaType }),
+      })
+      const data = await res.json()
+      if (data.error) { setError(`Photo scan failed: ${data.error}`); setLoading(false); return }
+      setParsed({
+        merchantName: data.merchantName ?? null,
+        merchantPib:  data.merchantPib  ?? null,
+        total:        data.total        ?? null,
+        date:         data.date         ?? null,
+        sufUrl:       '',
+        warning: data.confidence === 'high'
+          ? 'Read by AI from the photo — no QR found. Double-check the amount.'
+          : 'Read by AI from the photo and the image was hard to read — verify every field before saving.',
+      })
+    } catch {
+      setError('Could not process the photo.')
+    }
+    setLoading(false)
+  }, [handleSufUrl])
 
   const applyTrackCaps = (track: MediaStreamTrack) => {
     trackRef.current = track
@@ -128,7 +185,9 @@ function ScanInner() {
 
     } catch (e: any) {
       setScanning(false)
-      setError(/permission|denied/i.test(String(e)) ? 'Camera permission denied.' : 'Could not start camera.')
+      setError(/permission|denied/i.test(String(e))
+        ? 'Camera permission denied — enable it in Settings, or use "Photo" below.'
+        : 'Could not start the camera — use "Photo" below instead (works every time).')
     }
   }
 
@@ -225,10 +284,25 @@ function ScanInner() {
       {!parsed && (
         <div className="space-y-3">
           <section className="bg-white dark:bg-gray-900 rounded-2xl border border-black/10 dark:border-white/10 p-4 space-y-3">
-            <button onClick={startScanner} disabled={scanning}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white py-3 rounded-xl font-semibold transition-colors">
-              Scan QR Code
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={startScanner} disabled={scanning || loading}
+                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white py-3 rounded-xl font-semibold transition-colors">
+                Scan QR
+              </button>
+              <button onClick={() => photoInputRef.current?.click()} disabled={scanning || loading}
+                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                <Camera size={17} /> Photo
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 text-center">
+              Photo works offline-camera style: snap the whole receipt — the QR is read from the picture, with AI as backup.
+            </p>
+            <input ref={photoInputRef} type="file" accept="image/*" capture="environment" className="hidden"
+              onChange={e => {
+                const f = e.target.files?.[0]
+                if (f) handlePhoto(f)
+                e.target.value = ''
+              }} />
           </section>
 
           <section className="bg-white dark:bg-gray-900 rounded-2xl border border-black/10 dark:border-white/10 p-4 space-y-2">

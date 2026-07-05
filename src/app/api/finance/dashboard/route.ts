@@ -11,97 +11,108 @@ export async function GET(req: NextRequest) {
   const range = getDateRange(period, date)
   const where = range ? { date: { gte: range.start, lte: range.end } } : {}
 
-  const [accounts, settings, liveRate] = await Promise.all([
+  // Everything in one parallel burst — grouped aggregates instead of
+  // per-account / per-category query fans (was ~70 queries, now ~12)
+  const [
+    accounts, settings, liveRate,
+    incomeByAcc, expenseByAcc, convInByAcc, convOutByAcc, trfInByAcc, trfOutByAcc,
+    incomeByType, deductions, expenseByCat, categories,
+  ] = await Promise.all([
     prisma.account.findMany(),
     prisma.settings.findFirst(),
     getLiveRate(),
+    // Balance components, grouped per account (income split by currency)
+    prisma.incomeEntry.groupBy({ by: ['accountId', 'currency'], _sum: { netAmount: true } }),
+    prisma.expenseEntry.groupBy({ by: ['accountId'], _sum: { amountRSD: true } }),
+    prisma.conversion.groupBy({ by: ['toAccountId'], _sum: { amountReceived: true } }),
+    prisma.conversion.groupBy({ by: ['fromAccountId'], _sum: { amountSent: true } }),
+    prisma.transfer.groupBy({ by: ['toAccountId'], _sum: { amountReceived: true } }),
+    prisma.transfer.groupBy({ by: ['fromAccountId'], _sum: { amountSent: true } }),
+    // Period-filtered income + expense breakdowns
+    prisma.incomeEntry.groupBy({ by: ['type', 'currency'], where, _sum: { netAmount: true } }),
+    prisma.incomeEntry.aggregate({ where, _sum: { deduction: true } }),
+    prisma.expenseEntry.groupBy({ by: ['type', 'category'], where, _sum: { amountRSD: true } }),
+    prisma.category.findMany(),
   ])
 
   const manualRate = settings?.manualRate ?? 117.5
 
-  // Pre-compute crypto portfolio once if there's a crypto account
   const hasCryptoAcc = accounts.some(a => a.name.toLowerCase().includes('crypto'))
   const cryptoPortfolioEUR = hasCryptoAcc ? await computeCryptoPortfolioEUR() : 0
 
-  // Calculate balance for each account
+  // Currency-aware balance: expenses always via amountRSD, income split by currency
   const accountBalances = await Promise.all(accounts.map(async (acc) => {
-    const isCryptoAcc = acc.name.toLowerCase().includes('crypto')
-
-    // Crypto accounts use live portfolio value as base — no transactions tracked
-    if (isCryptoAcc) {
+    if (acc.name.toLowerCase().includes('crypto')) {
       const balanceEUR = cryptoPortfolioEUR
-      const balanceRSD = balanceEUR * manualRate
-      return { ...acc, currentBalance: balanceEUR, balanceRSD, balanceEUR, cryptoAutoSync: true }
+      return { ...acc, currentBalance: balanceEUR, balanceRSD: balanceEUR * manualRate, balanceEUR, cryptoAutoSync: true }
     }
 
-    const overrideWhere = acc.overrideDate
-      ? { date: { gte: acc.overrideDate } }
-      : {}
+    let incomeEUR: number, incomeRSD: number, expenseRSD: number, convIn: number, convOut: number, trfIn: number, trfOut: number
 
-    const [incomeSum, expenseSum, convIn, convOut, trfIn, trfOut] = await Promise.all([
-      prisma.incomeEntry.aggregate({ where: { accountId: acc.id, ...overrideWhere }, _sum: { netAmount: true } }),
-      prisma.expenseEntry.aggregate({ where: { accountId: acc.id, ...overrideWhere }, _sum: { amount: true } }),
-      prisma.conversion.aggregate({ where: { toAccountId: acc.id, ...overrideWhere }, _sum: { amountReceived: true } }),
-      prisma.conversion.aggregate({ where: { fromAccountId: acc.id, ...overrideWhere }, _sum: { amountSent: true } }),
-      prisma.transfer.aggregate({ where: { toAccountId: acc.id, ...overrideWhere }, _sum: { amountReceived: true } }),
-      prisma.transfer.aggregate({ where: { fromAccountId: acc.id, ...overrideWhere }, _sum: { amountSent: true } }),
-    ])
+    if (acc.overrideDate) {
+      // Rare path: override accounts only count transactions after the override date
+      const dateFilter = { date: { gte: acc.overrideDate } }
+      const [incGB, expAgg, cIn, cOut, tIn, tOut] = await Promise.all([
+        prisma.incomeEntry.groupBy({ by: ['currency'], where: { accountId: acc.id, ...dateFilter }, _sum: { netAmount: true } }),
+        prisma.expenseEntry.aggregate({ where: { accountId: acc.id, ...dateFilter }, _sum: { amountRSD: true } }),
+        prisma.conversion.aggregate({ where: { toAccountId: acc.id, ...dateFilter }, _sum: { amountReceived: true } }),
+        prisma.conversion.aggregate({ where: { fromAccountId: acc.id, ...dateFilter }, _sum: { amountSent: true } }),
+        prisma.transfer.aggregate({ where: { toAccountId: acc.id, ...dateFilter }, _sum: { amountReceived: true } }),
+        prisma.transfer.aggregate({ where: { fromAccountId: acc.id, ...dateFilter }, _sum: { amountSent: true } }),
+      ])
+      incomeEUR  = incGB.find(r => r.currency === 'EUR')?._sum.netAmount ?? 0
+      incomeRSD  = incGB.find(r => r.currency === 'RSD')?._sum.netAmount ?? 0
+      expenseRSD = expAgg._sum.amountRSD ?? 0
+      convIn  = cIn._sum.amountReceived ?? 0
+      convOut = cOut._sum.amountSent ?? 0
+      trfIn   = tIn._sum.amountReceived ?? 0
+      trfOut  = tOut._sum.amountSent ?? 0
+    } else {
+      incomeEUR  = incomeByAcc.find(r => r.accountId === acc.id && r.currency === 'EUR')?._sum.netAmount ?? 0
+      incomeRSD  = incomeByAcc.find(r => r.accountId === acc.id && r.currency === 'RSD')?._sum.netAmount ?? 0
+      expenseRSD = expenseByAcc.find(r => r.accountId === acc.id)?._sum.amountRSD ?? 0
+      convIn  = convInByAcc.find(r => r.toAccountId === acc.id)?._sum.amountReceived ?? 0
+      convOut = convOutByAcc.find(r => r.fromAccountId === acc.id)?._sum.amountSent ?? 0
+      trfIn   = trfInByAcc.find(r => r.toAccountId === acc.id)?._sum.amountReceived ?? 0
+      trfOut  = trfOutByAcc.find(r => r.fromAccountId === acc.id)?._sum.amountSent ?? 0
+    }
 
     const base = acc.manualOverride ?? acc.startingBalance
-    const income = incomeSum._sum.netAmount ?? 0
-    const expenses = expenseSum._sum.amount ?? 0
-    const netConv = (convIn._sum.amountReceived ?? 0) - (convOut._sum.amountSent ?? 0)
-    const netTrf = (trfIn._sum.amountReceived ?? 0) - (trfOut._sum.amountSent ?? 0)
-    const currentBalance = base + income - expenses + netConv + netTrf
+    const income = acc.currency === 'EUR'
+      ? incomeEUR + incomeRSD / manualRate
+      : incomeEUR * manualRate + incomeRSD
+    const expenses = acc.currency === 'EUR' ? expenseRSD / manualRate : expenseRSD
+    const currentBalance = base + income - expenses + (convIn - convOut) + (trfIn - trfOut)
     const balanceRSD = acc.currency === 'EUR' ? currentBalance * manualRate : currentBalance
     const balanceEUR = acc.currency === 'RSD' ? currentBalance / liveRate : currentBalance
 
     return { ...acc, currentBalance, balanceRSD, balanceEUR }
   }))
 
-  // Income filtered by period
-  const [salaryRSD, salaryEUR, invoiceRSD, invoiceEUR, otherRSD, otherEUR, deductions] = await Promise.all([
-    prisma.incomeEntry.aggregate({ where: { ...where, type: 'Salary', currency: 'RSD' }, _sum: { netAmount: true } }),
-    prisma.incomeEntry.aggregate({ where: { ...where, type: 'Salary', currency: 'EUR' }, _sum: { netAmount: true } }),
-    prisma.incomeEntry.aggregate({ where: { ...where, type: 'Invoice', currency: 'RSD' }, _sum: { netAmount: true } }),
-    prisma.incomeEntry.aggregate({ where: { ...where, type: 'Invoice', currency: 'EUR' }, _sum: { netAmount: true } }),
-    prisma.incomeEntry.aggregate({ where: { ...where, type: 'Other', currency: 'RSD' }, _sum: { netAmount: true } }),
-    prisma.incomeEntry.aggregate({ where: { ...where, type: 'Other', currency: 'EUR' }, _sum: { netAmount: true } }),
-    prisma.incomeEntry.aggregate({ where, _sum: { deduction: true } }),
-  ])
+  // Income breakdown from the grouped result
+  const inc = (type: string, currency: string) =>
+    incomeByType.find(r => r.type === type && r.currency === currency)?._sum.netAmount ?? 0
 
-  // Expenses filtered by period
-  const personalCats = await prisma.category.findMany({ where: { type: 'personal' } })
-  const businessCats = await prisma.category.findMany({ where: { type: 'business' } })
-
-  const personalExpenses = await Promise.all(personalCats.map(async (cat) => {
-    const sum = await prisma.expenseEntry.aggregate({
-      where: { ...where, type: 'personal', category: cat.name },
-      _sum: { amountRSD: true }
-    })
-    return { category: cat.name, amountRSD: sum._sum.amountRSD ?? 0 }
-  }))
-
-  const businessExpenses = await Promise.all(businessCats.map(async (cat) => {
-    const sum = await prisma.expenseEntry.aggregate({
-      where: { ...where, type: 'business', category: cat.name },
-      _sum: { amountRSD: true }
-    })
-    return { category: cat.name, amountRSD: sum._sum.amountRSD ?? 0 }
-  }))
-
-  const salaryRSDVal = salaryRSD._sum.netAmount ?? 0
-  const invoiceRSDVal = invoiceRSD._sum.netAmount ?? 0
-  const invoiceEURVal = (invoiceEUR._sum.netAmount ?? 0) * manualRate
-  const otherRSDVal = otherRSD._sum.netAmount ?? 0
-  const otherEURVal = (otherEUR._sum.netAmount ?? 0) * manualRate
-  const totalGrossRSD = salaryRSDVal + invoiceRSDVal + invoiceEURVal + otherRSDVal + otherEURVal
+  const salaryRSDVal  = inc('Salary', 'RSD')
+  const invoiceRSDVal = inc('Invoice', 'RSD')
+  const invoiceEURVal = inc('Invoice', 'EUR') * manualRate
+  const otherRSDVal   = inc('Other', 'RSD')
+  const otherEURVal   = inc('Other', 'EUR') * manualRate
+  const totalGrossRSD = salaryRSDVal + inc('Salary', 'EUR') * manualRate + invoiceRSDVal + invoiceEURVal + otherRSDVal + otherEURVal
   const totalDeductions = deductions._sum.deduction ?? 0
   const totalNetRSD = totalGrossRSD - totalDeductions
 
-  // Totals
+  // Category breakdowns from the grouped result (keeps zero-spend categories visible)
+  const catSum = (type: string, category: string) =>
+    expenseByCat.find(r => r.type === type && r.category === category)?._sum.amountRSD ?? 0
+
+  const personalExpenses = categories.filter(c => c.type === 'personal')
+    .map(cat => ({ category: cat.name, amountRSD: catSum('personal', cat.name) }))
+  const businessExpenses = categories.filter(c => c.type === 'business')
+    .map(cat => ({ category: cat.name, amountRSD: catSum('business', cat.name) }))
+
   const personalRSD = accountBalances.filter(a => a.type === 'personal').reduce((s, a) => s + a.balanceRSD, 0)
-  const companyRSD = accountBalances.filter(a => a.type === 'company').reduce((s, a) => s + a.balanceRSD, 0)
+  const companyRSD  = accountBalances.filter(a => a.type === 'company').reduce((s, a) => s + a.balanceRSD, 0)
   const totalRSD = personalRSD + companyRSD
 
   return NextResponse.json({
@@ -119,10 +130,10 @@ export async function GET(req: NextRequest) {
     income: {
       salaryRSD: salaryRSDVal,
       invoiceRSD: invoiceRSDVal,
-      invoiceEUR: invoiceEUR._sum.netAmount ?? 0,
+      invoiceEUR: inc('Invoice', 'EUR'),
       invoiceEURinRSD: invoiceEURVal,
       otherRSD: otherRSDVal,
-      otherEUR: otherEUR._sum.netAmount ?? 0,
+      otherEUR: inc('Other', 'EUR'),
       otherEURinRSD: otherEURVal,
       totalGrossRSD,
       totalDeductions,

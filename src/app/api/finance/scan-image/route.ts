@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 512,
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
         messages: [{
           role: 'user',
           content: [
@@ -30,16 +30,29 @@ export async function POST(req: NextRequest) {
             },
             {
               type: 'text',
-              text: `You are extracting data from a receipt or bill photo.
-Return ONLY valid JSON with these fields (no markdown, no explanation):
+              text: `Extract data from this receipt/bill photo. Most receipts will be Serbian fiscal receipts ("fiskalni račun").
+
+Serbian receipt hints:
+- Merchant name is at the very top (often ALL CAPS company name, may end in DOO/D.O.O.)
+- PIB is a 9-digit tax number, labeled "PIB:"
+- The total is labeled "УКУПАН ИЗНОС" / "UKUPAN IZNOS" / "ZA UPLATU" — use THAT number, not item prices or "POVRAĆAJ"
+- Dates are DD.MM.YYYY. — convert carefully (day first!)
+- Amounts use comma as decimal separator: "1.234,56" means 1234.56
+
+CRITICAL RULES:
+- Only report what you can actually READ in the image. If a field is blurry, cut off, or not visible, return null for it. NEVER guess or invent values.
+- If the image is not a receipt at all, return all nulls.
+- For "confidence", rate how certain you are overall: "high" (all fields clearly legible), "medium" (some fields uncertain), "low" (image hard to read — user should verify everything).
+
+Return ONLY valid JSON (no markdown, no explanation):
 {
-  "merchantName": "store or company name",
-  "merchantPib": "tax/VAT number if visible, else null",
-  "total": total amount as a number (no currency symbol),
-  "date": "ISO 8601 date string or null",
-  "currency": "currency code e.g. RSD, EUR, USD"
-}
-If a field is not visible, use null.`,
+  "merchantName": string | null,
+  "merchantPib": string | null,
+  "total": number | null,
+  "date": "ISO 8601 string" | null,
+  "currency": "RSD" | "EUR" | "USD" | null,
+  "confidence": "high" | "medium" | "low"
+}`,
             },
           ],
         }],
@@ -75,6 +88,7 @@ If a field is not visible, use null.`,
       total:        typeof parsed.total === 'number' ? parsed.total : null,
       date:         dateISO,
       currency:     parsed.currency ?? null,
+      confidence:   parsed.confidence ?? 'low',
     })
   } catch (err) {
     console.error('[scan-image] error:', err)

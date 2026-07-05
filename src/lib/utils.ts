@@ -31,7 +31,14 @@ export function getDateRange(period: Period, date: Date): { start: Date; end: Da
   }
 }
 
+// EUR/RSD barely moves intraday — cache for an hour so dashboard
+// loads never block on an external API call.
+let rateCache: { value: number; at: number } | null = null
+const RATE_CACHE_MS = 60 * 60 * 1000
+
 export async function getLiveRate(): Promise<number> {
+  if (rateCache && Date.now() - rateCache.at < RATE_CACHE_MS) return rateCache.value
+
   // Try multiple sources in order — first one that works wins
   const sources = [
     'https://api.frankfurter.dev/v1/latest?base=EUR&symbols=RSD',
@@ -41,22 +48,22 @@ export async function getLiveRate(): Promise<number> {
 
   for (const url of sources) {
     try {
-      const res = await fetch(url, { cache: 'no-store' })
+      const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(3000) })
       if (!res.ok) continue
       const data = await res.json()
 
-      // Frankfurter format: { rates: { RSD: 117.20 } }
-      if (data.rates?.RSD) return data.rates.RSD
-
-      // er-api format: { rates: { RSD: 117.20 } } (same shape)
-      if (data.rates?.RSD && typeof data.rates.RSD === 'number') return data.rates.RSD
+      // Frankfurter / er-api format: { rates: { RSD: 117.20 } }
+      if (typeof data.rates?.RSD === 'number') {
+        rateCache = { value: data.rates.RSD, at: Date.now() }
+        return data.rates.RSD
+      }
     } catch (e) {
       console.error('rate fetch failed for', url, e)
     }
   }
 
-  console.warn('all live rate sources failed, returning fallback 117.5')
-  return 117.5
+  console.warn('all live rate sources failed, returning fallback')
+  return rateCache?.value ?? 117.5
 }
 
 // ─── Habit utilities (used by life module) ────────────────────────────────────
