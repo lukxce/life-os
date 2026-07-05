@@ -315,7 +315,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
 
       {/* Filter bar */}
       {showFilters && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-700 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 dark:text-gray-300">Filters</h3>
             {activeFilterCount > 0 && (
@@ -367,7 +367,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
       )}
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-700 dark:border-gray-700 p-4 md:p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-4 md:p-6">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 dark:text-gray-100 mb-4">{editingId ? 'Edit Expense' : 'New Expense'}</h3>
 
           {form.merchantName && (
@@ -474,7 +474,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
                 </button>
                 {form.photoUrl && (
                   <button type="button" onClick={() => setPhotoViewer(form.photoUrl)}>
-                    <img src={form.photoUrl} alt="receipt" className="h-10 w-10 object-cover rounded border border-gray-200 dark:border-gray-700" />
+                    <img src={form.photoUrl} alt="receipt" className="h-10 w-10 object-cover rounded border border-black/10 dark:border-white/10" />
                   </button>
                 )}
                 {form.photoUrl && (
@@ -515,16 +515,16 @@ function ExpensesContent({ params }: { params: { type: string } }) {
       )}
 
       {/* Desktop table */}
-      <div className="hidden md:block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-700 dark:border-gray-700 overflow-hidden">
+      <div className="hidden md:block bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 dark:border-gray-700 dark:border-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 dark:bg-gray-800 border-b border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700">
             <tr>
               {['Date','Category','Subcategory','Description','Amount','Currency','RSD','Account',''].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-700 dark:divide-gray-700">
+          <tbody className="divide-y divide-black/5 dark:divide-white/5 dark:divide-gray-700">
             {filteredEntries.map(e => (
               <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-800 dark:bg-gray-800">
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-300 dark:text-gray-300">{formatDate(e.date)}</td>
@@ -561,11 +561,11 @@ function ExpensesContent({ params }: { params: { type: string } }) {
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
         {filteredEntries.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-700 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">
             {entries.length === 0 ? 'No expenses yet' : 'No expenses match your filters'}
           </div>
         ) : filteredEntries.map(e => (
-          <div key={e.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-700 dark:border-gray-700 p-4">
+          <div key={e.id} className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-4">
             <div className="flex items-start justify-between mb-2 gap-2">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap mb-1">

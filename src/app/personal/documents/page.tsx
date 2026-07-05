@@ -69,13 +69,13 @@ function DocModal({ doc, onClose, onSave }: { doc?: AdminDocument; onClose: () =
         <div>
           <label className="text-xs text-gray-400 font-medium mb-1.5 block">Name</label>
           <input autoFocus type="text" placeholder="e.g. Passport, Car insurance…"
-            className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-gray-200 dark:border-gray-700 dark:text-white"
+            className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10 dark:text-white"
             value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
         </div>
 
         <div>
           <label className="text-xs text-gray-400 font-medium mb-1.5 block">Category</label>
-          <select className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-gray-200 dark:border-gray-700 dark:text-white"
+          <select className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10 dark:text-white"
             value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}>
             {CATEGORIES.map(c => <option key={c} value={c}>{CATEGORY_ICONS[c]} {c}</option>)}
           </select>
@@ -85,13 +85,13 @@ function DocModal({ doc, onClose, onSave }: { doc?: AdminDocument; onClose: () =
           <div>
             <label className="text-xs text-gray-400 font-medium mb-1.5 block">Expiry date</label>
             <input type="date"
-              className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5 outline-none border border-gray-200 dark:border-gray-700 dark:text-white"
+              className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5 outline-none border border-black/10 dark:border-white/10 dark:text-white"
               value={form.expiryDate} onChange={e => setForm(p => ({ ...p, expiryDate: e.target.value }))} />
           </div>
           <div>
             <label className="text-xs text-gray-400 font-medium mb-1.5 block">Remind me (days before)</label>
             <input type="number" min="1" max="365"
-              className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5 outline-none border border-gray-200 dark:border-gray-700 dark:text-white"
+              className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5 outline-none border border-black/10 dark:border-white/10 dark:text-white"
               value={form.reminderDays} onChange={e => setForm(p => ({ ...p, reminderDays: e.target.value }))} />
           </div>
         </div>
@@ -99,7 +99,7 @@ function DocModal({ doc, onClose, onSave }: { doc?: AdminDocument; onClose: () =
         <div>
           <label className="text-xs text-gray-400 font-medium mb-1.5 block">Notes (optional)</label>
           <textarea placeholder="Document number, issuing office, renewal link…" rows={2}
-            className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-gray-200 dark:border-gray-700 resize-none dark:text-white"
+            className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10 resize-none dark:text-white"
             value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} />
         </div>
 
@@ -176,7 +176,7 @@ export default function DocumentsPage() {
       </div>
 
       {docs.length === 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-12 text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-12 text-center">
           <div className="text-5xl mb-3">🗂️</div>
           <p className="text-sm font-medium text-gray-600 dark:text-gray-300">No documents yet</p>
           <p className="text-xs text-gray-400 mt-1">Track passport, insurance, car registration — anything with an expiry date.</p>
@@ -221,7 +221,7 @@ export default function DocumentsPage() {
             {catDocs.map(doc => {
               const status = statusFor(doc)
               return (
-                <div key={doc.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 px-4 py-3.5 flex items-center gap-3">
+                <div key={doc.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 px-4 py-3.5 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{doc.name}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">

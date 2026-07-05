@@ -45,7 +45,7 @@ function MetricCard({ cfg, rows }: { cfg: typeof METRICS[number]; rows: BodyRow[
     : ['auto', 'auto']
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
       <div className="flex items-center justify-between px-5 pt-4 pb-3">
         <div className="flex items-center gap-2.5">
           <span className="text-2xl">{cfg.icon}</span>
@@ -95,7 +95,7 @@ function MetricCard({ cfg, rows }: { cfg: typeof METRICS[number]; rows: BodyRow[
         </div>
       )}
       {stats && stats.count >= 2 && (
-        <div className="grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-800 border-t border-gray-100 dark:border-gray-800">
+        <div className="grid grid-cols-3 divide-x divide-black/5 dark:divide-white/5 border-t border-black/5 dark:border-white/5">
           {[{ label: 'Entries', value: String(stats.count) }, { label: 'Min', value: `${stats.min} ${cfg.unit}` }, { label: 'Max', value: `${stats.max} ${cfg.unit}` }].map(s => (
             <div key={s.label} className="py-2.5 text-center">
               <p className="text-[10px] text-gray-400 uppercase tracking-wide">{s.label}</p>
@@ -168,7 +168,7 @@ export default function FitnessBodyPage() {
       </div>
 
       {showLog && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <Scale size={16} className="text-green-600" /> Log measurement
@@ -179,19 +179,19 @@ export default function FitnessBodyPage() {
             <div>
               <label className="text-xs text-gray-400 block mb-1">Metric</label>
               <select value={form.metric} onChange={e => setForm(f => ({ ...f, metric: e.target.value as MetricKey }))}
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800">
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800">
                 {METRICS.map(m => <option key={m.key} value={m.key}>{m.label} ({m.unit})</option>)}
               </select>
             </div>
             <div>
               <label className="text-xs text-gray-400 block mb-1">Value</label>
               <input type="number" step="0.1" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
-                placeholder="0.0" className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800" />
+                placeholder="0.0" className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800" />
             </div>
             <div>
               <label className="text-xs text-gray-400 block mb-1">Date</label>
               <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800" />
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800" />
             </div>
             <div className="col-span-3">
               <button type="submit" disabled={saving}

@@ -55,7 +55,7 @@ function ContactCard({ contact, onMarkContacted, onEdit, onDelete }: {
   const birthday = nextBirthday(contact.birthday)
 
   return (
-    <div className={cn('bg-white dark:bg-gray-900 rounded-2xl border overflow-hidden transition-all', status.urgent ? 'border-red-200 dark:border-red-900/40' : 'border-gray-100 dark:border-gray-800')}>
+    <div className={cn('bg-white dark:bg-gray-900 rounded-2xl border overflow-hidden transition-all', status.urgent ? 'border-red-200 dark:border-red-900/40' : 'border-black/5 dark:border-white/5')}>
       <div className="px-4 py-3.5 flex items-center gap-3">
         <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0" style={{ backgroundColor: color + '22' }}>
           {contact.emoji ?? '👤'}
@@ -125,7 +125,7 @@ function ContactModal({ contact, onClose, onSave }: {
         </div>
 
         <input autoFocus type="text" placeholder="Name"
-          className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-gray-200 dark:border-gray-700 dark:text-white"
+          className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10 dark:text-white"
           value={name} onChange={e => setName(e.target.value)} />
 
         <div>
@@ -155,12 +155,12 @@ function ContactModal({ contact, onClose, onSave }: {
           <div>
             <label className="text-xs text-gray-400 font-medium mb-1.5 block">Birthday (MM-DD)</label>
             <input type="text" placeholder="e.g. 03-15" maxLength={5}
-              className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5 outline-none border border-gray-200 dark:border-gray-700 dark:text-white"
+              className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5 outline-none border border-black/10 dark:border-white/10 dark:text-white"
               value={birthday} onChange={e => setBirthday(e.target.value)} />
           </div>
           <div>
             <label className="text-xs text-gray-400 font-medium mb-1.5 block">Reach out</label>
-            <select className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5 outline-none border border-gray-200 dark:border-gray-700 dark:text-white"
+            <select className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5 outline-none border border-black/10 dark:border-white/10 dark:text-white"
               value={freq} onChange={e => setFreq(e.target.value)}>
               {Object.entries(FREQ_LABELS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
@@ -172,12 +172,12 @@ function ContactModal({ contact, onClose, onSave }: {
             <Linkedin size={12} /> LinkedIn URL
           </label>
           <input type="url" placeholder="https://linkedin.com/in/username"
-            className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2.5 outline-none border border-gray-200 dark:border-gray-700 dark:text-white"
+            className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2.5 outline-none border border-black/10 dark:border-white/10 dark:text-white"
             value={linkedin} onChange={e => setLinkedin(e.target.value)} />
         </div>
 
         <textarea placeholder="Note (optional)" rows={2}
-          className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-gray-200 dark:border-gray-700 resize-none dark:text-white"
+          className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10 resize-none dark:text-white"
           value={note} onChange={e => setNote(e.target.value)} />
 
         <div className="flex gap-3">
@@ -262,7 +262,7 @@ export default function ContactsPage() {
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input type="text" placeholder="Search…" value={searchText} onChange={e => setSearchText(e.target.value)}
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl pl-8 pr-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:text-white" />
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-black/10 dark:border-white/10 rounded-2xl pl-8 pr-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:text-white" />
           {searchText && (
             <button onClick={() => setSearchText('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><X size={13} /></button>
           )}
@@ -270,7 +270,7 @@ export default function ContactsPage() {
       )}
 
       {contacts.length === 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-10 text-center">
           <div className="text-4xl mb-3">👥</div>
           <p className="text-sm font-medium text-gray-500">No contacts yet</p>
           <p className="text-xs mt-1 text-gray-400">Add the people who matter — get nudged when it's time to reach out.</p>

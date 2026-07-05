@@ -74,7 +74,7 @@ export default function FoodListPage() {
   return (
     <div className="h-full overflow-auto pb-24 md:pb-6">
       {/* Filters + sort */}
-      <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-gray-100 dark:border-gray-800 px-4 py-3 space-y-2">
+      <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-black/5 dark:border-white/5 px-4 py-3 space-y-2">
         {/* Text search */}
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -83,7 +83,7 @@ export default function FoodListPage() {
             placeholder="Search places, cuisine, notes…"
             value={filterText}
             onChange={e => setFilterText(e.target.value)}
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-orange-400"
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-black/10 dark:border-white/10 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-orange-400"
           />
           {filterText && (
             <button onClick={() => setFilterText('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -98,7 +98,7 @@ export default function FoodListPage() {
             <button key={key}
               onClick={() => setCats(c => c.includes(key) ? c.filter(x => x !== key) : [...c, key])}
               className={cn('px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all',
-                cats.includes(key) ? 'text-white border-transparent' : 'border-gray-200 dark:border-gray-700 text-gray-400')}
+                cats.includes(key) ? 'text-white border-transparent' : 'border-black/10 dark:border-white/10 text-gray-400')}
               style={cats.includes(key) ? { background: cfg.color } : undefined}>
               {cfg.label}
             </button>
@@ -109,7 +109,7 @@ export default function FoodListPage() {
         <div className="flex gap-2 flex-wrap">
           {cities.length > 1 && (
             <select value={filterCity} onChange={e => setFilterCity(e.target.value)}
-              className="border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 text-xs bg-white dark:bg-gray-800 outline-none">
+              className="border border-black/10 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs bg-white dark:bg-gray-800 outline-none">
               <option value="">All cities</option>
               {cities.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -127,13 +127,13 @@ export default function FoodListPage() {
           )}
           {cuisines.length > 1 && (
             <select value={filterCuisine} onChange={e => setFilterCuisine(e.target.value)}
-              className="border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 text-xs bg-white dark:bg-gray-800 outline-none">
+              className="border border-black/10 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs bg-white dark:bg-gray-800 outline-none">
               <option value="">All cuisines</option>
               {cuisines.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           )}
           <select value={sort} onChange={e => setSort(e.target.value as SortKey)}
-            className="border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 text-xs bg-white dark:bg-gray-800 outline-none ml-auto">
+            className="border border-black/10 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs bg-white dark:bg-gray-800 outline-none ml-auto">
             <option value="createdAt">Newest</option>
             <option value="rating">Top rated</option>
             <option value="name">A–Z</option>
@@ -148,7 +148,7 @@ export default function FoodListPage() {
           <p className="font-medium text-gray-600 dark:text-gray-300">No places match your filters</p>
         </div>
       ) : (
-        <div className="divide-y divide-gray-100 dark:divide-gray-800">
+        <div className="divide-y divide-black/5 dark:divide-white/5">
           {filtered.map(place => {
             const cfg = CATEGORY_CONFIG[place.category as keyof typeof CATEGORY_CONFIG]
             return (
@@ -228,7 +228,7 @@ export default function FoodListPage() {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setEditing(selected)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium rounded-xl border border-black/10 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-gray-800">
                   <Pencil size={13} /> Edit
                 </button>
                 <button onClick={() => handleDelete(selected)}

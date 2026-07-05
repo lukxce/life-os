@@ -22,7 +22,7 @@ function LocateMeButton() {
   }
   return (
     <button onClick={locate} title="Go to my location"
-      className="absolute bottom-24 md:bottom-6 left-4 md:left-6 z-10 w-10 h-10 bg-white dark:bg-gray-900 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+      className="absolute bottom-24 md:bottom-6 left-4 md:left-6 z-10 w-10 h-10 bg-white dark:bg-gray-900 rounded-full shadow-lg border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
       <Crosshair size={17} className="text-gray-600 dark:text-gray-300" />
     </button>
   )
@@ -175,7 +175,7 @@ export function FoodMapView({ places, onReload }: Props) {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setEditing(selected)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium rounded-xl border border-black/10 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                   <Pencil size={13} /> Edit
                 </button>
                 <button onClick={() => handleDelete(selected)}

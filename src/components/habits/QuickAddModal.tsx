@@ -50,22 +50,22 @@ export function QuickAddModal({ onClose, onCreated, embedded }: Props) {
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="block text-xs text-gray-500 mb-1">Name *</label>
-          <input autoFocus className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none focus:border-indigo-400"
+          <input autoFocus className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none focus:border-indigo-400"
             value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Morning run" />
         </div>
         <div className="col-span-2">
           <label className="block text-xs text-gray-500 mb-1">Category</label>
-          <input className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none focus:border-indigo-400"
+          <input className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none focus:border-indigo-400"
             value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="e.g. Health & Body (optional)" />
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">Icon (emoji)</label>
-          <input className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none"
+          <input className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none"
             value={form.icon} onChange={e => setForm({ ...form, icon: e.target.value })} placeholder="🏃" />
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">Color</label>
-          <input type="color" className="w-full h-10 border border-gray-200 dark:border-gray-700 rounded-xl px-1 bg-gray-50 dark:bg-gray-800 cursor-pointer"
+          <input type="color" className="w-full h-10 border border-black/10 dark:border-white/10 rounded-xl px-1 bg-gray-50 dark:bg-gray-800 cursor-pointer"
             value={form.color} onChange={e => setForm({ ...form, color: e.target.value })} />
         </div>
       </div>
@@ -75,7 +75,7 @@ export function QuickAddModal({ onClose, onCreated, embedded }: Props) {
         <div className="flex gap-2">
           {[{ v: 'boolean', l: '✓ Yes/No' }, { v: 'quantity', l: '# Quantity' }].map(t => (
             <button key={t.v} onClick={() => setForm({ ...form, type: t.v })}
-              className={cn('flex-1 py-2 text-sm rounded-xl border transition-colors', form.type === t.v ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 dark:border-gray-700')}>
+              className={cn('flex-1 py-2 text-sm rounded-xl border transition-colors', form.type === t.v ? 'bg-indigo-600 text-white border-indigo-600' : 'border-black/10 dark:border-white/10')}>
               {t.l}
             </button>
           ))}
@@ -86,12 +86,12 @@ export function QuickAddModal({ onClose, onCreated, embedded }: Props) {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-gray-500 mb-1">Unit</label>
-            <input className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none"
+            <input className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none"
               value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} placeholder="ml, km, reps…" />
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1">Target</label>
-            <input type="number" className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none"
+            <input type="number" className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none"
               value={form.target} onChange={e => setForm({ ...form, target: e.target.value })} placeholder="2000" />
           </div>
         </div>
@@ -102,7 +102,7 @@ export function QuickAddModal({ onClose, onCreated, embedded }: Props) {
         <div className="flex gap-1.5 flex-wrap">
           {[{ v: 'morning', l: '🌅 Morning' }, { v: 'noon', l: '☀️ Noon' }, { v: 'night', l: '🌙 Night' }, { v: 'all_day', l: '🕐 All Day' }].map(t => (
             <button key={t.v} onClick={() => setForm({ ...form, timeOfDay: t.v })}
-              className={cn('px-3 py-1.5 text-xs rounded-full border transition-colors', form.timeOfDay === t.v ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 dark:border-gray-700')}>
+              className={cn('px-3 py-1.5 text-xs rounded-full border transition-colors', form.timeOfDay === t.v ? 'bg-indigo-600 text-white border-indigo-600' : 'border-black/10 dark:border-white/10')}>
               {t.l}
             </button>
           ))}

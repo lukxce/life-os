@@ -90,7 +90,7 @@ export default function PurchasesPage() {
 
       {/* Form */}
       {showForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4 md:p-6">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{editingId ? 'Edit Item' : 'New Item'}</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
@@ -166,13 +166,13 @@ export default function PurchasesPage() {
       {/* List */}
       <div className="space-y-2">
         {shown.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-8 text-center text-gray-400 dark:text-gray-500">
             {filter === 'pending' ? 'Nothing on your list yet' : 'No purchased items yet'}
           </div>
         ) : shown.map(item => {
           const cfg = PRIORITY_CFG[item.priority as Priority] ?? PRIORITY_CFG.medium
           return (
-            <div key={item.id} className={cn('bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-start gap-3', item.bought && 'opacity-60')}>
+            <div key={item.id} className={cn('bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4 flex items-start gap-3', item.bought && 'opacity-60')}>
               <button onClick={() => toggleBought(item)} className="mt-0.5 shrink-0 text-gray-400 hover:text-teal-500 transition-colors">
                 {item.bought ? <CheckCircle2 size={20} className="text-teal-500" /> : <Circle size={20} />}
               </button>

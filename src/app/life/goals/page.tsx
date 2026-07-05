@@ -42,7 +42,7 @@ function GoalCard({ goal, isBucket, onUpdate, onDelete, onAddMilestone, onToggle
     : null
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-start gap-3">
           <span className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ backgroundColor: color + '22' }}>
@@ -91,9 +91,9 @@ function GoalCard({ goal, isBucket, onUpdate, onDelete, onAddMilestone, onToggle
       </div>
 
       {!isBucket && expanded && (
-        <div className="border-t border-gray-100 dark:border-gray-800">
+        <div className="border-t border-black/5 dark:border-white/5">
           {goal.milestones.map(m => (
-            <div key={m.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-50 dark:border-gray-800/50 last:border-0 group">
+            <div key={m.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-black/5 dark:border-white/5/50 last:border-0 group">
               <button
                 onClick={() => onToggleMilestone(m.id, !m.completed)}
                 className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
@@ -111,7 +111,7 @@ function GoalCard({ goal, isBucket, onUpdate, onDelete, onAddMilestone, onToggle
             {addingMilestone ? (
               <input
                 autoFocus type="text" placeholder="Milestone name…"
-                className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2 outline-none border border-gray-200 dark:border-gray-700"
+                className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2 outline-none border border-black/10 dark:border-white/10"
                 value={newMilestone}
                 onChange={e => setNewMilestone(e.target.value)}
                 onBlur={() => { if (newMilestone.trim()) { onAddMilestone(newMilestone.trim()); setNewMilestone('') } setAddingMilestone(false) }}
@@ -153,7 +153,7 @@ function AddGoalModal({ onClose, onAdd, defaultType }: { onClose: () => void; on
         </div>
 
         <input autoFocus type="text" placeholder="What do you want to achieve?"
-          className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-gray-200 dark:border-gray-700"
+          className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10"
           value={name} onChange={e => setName(e.target.value)} />
 
         <div>
@@ -179,7 +179,7 @@ function AddGoalModal({ onClose, onAdd, defaultType }: { onClose: () => void; on
         {type !== 'bucket_list' && (
           <div>
             <label className="text-xs text-gray-400 font-medium mb-1.5 block">Target date (optional)</label>
-            <input type="date" className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-gray-200 dark:border-gray-700"
+            <input type="date" className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10"
               value={targetDate} onChange={e => setTargetDate(e.target.value)} />
           </div>
         )}
@@ -283,7 +283,7 @@ export default function GoalsPage() {
             placeholder="Search goals…"
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-indigo-500"
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-black/10 dark:border-white/10 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-indigo-500"
           />
           {searchText && (
             <button onClick={() => setSearchText('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -294,7 +294,7 @@ export default function GoalsPage() {
       )}
 
       {tabGoals.length === 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-10 text-center">
           <Target size={32} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
           <p className="text-sm font-medium text-gray-500">No {TABS.find(t => t.key === activeTab)?.label.toLowerCase()} yet</p>
           <button onClick={() => setShowAdd(true)} className="mt-4 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold">Add one</button>

@@ -91,7 +91,7 @@ export default function MealPlanPage() {
             <div key={dow}
               className={cn('rounded-2xl border overflow-hidden',
                 isToday ? 'border-green-400 dark:border-green-700 ring-2 ring-green-200 dark:ring-green-900'
-                        : 'border-gray-100 dark:border-gray-800')}>
+                        : 'border-black/5 dark:border-white/5')}>
 
               {/* Day header */}
               <div className={cn('px-4 py-3 flex items-center justify-between',
@@ -109,7 +109,7 @@ export default function MealPlanPage() {
               </div>
 
               {/* Meals */}
-              <div className={cn('divide-y divide-gray-50 dark:divide-gray-800', isToday ? 'bg-green-50/30 dark:bg-green-950/20' : 'bg-white dark:bg-gray-900')}>
+              <div className={cn('divide-y divide-black/5 dark:divide-white/5', isToday ? 'bg-green-50/30 dark:bg-green-950/20' : 'bg-white dark:bg-gray-900')}>
                 {MEALS.map(mealType => {
                   const slot = slots.find(s => s.dayOfWeek === dow && s.mealType === mealType)
                   if (!slot) return null
@@ -127,24 +127,24 @@ export default function MealPlanPage() {
                           <textarea
                             value={form.name}
                             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                            className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 resize-none"
+                            className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 resize-none"
                             rows={2}
                           />
                           <div className="grid grid-cols-3 gap-2">
                             <div>
                               <label className="text-[10px] text-gray-400 block mb-1">kcal</label>
                               <input type="number" value={form.calories} onChange={e => setForm(f => ({ ...f, calories: e.target.value }))}
-                                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
+                                className="w-full border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
                             </div>
                             <div>
                               <label className="text-[10px] text-gray-400 block mb-1">protein (g)</label>
                               <input type="number" value={form.protein} onChange={e => setForm(f => ({ ...f, protein: e.target.value }))}
-                                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
+                                className="w-full border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
                             </div>
                             <div>
                               <label className="text-[10px] text-gray-400 block mb-1">notes</label>
                               <input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
+                                className="w-full border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
                             </div>
                           </div>
                           <div className="flex gap-2">

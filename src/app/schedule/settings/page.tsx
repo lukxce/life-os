@@ -22,12 +22,12 @@ function AddCalendarModal({ onClose, onAdd }: { onClose: () => void; onAdd: (dat
         </div>
 
         <input autoFocus type="text" placeholder="Name (e.g. Work, Personal)"
-          className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-gray-200 dark:border-gray-700 dark:text-white"
+          className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10 dark:text-white"
           value={name} onChange={e => setName(e.target.value)} />
 
         <div>
           <input type="url" placeholder="ICS URL (https://…/basic.ics)"
-            className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-gray-200 dark:border-gray-700 dark:text-white"
+            className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10 dark:text-white"
             value={url} onChange={e => setUrl(e.target.value)} />
           <p className="text-xs text-gray-400 mt-1.5">Google Calendar: Settings → calendar → Secret iCal address</p>
         </div>
@@ -121,9 +121,9 @@ export default function ScheduleSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-gray-950">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-3 flex items-center gap-3">
+      <header className="bg-white dark:bg-gray-900 border-b border-black/5 dark:border-white/5 px-4 sm:px-6 py-3 flex items-center gap-3">
         <Link href="/schedule" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <ArrowLeft size={17} />
         </Link>
@@ -138,7 +138,7 @@ export default function ScheduleSettingsPage() {
         {/* ── Your info ─────────────────────────────────────────── */}
         <section>
           <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Your info</h2>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 space-y-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-5 space-y-4">
             <p className="text-xs text-gray-400">Shown on your public share link so people know where you&apos;re based and how to book time with you.</p>
 
             <div className="space-y-1">
@@ -148,7 +148,7 @@ export default function ScheduleSettingsPage() {
               <input
                 type="text"
                 placeholder="e.g. Dubai, UAE"
-                className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2.5 outline-none border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 dark:text-white"
+                className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2.5 outline-none border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 dark:text-white"
                 value={location}
                 onChange={e => setLocation(e.target.value)}
               />
@@ -161,7 +161,7 @@ export default function ScheduleSettingsPage() {
               <input
                 type="url"
                 placeholder="e.g. https://calendly.com/yourname"
-                className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2.5 outline-none border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 dark:text-white"
+                className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2.5 outline-none border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 dark:text-white"
                 value={meetingLink}
                 onChange={e => setMeetingLink(e.target.value)}
               />
@@ -193,13 +193,13 @@ export default function ScheduleSettingsPage() {
           {loading ? (
             <div className="h-20 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse" />
           ) : calendars.length === 0 ? (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 text-center">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-6 text-center">
               <p className="text-sm text-gray-500">No calendars connected yet</p>
               <p className="text-xs text-gray-400 mt-1">Connect Google Calendar or Outlook to see events alongside your schedule.</p>
               <button onClick={() => setShowAdd(true)} className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold">Connect calendar</button>
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
               {calendars.map(cal => (
                 <div key={cal.id} className="px-4 py-3.5">
                   <div className="flex items-center gap-3">

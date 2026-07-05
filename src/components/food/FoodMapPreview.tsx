@@ -18,7 +18,7 @@ function PreviewInner() {
     : { lat: 43.32, lng: 21.9 }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
       <div className="relative h-44 md:h-52">
         <Map
           center={places.length > 0 ? center : undefined}

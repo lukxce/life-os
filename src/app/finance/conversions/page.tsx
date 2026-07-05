@@ -107,7 +107,7 @@ export default function ConversionsPage() {
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-700 p-4 md:p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 p-4 md:p-6">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 dark:text-gray-100 mb-4">{editingId ? 'Edit Conversion' : 'New Conversion'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -184,16 +184,16 @@ export default function ConversionsPage() {
       )}
 
       {/* Desktop table */}
-      <div className="hidden md:block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-700 overflow-hidden">
+      <div className="hidden md:block bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 dark:border-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 border-b border-black/10 dark:border-white/10 dark:border-gray-700">
             <tr>
               {['Date','From','Sent','To','Received','Rate','Notes',''].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+          <tbody className="divide-y divide-black/5 dark:divide-white/5">
             {entries.map(e => (
               <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800">
                 <td className="px-4 py-3">{formatDate(e.date)}</td>
@@ -219,9 +219,9 @@ export default function ConversionsPage() {
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
         {entries.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500">No conversions yet</div>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500">No conversions yet</div>
         ) : entries.map(e => (
-          <div key={e.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 dark:border-gray-700 p-4">
+          <div key={e.id} className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 p-4">
             <div className="flex items-start justify-between mb-2">
               <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(e.date)} · rate {e.rateUsed}</span>
               <div className="flex items-center gap-1">

@@ -15,7 +15,7 @@ function GoalCard({ goal, onEdit, onDelete, onDeposit }: { goal: any; onEdit: ()
     : null
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center shrink-0">
@@ -141,7 +141,7 @@ export default function GoalsPage() {
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{editingId ? 'Edit Goal' : 'New Goal'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
@@ -190,7 +190,7 @@ export default function GoalsPage() {
       )}
 
       {depositGoal && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Log deposit — {depositGoal.name}</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -225,7 +225,7 @@ export default function GoalsPage() {
 
       <div className="grid grid-cols-1 gap-4">
         {goals.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500">No goals yet</div>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-8 text-center text-gray-400 dark:text-gray-500">No goals yet</div>
         ) : goals.map(g => (
           <GoalCard key={g.id} goal={g}
             onEdit={() => startEdit(g)}

@@ -51,7 +51,7 @@ export default async function CityGuidePage({ params }: Props) {
   const country       = places[0]?.country
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <main className="min-h-screen bg-[#f5f5f7] dark:bg-gray-950">
       {/* Hero */}
       <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-red-500 text-white px-5 pt-14 pb-10">
         <div className="max-w-2xl mx-auto">
@@ -93,7 +93,7 @@ export default async function CityGuidePage({ params }: Props) {
         )}
 
         {/* Footer */}
-        <div className="text-center text-xs text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-800">
+        <div className="text-center text-xs text-gray-400 pt-4 border-t border-black/5 dark:border-white/5">
           Curated guide · Made with{' '}
           <Link href="/" className="text-orange-500 hover:underline">Life OS</Link>
         </div>
@@ -104,7 +104,7 @@ export default async function CityGuidePage({ params }: Props) {
 
 function PlaceCard({ place }: { place: any }) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
       {/* Photo */}
       {place.photoUrl && (
         // eslint-disable-next-line @next/next/no-img-element

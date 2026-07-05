@@ -318,7 +318,7 @@ export default function TodayPage() {
         {FILTER_TABS.map(tab => (
           <button key={tab.key} onClick={() => setFilterTime(tab.key)}
             className={cn('px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors shrink-0',
-              filterTime === tab.key ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800')}>
+              filterTime === tab.key ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border border-black/5 dark:border-white/5')}>
             {tab.label}
           </button>
         ))}
@@ -394,13 +394,13 @@ export default function TodayPage() {
               pendingGrouped.map(group => (
                 <div key={group.key} className="mt-4">
                   <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 px-1">{group.label}</p>
-                  <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden">
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
                     {group.items.map(renderHabit)}
                   </div>
                 </div>
               ))
             ) : pending.length > 0 ? (
-              <div className="mt-4 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden">
+              <div className="mt-4 bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
                 {pending.map(renderHabit)}
               </div>
             ) : (
@@ -410,7 +410,7 @@ export default function TodayPage() {
             {done.length > 0 && (
               <div className="mt-6">
                 <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 px-1">✅ Completed</p>
-                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden opacity-60">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden opacity-60">
                   {done.map(renderHabit)}
                 </div>
               </div>

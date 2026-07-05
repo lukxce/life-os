@@ -236,7 +236,7 @@ function HabitsPage() {
             placeholder="Search habits…"
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-blue-500"
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-black/10 dark:border-white/10 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-blue-500"
           />
           {searchText && (
             <button onClick={() => setSearchText('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -265,7 +265,7 @@ function HabitsPage() {
               .map((h) => (
                 <div
                   key={h.id}
-                  className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl"
+                  className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 border border-black/5 dark:border-white/5 rounded-xl"
                 >
                   <span className="text-xl">{h.icon ?? '📋'}</span>
                   <div className="flex-1 min-w-0">
@@ -345,7 +345,7 @@ function HabitsPage() {
 
       {/* Add / Edit form */}
       {showForm && (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 space-y-4">
+        <div className="bg-white dark:bg-gray-900 border border-black/5 dark:border-white/5 rounded-2xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">{editId ? 'Edit habit' : 'New habit'}</h3>
             <button onClick={resetForm} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800">

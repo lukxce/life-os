@@ -76,7 +76,7 @@ export default function JournalPage() {
           </div>
 
           {questions.length === 0 ? (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8 text-center">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-8 text-center">
               <BookOpen size={32} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
               <p className="text-sm font-medium text-gray-500">No reflection questions yet</p>
               <p className="text-xs mt-1 text-gray-400">Add questions in settings to get started.</p>
@@ -86,7 +86,7 @@ export default function JournalPage() {
               </Link>
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 space-y-5">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-5 space-y-5">
               {questions.map(q => (
                 <div key={q.id}>
                   <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block leading-snug">
@@ -95,7 +95,7 @@ export default function JournalPage() {
                   <textarea
                     rows={3}
                     placeholder="Write your thoughts…"
-                    className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-amber-300 dark:focus:ring-amber-700 resize-none leading-relaxed transition-shadow"
+                    className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-amber-300 dark:focus:ring-amber-700 resize-none leading-relaxed transition-shadow"
                     value={answers[q.id] ?? ''}
                     onChange={e => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
                   />
@@ -121,7 +121,7 @@ export default function JournalPage() {
                   const isOpen      = expandedEntry === entry.id
                   const answerCount = Object.values(entry.answers).filter(Boolean).length
                   return (
-                    <div key={entry.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                    <div key={entry.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
                       <button
                         className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                         onClick={() => setExpandedEntry(isOpen ? null : entry.id)}>
@@ -133,7 +133,7 @@ export default function JournalPage() {
                         <ChevronDown size={14} className={cn('text-gray-400 transition-transform', isOpen && 'rotate-180')} />
                       </button>
                       {isOpen && (
-                        <div className="border-t border-gray-100 dark:border-gray-800 px-4 py-4 space-y-4">
+                        <div className="border-t border-black/5 dark:border-white/5 px-4 py-4 space-y-4">
                           {questions.map(q => (
                             <div key={q.id}>
                               <p className="text-xs font-semibold text-gray-400 mb-1">{q.text}</p>

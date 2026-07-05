@@ -50,13 +50,13 @@ export default function JournalSettingsPage() {
       </div>
 
       {/* Add new question */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-4">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Add Question</p>
         <div className="flex gap-2">
           <input
             type="text"
             placeholder="e.g. What am I grateful for this week?"
-            className="flex-1 text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2.5 outline-none border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-amber-300 dark:focus:ring-amber-700"
+            className="flex-1 text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2.5 outline-none border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-amber-300 dark:focus:ring-amber-700"
             value={newQ}
             onChange={e => setNewQ(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') add() }}
@@ -73,8 +73,8 @@ export default function JournalSettingsPage() {
       </div>
 
       {/* Question list */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+        <div className="px-4 py-3 border-b border-black/5 dark:border-white/5">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
             Current Questions <span className="text-gray-300 dark:text-gray-600 ml-1">{questions.length}</span>
           </p>
@@ -89,7 +89,7 @@ export default function JournalSettingsPage() {
             No questions yet — add one above to get started
           </div>
         ) : (
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+          <div className="divide-y divide-black/5 dark:divide-white/5">
             {questions.map(q => (
               <div key={q.id} className="flex items-center gap-3 px-4 py-3 group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                 <GripVertical size={14} className="text-gray-300 dark:text-gray-600 shrink-0" />

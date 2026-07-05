@@ -42,7 +42,7 @@ export function QuantityInput({ value, target, unit, color, onUpdate }: Props) {
   return (
     <div
       ref={containerRef}
-      className="relative rounded-xl overflow-hidden cursor-ew-resize select-none border border-gray-100 dark:border-gray-800 touch-none"
+      className="relative rounded-xl overflow-hidden cursor-ew-resize select-none border border-black/5 dark:border-white/5 touch-none"
       style={{ background: `linear-gradient(90deg, ${activeColor}25 ${pct}%, transparent ${pct}%)` }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}

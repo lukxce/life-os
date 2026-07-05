@@ -147,7 +147,7 @@ export default function HomePage() {
         {data && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Balance */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-black/5 dark:border-white/5 shadow-sm">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-black/5 dark:border-white/5 shadow-sm">
               <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase mb-1 flex items-center gap-1.5">
                 <Wallet size={12} /> Total Balance
               </p>
@@ -155,7 +155,7 @@ export default function HomePage() {
             </div>
 
             {/* This month */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-black/5 dark:border-white/5 shadow-sm">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-black/5 dark:border-white/5 shadow-sm">
               <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase mb-2">This month</p>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm">
@@ -170,7 +170,7 @@ export default function HomePage() {
             </div>
 
             {/* Habits today */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-black/5 dark:border-white/5 shadow-sm">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-black/5 dark:border-white/5 shadow-sm">
               <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase mb-1 flex items-center gap-1.5">
                 <Sparkles size={12} /> Habits today
               </p>
@@ -205,7 +205,7 @@ export default function HomePage() {
               { href: '/schedule', label: 'My schedule', emoji: '📅' },
             ].map(q => (
               <Link key={q.href} href={q.href}
-                className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-300 ease-apple text-center">
+                className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-300 ease-apple text-center">
                 <span className="text-2xl mb-2 block">{q.emoji}</span>
                 <span className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-tight block">{q.label}</span>
               </Link>
@@ -215,7 +215,7 @@ export default function HomePage() {
 
         {/* Upcoming bills */}
         {data && data.finance.upcomingBills.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
               <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <FileText size={16} className="text-gray-400" /> Upcoming Bills

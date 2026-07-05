@@ -57,7 +57,7 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
   return (
     <>
       <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
-      <div className="fixed bottom-16 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 rounded-t-2xl p-4 pb-6">
+      <div className="fixed bottom-16 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-black/10 dark:border-white/10 rounded-t-2xl p-4 pb-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600"><X size={18} /></button>
@@ -104,7 +104,7 @@ export function FinanceBottomNav() {
                 <Link key={a.href} href={a.href} onClick={close}
                   className="flex items-center gap-3"
                   style={{ animation: `fadeSlideUp 0.15s ease both`, animationDelay: `${i * 40}ms` }}>
-                  <span className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-full shadow-md border border-gray-200 dark:border-gray-700 whitespace-nowrap">
+                  <span className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1.5 rounded-full shadow-md border border-black/10 dark:border-white/10 whitespace-nowrap">
                     {a.label}
                   </span>
                   <div className={`${a.color} w-12 h-12 rounded-full flex items-center justify-center shadow-lg`}>
@@ -144,7 +144,7 @@ export function FinanceBottomNav() {
         </Sheet>
       )}
 
-      <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-900 border-t border-black/10 dark:border-white/10">
         <div className="flex items-center">
           <Link href="/finance" className={cn('flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors',
             path === '/finance' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500')}>

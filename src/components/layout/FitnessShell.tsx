@@ -16,8 +16,8 @@ const NAV = [
 function Sidebar() {
   const path = usePathname()
   return (
-    <aside className="hidden md:flex flex-col w-52 shrink-0 border-r border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 h-screen sticky top-0">
-      <div className="px-5 py-5 border-b border-gray-100 dark:border-gray-800">
+    <aside className="hidden md:flex flex-col w-52 shrink-0 border-r border-black/5 dark:border-white/5 bg-white dark:bg-gray-950 h-screen sticky top-0">
+      <div className="px-5 py-5 border-b border-black/5 dark:border-white/5">
         <Link href="/" className="text-xs text-gray-400 hover:text-blue-500 transition-colors">← Home</Link>
         <div className="flex items-center gap-2 mt-2">
           <Dumbbell size={20} className="text-green-600" />
@@ -64,7 +64,7 @@ export function FitnessShell({ children }: { children: React.ReactNode }) {
   const path = usePathname()
   const pageLabel = NAV.find(n => n.href === path)?.label ?? 'Fitness'
   return (
-    <div className="flex min-h-screen bg-white dark:bg-gray-950">
+    <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-gray-950">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <header className="md:hidden sticky top-0 z-30 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-4 py-3 flex items-center justify-between shrink-0">

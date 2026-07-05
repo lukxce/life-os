@@ -107,7 +107,7 @@ export default function WorkoutsPage() {
           { label: 'Bike rides',    value: bikeCount,       icon: '🚴', target: 2 },
           { label: 'Total this wk', value: thisWeek.length, icon: '📊', target: 5 },
         ].map(s => (
-          <div key={s.label} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 text-center">
+          <div key={s.label} className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-4 text-center">
             <span className="text-xl">{s.icon}</span>
             <p className="text-2xl font-bold mt-1 text-gray-900 dark:text-white">
               {s.value}<span className="text-xs font-normal text-gray-400">/{s.target}</span>
@@ -126,7 +126,7 @@ export default function WorkoutsPage() {
 
       {/* Log form */}
       {showForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-5">
           <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Dumbbell size={16} className="text-green-600" /> Log workout manually
           </h2>
@@ -135,26 +135,26 @@ export default function WorkoutsPage() {
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Type</label>
                 <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800">
+                  className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800">
                   {TYPES.map(t => <option key={t.value} value={t.value}>{t.icon} {t.label}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Duration (min)</label>
                 <input type="number" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))}
-                  placeholder="60" className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800" />
+                  placeholder="60" className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800" />
               </div>
             </div>
             <div>
               <label className="text-xs text-gray-400 block mb-1">Date</label>
               <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800" />
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800" />
             </div>
             <div>
               <label className="text-xs text-gray-400 block mb-1">Notes</label>
               <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="How did it go?" rows={2}
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 resize-none" />
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 resize-none" />
             </div>
             <button type="submit" disabled={saving}
               className="w-full bg-green-600 text-white rounded-xl py-2 text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors">
@@ -173,8 +173,8 @@ export default function WorkoutsPage() {
       ) : (
         <div className="space-y-4">
           {Object.entries(groups).map(([date, entries]) => (
-            <div key={date} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-800">
+            <div key={date} className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+              <div className="px-4 py-3 border-b border-black/5 dark:border-white/5">
                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                   {new Date(date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
                 </p>
@@ -182,7 +182,7 @@ export default function WorkoutsPage() {
               {entries.map(log => {
                 const t = typeOf(log.type)
                 return (
-                  <div key={log.id} className="flex items-center gap-3 px-4 py-3 border-b last:border-0 border-gray-50 dark:border-gray-800">
+                  <div key={log.id} className="flex items-center gap-3 px-4 py-3 border-b last:border-0 border-black/5 dark:border-white/5">
                     <span className="text-xl w-8 text-center shrink-0">{t.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">

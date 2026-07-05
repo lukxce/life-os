@@ -15,7 +15,7 @@ export function FoodSidebar({ onAdd, collapsed = false, onToggle }: Props) {
   const pathname = usePathname()
   return (
     <aside className={cn(
-      'hidden md:flex flex-col h-screen sticky top-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-all duration-200',
+      'hidden md:flex flex-col h-screen sticky top-0 border-r border-black/5 dark:border-white/5 bg-white dark:bg-gray-900 transition-all duration-200',
       collapsed ? 'w-14' : 'w-56',
     )}>
       <div className={cn('flex items-center px-3 pt-4 pb-2', collapsed ? 'flex-col gap-2' : 'justify-between')}>
@@ -56,7 +56,7 @@ export function FoodSidebar({ onAdd, collapsed = false, onToggle }: Props) {
         })}
       </nav>
 
-      <div className={cn('mt-3 pt-3 border-t border-gray-100 dark:border-gray-800', collapsed ? 'px-1.5 pb-3' : 'px-3 pb-4')}>
+      <div className={cn('mt-3 pt-3 border-t border-black/5 dark:border-white/5', collapsed ? 'px-1.5 pb-3' : 'px-3 pb-4')}>
         <button onClick={onAdd}
           className={cn(
             'flex items-center rounded-xl text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 w-full transition-colors',

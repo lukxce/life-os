@@ -132,16 +132,16 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
                 autoFocus
                 type="text"
                 placeholder="Search for a restaurant or café…"
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm bg-gray-50 dark:bg-gray-800 outline-none focus:border-orange-400"
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm bg-gray-50 dark:bg-gray-800 outline-none focus:border-orange-400"
                 value={search}
                 onChange={e => handleSearch(e.target.value)}
               />
               {searching && <p className="text-xs text-gray-400 mt-1 px-1">Searching…</p>}
               {results.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden">
+                <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white dark:bg-gray-900 border border-black/10 dark:border-white/10 rounded-xl shadow-xl overflow-hidden">
                   {results.map((r, i) => (
                     <button key={i} onClick={() => pickResult(r)}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 border-b last:border-0 border-gray-100 dark:border-gray-800 transition-colors">
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 border-b last:border-0 border-black/5 dark:border-white/5 transition-colors">
                       <p className="text-sm font-medium">{r.name}</p>
                       <p className="text-xs text-gray-400 truncate">{r.address}</p>
                     </button>
@@ -162,7 +162,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
               {(Object.entries(CATEGORY_CONFIG) as [string, { label: string; color: string }][]).map(([key, cfg]) => (
                 <button key={key} onClick={() => setForm(f => ({ ...f, category: key }))}
                   className={cn('flex-1 py-2 text-xs font-semibold rounded-xl border-2 transition-all',
-                    form.category === key ? 'text-white border-transparent' : 'border-gray-200 dark:border-gray-700 text-gray-500')}
+                    form.category === key ? 'text-white border-transparent' : 'border-black/10 dark:border-white/10 text-gray-500')}
                   style={form.category === key ? { background: cfg.color } : undefined}>
                   {cfg.label}
                 </button>
@@ -175,7 +175,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
             <div>
               <label className="block text-xs text-gray-500 mb-1">Cuisine</label>
               <select value={form.cuisine} onChange={e => setForm(f => ({ ...f, cuisine: e.target.value }))}
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none">
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none">
                 <option value="">Select</option>
                 {CUISINES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -183,7 +183,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
             <div>
               <label className="block text-xs text-gray-500 mb-1">Price range</label>
               <select value={form.priceRange} onChange={e => setForm(f => ({ ...f, priceRange: e.target.value }))}
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none">
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none">
                 <option value="">Select</option>
                 <option value="budget">€ Budget</option>
                 <option value="mid">€€ Mid</option>
@@ -198,7 +198,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
             <input type="number" min="1" max="10" step="0.5"
               value={form.myRating} onChange={e => setForm(f => ({ ...f, myRating: e.target.value }))}
               placeholder="8.5"
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none" />
+              className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none" />
           </div>
 
           {/* Must order */}
@@ -207,7 +207,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
             <input type="text"
               value={form.mustOrder} onChange={e => setForm(f => ({ ...f, mustOrder: e.target.value }))}
               placeholder="e.g. Beef tartare"
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none" />
+              className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none" />
           </div>
 
           {/* Notes */}
@@ -216,7 +216,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
             <textarea rows={3}
               value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
               placeholder="What was great, what to remember…"
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none resize-none" />
+              className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none resize-none" />
           </div>
 
           {/* Date visited */}
@@ -225,7 +225,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
               <label className="block text-xs text-gray-500 mb-1">Date visited</label>
               <input type="date"
                 value={form.visitedAt} onChange={e => setForm(f => ({ ...f, visitedAt: e.target.value }))}
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none" />
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none" />
             </div>
           )}
 
@@ -235,7 +235,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
             <input type="text"
               value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
               placeholder="e.g. Niš"
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none" />
+              className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 outline-none" />
           </div>
 
           {/* Photo */}
@@ -262,7 +262,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
               <button
                 onClick={() => photoInputRef.current?.click()}
                 disabled={uploadingPhoto}
-                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl py-4 text-sm text-gray-400 hover:border-orange-400 hover:text-orange-400 transition-colors disabled:opacity-50">
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-black/10 dark:border-white/10 rounded-xl py-4 text-sm text-gray-400 hover:border-orange-400 hover:text-orange-400 transition-colors disabled:opacity-50">
                 {uploadingPhoto ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
                 {uploadingPhoto ? 'Uploading…' : 'Add a photo'}
               </button>

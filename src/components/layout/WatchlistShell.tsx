@@ -16,7 +16,7 @@ function WatchlistSidebar({ collapsed = false, onToggle }: { collapsed?: boolean
   const pathname = usePathname()
   return (
     <aside className={cn(
-      'hidden md:flex flex-col h-screen sticky top-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-all duration-200',
+      'hidden md:flex flex-col h-screen sticky top-0 border-r border-black/5 dark:border-white/5 bg-white dark:bg-gray-900 transition-all duration-200',
       collapsed ? 'w-14' : 'w-56',
     )}>
       <div className={cn('flex items-center px-3 pt-4 pb-2', collapsed ? 'flex-col gap-2' : 'justify-between')}>
@@ -99,7 +99,7 @@ export function WatchlistShell({ children }: { children: React.ReactNode }) {
   const title = pathname.startsWith('/books') ? '📚 Books' : '🎬 Movies & TV'
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-gray-950">
       <WatchlistSidebar collapsed={collapsed} onToggle={toggle} />
 
       <div className="flex-1 flex flex-col min-w-0">

@@ -85,7 +85,7 @@ export default function FitnessTodayPage() {
       {/* Today's workout */}
       <div className={cn('rounded-2xl p-4 flex items-center gap-4',
         todayWorkout ? 'bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900'
-                     : 'bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800')}>
+                     : 'bg-white dark:bg-gray-900 border border-black/5 dark:border-white/5')}>
         <span className="text-3xl">{plan.emoji}</span>
         <div className="flex-1">
           <p className="font-bold text-gray-900 dark:text-white">{plan.activity}</p>
@@ -103,17 +103,17 @@ export default function FitnessTodayPage() {
 
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-4 text-center">
           <Flame size={18} className="text-orange-400 mx-auto mb-1" />
           <p className="text-xl font-bold text-gray-900 dark:text-white">{totalCal}</p>
           <p className="text-[10px] text-gray-400 uppercase tracking-wide">kcal today</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-4 text-center">
           <Beef size={18} className="text-red-400 mx-auto mb-1" />
           <p className="text-xl font-bold text-gray-900 dark:text-white">{totalProt}g</p>
           <p className="text-[10px] text-gray-400 uppercase tracking-wide">protein</p>
         </div>
-        <Link href="/fitness/body" className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 text-center hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
+        <Link href="/fitness/body" className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-4 text-center hover:border-gray-200 dark:hover:border-gray-700 transition-colors">
           <Scale size={18} className="text-purple-400 mx-auto mb-1" />
           <p className="text-xl font-bold text-gray-900 dark:text-white">{weight ? `${weight.value}` : '—'}</p>
           <p className="text-[10px] text-gray-400 uppercase tracking-wide">kg · last</p>
@@ -121,8 +121,8 @@ export default function FitnessTodayPage() {
       </div>
 
       {/* Today's meals */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+        <div className="px-4 py-3 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
           <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Today's meals</h2>
           <Link href="/fitness/meal-plan" className="text-xs text-green-600 dark:text-green-400 hover:underline flex items-center gap-1">
             Full plan <ChevronRight size={12} />
@@ -131,7 +131,7 @@ export default function FitnessTodayPage() {
         {todayMeals.length === 0 ? (
           <div className="px-4 py-6 text-center text-sm text-gray-400">No meal plan found.</div>
         ) : (
-          <div className="divide-y divide-gray-50 dark:divide-gray-800">
+          <div className="divide-y divide-black/5 dark:divide-white/5">
             {MEAL_ORDER.map(mt => {
               const meal = todayMeals.find(m => m.mealType === mt)
               if (!meal) return null
@@ -154,7 +154,7 @@ export default function FitnessTodayPage() {
             })}
           </div>
         )}
-        <div className="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between border-t border-gray-100 dark:border-gray-800">
+        <div className="px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between border-t border-black/5 dark:border-white/5">
           <span className="text-xs text-gray-400">Total</span>
           <div className="flex items-center gap-4">
             <span className="text-xs font-bold text-orange-500">{totalCal} kcal</span>
@@ -164,11 +164,11 @@ export default function FitnessTodayPage() {
       </div>
 
       {/* Daily non-negotiables */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+        <div className="px-4 py-3 border-b border-black/5 dark:border-white/5">
           <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Daily non-negotiables</h2>
         </div>
-        <div className="divide-y divide-gray-50 dark:divide-gray-800">
+        <div className="divide-y divide-black/5 dark:divide-white/5">
           {[
             { icon: <Footprints size={16} />, label: '10,000 steps', color: 'text-blue-500',   target: 'min daily' },
             { icon: <Droplets size={16} />,   label: '3L water',     color: 'text-cyan-500',   target: 'stay hydrated' },

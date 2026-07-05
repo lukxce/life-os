@@ -24,7 +24,7 @@ export function LifeShell({ children }: { children: React.ReactNode }) {
   })
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-gray-950">
+    <div className="flex min-h-screen bg-[#f5f5f7] dark:bg-gray-950">
       <LifeSidebar onAdd={() => setShowAdd(true)} collapsed={collapsed} onToggle={toggle} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">

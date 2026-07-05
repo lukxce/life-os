@@ -75,7 +75,7 @@ export default function Dashboard() {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4 space-y-3">
         <div className="flex flex-wrap gap-2">
           {[
             { label: 'Today',      period: 'day'   as Period, offset: 0 },
@@ -125,7 +125,7 @@ export default function Dashboard() {
 
       {/* Recent Activity */}
       {recent.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Recent Activity</h3>
           <div className="space-y-2">
             {recent.map(r => (
@@ -146,7 +146,7 @@ export default function Dashboard() {
 
       {/* Budgets */}
       {budgets.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Budgets — This Month</h3>
             <Link href="/finance/budgets" className="text-xs text-blue-600 hover:underline">Manage</Link>
@@ -196,7 +196,7 @@ export default function Dashboard() {
 
       {/* Saving Goals */}
       {goals.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Saving Goals</h3>
             <Link href="/finance/goals" className="text-xs text-blue-600 hover:underline">Manage</Link>
@@ -248,12 +248,12 @@ export default function Dashboard() {
         </div>
         {bundled ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4 md:p-5">
               <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Personal Total</p>
               <p className="text-2xl font-bold text-blue-600 mt-1">{formatRSD(data.totals.personalRSD)}</p>
               <p className="text-sm text-gray-400">{formatEUR(data.totals.personalEUR)}</p>
             </div>
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4 md:p-5">
               <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Company Total</p>
               <p className="text-2xl font-bold text-purple-600 mt-1">{formatRSD(data.totals.companyRSD)}</p>
               <p className="text-sm text-gray-400">{formatEUR(data.totals.companyEUR)}</p>
@@ -262,7 +262,7 @@ export default function Dashboard() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[...personalAccounts, ...companyAccounts].map(acc => (
-              <div key={acc.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <div key={acc.id} className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${acc.type === 'personal' ? 'bg-blue-500' : 'bg-purple-500'}`} />
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{acc.name}</p>
@@ -285,7 +285,7 @@ export default function Dashboard() {
           { title: 'Personal Expenses', data: data.personalExpenses, color: 'red' },
           { title: 'Business Expenses', data: data.businessExpenses, color: 'purple' },
         ].map(section => (
-          <div key={section.title} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-6">
+          <div key={section.title} className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4 md:p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{section.title}</h3>
             {section.data.filter(e => e.amountRSD > 0).length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-8">No expenses this period</p>
@@ -323,7 +323,7 @@ export default function Dashboard() {
       </div>
 
       {/* Income */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4 md:p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Income</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
           {[

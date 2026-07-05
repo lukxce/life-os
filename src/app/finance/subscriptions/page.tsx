@@ -183,7 +183,7 @@ export default function SubscriptionsPage() {
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4 md:p-6">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{editingId ? 'Edit Subscription' : 'New Subscription'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -249,7 +249,7 @@ export default function SubscriptionsPage() {
       )}
 
       {logSub && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Log payment — {logSub.name}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <div>
@@ -282,11 +282,11 @@ export default function SubscriptionsPage() {
 
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-8 text-center text-gray-400 dark:text-gray-500">
             {typeFilter === 'all' ? 'No subscriptions yet' : `No ${typeFilter} subscriptions`}
           </div>
         ) : filtered.map(s => (
-          <div key={s.id} className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 ${!s.active ? 'opacity-50' : ''}`}>
+          <div key={s.id} className={`bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4 ${!s.active ? 'opacity-50' : ''}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">

@@ -64,12 +64,12 @@ export function FinanceSidebar({ collapsed = false, onToggle }: Props) {
 
   return (
     <aside className={cn(
-      'hidden md:flex flex-col h-screen sticky top-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-all duration-200',
+      'hidden md:flex flex-col h-screen sticky top-0 border-r border-black/10 dark:border-white/10 bg-white dark:bg-gray-900 transition-all duration-200',
       collapsed ? 'w-14' : 'w-64',
     )}>
       {/* Header */}
       <div className={cn(
-        'flex items-center px-3 pt-4 pb-3 border-b border-gray-200 dark:border-gray-700',
+        'flex items-center px-3 pt-4 pb-3 border-b border-black/10 dark:border-white/10',
         collapsed ? 'flex-col gap-2' : 'justify-between',
       )}>
         {!collapsed && (
@@ -136,7 +136,7 @@ export function FinanceSidebar({ collapsed = false, onToggle }: Props) {
                 {opened ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
               </button>
               {opened && (
-                <div className="mt-0.5 ml-3 pl-3 border-l border-gray-200 dark:border-gray-700 space-y-0.5">
+                <div className="mt-0.5 ml-3 pl-3 border-l border-black/10 dark:border-white/10 space-y-0.5">
                   {entry.items.map(child => {
                     const CI = child.icon
                     const ca = path === child.href

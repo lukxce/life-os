@@ -135,7 +135,7 @@ export default function HistoryPage() {
         <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
           Year overview
         </h2>
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 overflow-x-auto">
+        <div className="bg-white dark:bg-gray-900 border border-black/5 dark:border-white/5 rounded-2xl p-4 overflow-x-auto">
           <HeatmapGrid data={heatmapData} />
         </div>
       </section>
@@ -177,7 +177,7 @@ export default function HistoryPage() {
         {visibleHabits.length === 0 ? (
           <div className="text-center py-8 text-gray-400">No habits found</div>
         ) : (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 overflow-x-auto">
+          <div className="bg-white dark:bg-gray-900 border border-black/5 dark:border-white/5 rounded-2xl p-4 overflow-x-auto">
             <div className="space-y-3" style={{ minWidth: `${Math.max(400, days.length * 16 + 160)}px` }}>
               {visibleHabits.map((habit) => (
                 <div key={habit.id} className="flex items-center gap-2">

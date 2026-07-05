@@ -38,7 +38,7 @@ function EventCard({ ev }: { ev: ICSEvent }) {
   const color = ev.calendarColor ?? '#6366f1'
   return (
     <div
-      className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden cursor-pointer hover:shadow-sm transition-shadow"
+      className="bg-white dark:bg-gray-900 rounded-xl border border-black/5 dark:border-white/5 overflow-hidden cursor-pointer hover:shadow-sm transition-shadow"
       onClick={() => setOpen(!open)}
       style={{ borderLeftColor: color, borderLeftWidth: 3 }}
     >
@@ -63,7 +63,7 @@ function EventCard({ ev }: { ev: ICSEvent }) {
             </p>
           )}
           {open && ev.description && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 whitespace-pre-wrap leading-relaxed border-t border-gray-100 dark:border-gray-800 pt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 whitespace-pre-wrap leading-relaxed border-t border-black/5 dark:border-white/5 pt-2">
               {ev.description.slice(0, 400)}{ev.description.length > 400 ? '…' : ''}
             </p>
           )}
@@ -135,7 +135,7 @@ export default function ICSPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Calendar</h1>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-10 text-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-black/5 dark:border-white/5 p-10 text-center">
           <Calendar size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
           <p className="text-sm font-medium text-gray-500">No calendars connected</p>
           <p className="text-xs text-gray-400 mt-1">Add your Google Calendar or Outlook ICS URL in settings.</p>

@@ -36,7 +36,7 @@ export default function SettingsPage() {
     <div className="max-w-2xl mx-auto space-y-6">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h2>
 
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-4 flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Session</p>
           <p className="text-xs text-gray-400 mt-0.5">Logged in on this device</p>
@@ -46,7 +46,7 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-5">
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/10 dark:border-white/10 p-6 space-y-5">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Currency</h3>
 
         <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700">

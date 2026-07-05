@@ -91,20 +91,20 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
   if (!open) return (
     <button
       onClick={() => setOpen(true)}
-      className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors"
+      className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-1.5 rounded-lg border border-black/10 dark:border-white/10 transition-colors"
     >
       <Search size={14} />
       <span>Search everything...</span>
-      <kbd className="ml-2 text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded px-1.5 py-0.5">⌘K</kbd>
+      <kbd className="ml-2 text-xs bg-white dark:bg-gray-900 border border-black/10 dark:border-white/10 rounded px-1.5 py-0.5">⌘K</kbd>
     </button>
   )
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] px-4">
       <div className="fixed inset-0 bg-black/50" onClick={() => setOpen(false)} />
-      <div className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-black/10 dark:border-white/10 overflow-hidden">
         {/* Search input */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-black/10 dark:border-white/10">
           <Search size={16} className="text-gray-400 shrink-0" />
           <input
             ref={inputRef}
@@ -120,7 +120,7 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
         </div>
 
         {/* Module pills */}
-        <div className="flex gap-2 px-4 py-2 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+        <div className="flex gap-2 px-4 py-2 border-b border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-800/50">
           {[
             { label: '💰 Finance', color: 'text-blue-600 dark:text-blue-400' },
             { label: '🌿 Life',    color: 'text-indigo-600 dark:text-indigo-400' },
