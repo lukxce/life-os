@@ -7,8 +7,11 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { ModuleDock } from '@/components/layout/ModuleDock'
 import { Ambient } from '@/components/layout/AppShell'
-import { Mascot, MascotMood } from '@/components/ui/Mascot'
-import { TrendingUp, TrendingDown, FileText, ArrowRight, ChevronRight } from 'lucide-react'
+import { NudgeBanner } from '@/components/ui/NudgeBanner'
+import {
+  TrendingUp, TrendingDown, FileText, ArrowRight, ChevronRight,
+  Wallet, BarChart3, Sparkles, Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
+} from 'lucide-react'
 
 const FoodMapPreview = dynamic(
   () => import('@/components/food/FoodMapPreview').then(m => m.FoodMapPreview),
@@ -30,17 +33,15 @@ interface DashboardData {
   }
 }
 
-interface Nudge { id: string; mood: 'curious' | 'content'; message: string; href: string }
-
 const MODULES = [
-  { href: '/finance',   emoji: '💰', title: 'Finance',   gradient: 'from-[rgb(232,120,90)] to-[rgb(220,161,84)]' },
-  { href: '/life',      emoji: '🧘', title: 'Habits',    gradient: 'from-[rgb(167,120,160)] to-[rgb(217,138,148)]' },
-  { href: '/fitness',   emoji: '💪', title: 'Fitness',   gradient: 'from-[rgb(220,161,84)] to-[rgb(232,120,90)]' },
-  { href: '/schedule',  emoji: '📅', title: 'Schedule',  gradient: 'from-[rgb(217,138,148)] to-[rgb(167,120,160)]' },
-  { href: '/journal',   emoji: '📓', title: 'Journal',   gradient: 'from-[rgb(220,161,84)] to-[rgb(217,138,148)]' },
-  { href: '/food',      emoji: '🗺️', title: 'Food Map',  gradient: 'from-[rgb(232,120,90)] to-[rgb(217,138,148)]' },
-  { href: '/personal',  emoji: '🗂️', title: 'Personal',  gradient: 'from-[rgb(167,120,160)] to-[rgb(220,161,84)]' },
-  { href: '/watchlist', emoji: '🎬', title: 'Watchlist', gradient: 'from-[rgb(217,138,148)] to-[rgb(232,120,90)]' },
+  { href: '/finance',   icon: Wallet,       title: 'Finance',   gradient: 'from-[rgb(232,120,90)] to-[rgb(220,161,84)]' },
+  { href: '/life',      icon: Sparkles,     title: 'Habits',    gradient: 'from-[rgb(167,120,160)] to-[rgb(217,138,148)]' },
+  { href: '/fitness',   icon: Dumbbell,     title: 'Fitness',   gradient: 'from-[rgb(220,161,84)] to-[rgb(232,120,90)]' },
+  { href: '/schedule',  icon: CalendarDays, title: 'Schedule',  gradient: 'from-[rgb(217,138,148)] to-[rgb(167,120,160)]' },
+  { href: '/journal',   icon: BookOpen,     title: 'Journal',   gradient: 'from-[rgb(220,161,84)] to-[rgb(217,138,148)]' },
+  { href: '/food',      icon: MapPin,       title: 'Food Map',  gradient: 'from-[rgb(232,120,90)] to-[rgb(217,138,148)]' },
+  { href: '/personal',  icon: FolderLock,   title: 'Personal',  gradient: 'from-[rgb(167,120,160)] to-[rgb(220,161,84)]' },
+  { href: '/watchlist', icon: Clapperboard, title: 'Watchlist', gradient: 'from-[rgb(217,138,148)] to-[rgb(232,120,90)]' },
 ]
 
 // Training plan by day of week (1=Mon … 7=Sun)
@@ -92,8 +93,6 @@ function greeting() {
 export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [name, setName] = useState('')
-  const [nudges, setNudges] = useState<Nudge[]>([])
-  const [mascotMood, setMascotMood] = useState<MascotMood>('content')
   const today = new Date()
   const dateStr = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
   const todayDow = today.getDay() || 7
@@ -101,14 +100,8 @@ export default function HomePage() {
 
   useEffect(() => {
     fetch('/api/dashboard').then(r => r.json()).then(setData).catch(() => {})
-    fetch('/api/life/nudges').then(r => r.json()).then(d => {
-      setNudges(d.nudges ?? [])
-      setMascotMood(d.nudges?.length ? 'curious' : 'pleased')
-    }).catch(() => {})
     setName(localStorage.getItem('userName') ?? '')
   }, [])
-
-  const topNudge = nudges[0]
 
   return (
     <div className="relative flex min-h-screen bg-canvas dark:bg-canvas">
@@ -133,21 +126,7 @@ export default function HomePage() {
         <main className="page-in max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-7 pb-16">
 
           {/* ── Companion nudge ── */}
-          <div className="bg-surface/90 dark:bg-surface/70 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm px-5 py-4 flex items-center gap-4">
-            <Mascot mood={mascotMood} size={52} className="mascot-pop shrink-0" />
-            <div className="flex-1 min-w-0">
-              {topNudge ? (
-                <>
-                  <p className="text-sm font-semibold text-ink leading-snug">{topNudge.message}</p>
-                  <Link href={topNudge.href} className="text-xs font-bold text-[rgb(var(--coral))] hover:underline mt-0.5 inline-block">
-                    Take care of it →
-                  </Link>
-                </>
-              ) : (
-                <p className="text-sm font-semibold text-ink leading-snug">All caught up — nothing needs you right now.</p>
-              )}
-            </div>
-          </div>
+          <NudgeBanner />
 
           {/* ── Widgets row ── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -166,7 +145,7 @@ export default function HomePage() {
             {/* Balance widget */}
             <Link href="/finance"
               className="bg-surface/90 dark:bg-surface/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
-              <span className="text-xl">💰</span>
+              <Wallet size={20} className="text-[rgb(232,120,90)]" />
               <div>
                 <p className="text-[10px] font-semibold tracking-wide text-ink/40 uppercase mb-0.5">Total balance</p>
                 {data ? (
@@ -180,7 +159,7 @@ export default function HomePage() {
             {/* Month flow widget */}
             <Link href="/finance/insights"
               className="bg-surface/90 dark:bg-surface/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
-              <span className="text-xl">📊</span>
+              <BarChart3 size={20} className="text-[rgb(220,161,84)]" />
               <div className="space-y-1.5">
                 <p className="text-[10px] font-semibold tracking-wide text-ink/40 uppercase">This month</p>
                 {data ? (
@@ -261,8 +240,8 @@ export default function HomePage() {
             <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:grid-cols-8 sm:gap-x-3">
               {MODULES.map(m => (
                 <Link key={m.href} href={m.href} className="group flex flex-col items-center gap-1.5">
-                  <span className={`flex items-center justify-center w-[60px] h-[60px] rounded-[18px] bg-gradient-to-br ${m.gradient} text-[28px] shadow-md shadow-black/10 group-hover:scale-105 group-active:scale-95 transition-transform duration-300 ease-apple`}>
-                    {m.emoji}
+                  <span className={`flex items-center justify-center w-[60px] h-[60px] rounded-[18px] bg-gradient-to-br ${m.gradient} shadow-md shadow-black/10 group-hover:scale-105 group-active:scale-95 transition-transform duration-300 ease-apple`}>
+                    <m.icon size={26} className="text-white" strokeWidth={1.8} />
                   </span>
                   <span className="text-[11px] font-medium text-ink/70">{m.title}</span>
                 </Link>

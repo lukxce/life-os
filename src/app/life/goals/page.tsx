@@ -145,7 +145,7 @@ function AddGoalModal({ onClose, onAdd, defaultType }: { onClose: () => void; on
 
         <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
           {TABS.map(t => (
-            <button key={t.key} onClick={() => setType(t.key)} className={cn('flex-1 text-xs font-semibold py-1.5 rounded-lg transition-colors', type === t.key ? 'bg-white dark:bg-gray-700 shadow-sm' : 'text-gray-500')}>
+            <button key={t.key} onClick={() => setType(t.key)} className={cn('flex-1 text-xs font-semibold py-1.5 rounded-lg transition-colors', type === t.key ? 'bg-surface dark:bg-surface shadow-sm' : 'text-gray-500')}>
               {t.emoji} {t.label}
             </button>
           ))}
@@ -264,7 +264,7 @@ export default function GoalsPage() {
         {TABS.map(t => {
           const count = goals.filter(g => g.type === t.key && !g.completed).length
           return (
-            <button key={t.key} onClick={() => setActiveTab(t.key)} className={cn('flex-1 text-xs font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-1', activeTab === t.key ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500')}>
+            <button key={t.key} onClick={() => setActiveTab(t.key)} className={cn('flex-1 text-xs font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-1', activeTab === t.key ? 'bg-surface dark:bg-surface shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500')}>
               <span>{t.emoji}</span>
               <span>{t.label}</span>
               {count > 0 && <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900 text-[rgb(167,120,160)] dark:text-[rgb(167,120,160)] rounded-full px-1.5">{count}</span>}

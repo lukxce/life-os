@@ -357,7 +357,7 @@ function HabitsPage() {
             <div>
               <label className="block text-xs text-gray-500 mb-1">Name *</label>
               <input
-                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800"
+                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-surface dark:bg-surface"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="e.g. Morning run"
@@ -367,7 +367,7 @@ function HabitsPage() {
               <label className="block text-xs text-gray-500 mb-1">Category *</label>
               <input
                 list="category-list"
-                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800"
+                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-surface dark:bg-surface"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 placeholder="e.g. Health & Body"
@@ -380,7 +380,7 @@ function HabitsPage() {
             <div>
               <label className="block text-xs text-gray-500 mb-1">Icon (emoji)</label>
               <input
-                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800"
+                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-surface dark:bg-surface"
                 value={form.icon}
                 onChange={(e) => setForm({ ...form, icon: e.target.value })}
                 placeholder="🏃"
@@ -390,7 +390,7 @@ function HabitsPage() {
               <label className="block text-xs text-gray-500 mb-1">Color</label>
               <input
                 type="color"
-                className="w-full h-10 border border-gray-300 dark:border-gray-700 rounded-lg px-1 bg-white dark:bg-gray-800 cursor-pointer"
+                className="w-full h-10 border border-gray-300 dark:border-gray-700 rounded-lg px-1 bg-surface dark:bg-surface cursor-pointer"
                 value={form.color}
                 onChange={(e) => setForm({ ...form, color: e.target.value })}
               />
@@ -447,7 +447,7 @@ function HabitsPage() {
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Unit</label>
                 <input
-                  className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800"
+                  className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-surface dark:bg-surface"
                   value={form.unit}
                   onChange={(e) => setForm({ ...form, unit: e.target.value })}
                   placeholder="ml, km, glasses..."
@@ -457,7 +457,7 @@ function HabitsPage() {
                 <label className="block text-xs text-gray-500 mb-1">Target</label>
                 <input
                   type="number"
-                  className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800"
+                  className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-surface dark:bg-surface"
                   value={form.target}
                   onChange={(e) => setForm({ ...form, target: e.target.value })}
                   placeholder="2000"
@@ -469,7 +469,7 @@ function HabitsPage() {
           <div>
             <label className="block text-xs text-gray-500 mb-1">Frequency</label>
             <select
-              className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800"
+              className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-surface dark:bg-surface"
               value={form.frequency}
               onChange={(e) => {
                 const v = e.target.value
@@ -521,7 +521,7 @@ function HabitsPage() {
               <input
                 type="number"
                 min="2"
-                className="w-24 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800"
+                className="w-24 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-surface dark:bg-surface"
                 value={form.frequencyDays[0] ?? 2}
                 onChange={(e) => setForm({ ...form, frequencyDays: [Number(e.target.value)] })}
               />
@@ -547,7 +547,7 @@ function HabitsPage() {
               </div>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800"
+                  className="flex-1 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-surface dark:bg-surface"
                   placeholder="e.g. Apply moisturiser"
                   value={newSubTask}
                   onChange={(e) => setNewSubTask(e.target.value)}

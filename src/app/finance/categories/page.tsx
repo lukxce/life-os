@@ -99,7 +99,7 @@ export default function CategoriesPage() {
   const renderList = (list: any[], type: 'personal' | 'business', color: string) => (
     <div className="space-y-3">
       {list.map(cat => (
-        <div key={cat.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div key={cat.id} className="bg-surface/90 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 gap-2">
             {editingCatId === cat.id ? (
               <div className="flex items-center gap-2 flex-1">
@@ -186,7 +186,7 @@ export default function CategoriesPage() {
       </button>
 
       {showForm === type && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-surface/90 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm p-4">
           <div className="space-y-3">
             <div>
               <label className="text-xs font-medium text-gray-500">Category Name</label>

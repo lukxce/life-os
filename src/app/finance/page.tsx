@@ -5,6 +5,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { HeroStat } from '@/components/ui/synth'
+import { NudgeBanner } from '@/components/ui/NudgeBanner'
 
 const COLORS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4']
 
@@ -87,6 +88,8 @@ export default function Dashboard() {
 
       <div className="max-w-5xl mx-auto px-4 md:px-6 space-y-6 pt-4 pb-8">
 
+        <NudgeBanner />
+
         {/* ── Period pills ── */}
         <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {[
@@ -113,28 +116,29 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* ── Accounts: wallet-style scroll ── */}
+        {/* ── Accounts: scroll strip on mobile, full grid on desktop ── */}
         {data && (
           <div>
             <div className="flex items-center justify-between mb-2 px-1">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Accounts</h3>
-              <Link href="/finance/accounts" className="text-xs text-[rgb(232,120,90)] dark:text-[rgb(232,120,90)] hover:underline">Manage</Link>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-ink/40">Accounts</h3>
+              <Link href="/finance/accounts" className="text-xs text-[rgb(232,120,90)] hover:underline">Manage</Link>
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 snap-x" style={{ scrollbarWidth: 'none' }}>
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x md:grid md:grid-cols-3 md:gap-3 md:overflow-visible md:mx-0 md:px-0 md:pb-0"
+              style={{ scrollbarWidth: 'none' }}>
               {data.accounts.map(acc => {
                 const isCompany = acc.type === 'company'
                 const isCrypto = acc.name.toLowerCase().includes('crypto')
                 return (
                   <div key={acc.id}
-                    className={cn('snap-start shrink-0 w-[190px] rounded-2xl p-4 text-white shadow-md',
-                      isCrypto ? 'bg-gradient-to-br from-amber-500 to-orange-600'
-                        : isCompany ? 'bg-gradient-to-br from-purple-600 to-violet-700'
-                        : 'bg-gradient-to-br from-blue-600 to-blue-700')}>
-                    <p className="text-[11px] font-medium text-white/70 truncate">{acc.name}</p>
-                    <p className="text-xl font-bold mt-3 tabular-nums">
+                    className={cn('snap-start shrink-0 w-[190px] md:w-auto rounded-2xl p-4 text-white shadow-md',
+                      isCrypto ? 'bg-gradient-to-br from-[rgb(220,161,84)] to-[rgb(200,141,64)]'
+                        : isCompany ? 'bg-gradient-to-br from-[rgb(167,120,160)] to-[rgb(147,100,140)]'
+                        : 'bg-gradient-to-br from-[rgb(232,120,90)] to-[rgb(212,100,72)]')}>
+                    <p className="text-[11px] font-medium text-white/75 truncate">{acc.name}</p>
+                    <p className="text-xl font-black mt-3 tabular-nums tracking-tight">
                       {acc.currency === 'EUR' ? formatEUR(acc.currentBalance) : formatRSD(acc.currentBalance)}
                     </p>
-                    <p className="text-[11px] text-white/60 tabular-nums">
+                    <p className="text-[11px] text-white/70 tabular-nums">
                       {acc.currency === 'EUR' ? formatRSD(acc.balanceRSD) : formatEUR(acc.balanceEUR)}
                     </p>
                   </div>

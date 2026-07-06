@@ -171,7 +171,7 @@ export default function TodayPage() {
   async function handleToggle(item: TodayItem, completed: boolean) {
     setItems(prev => prev.map(i => i.habit.id === item.habit.id ? { ...i, log: { ...(i.log ?? {}), completed } } : i))
     await fetch('/api/life/logs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ habitId: item.habit.id, date: selectedDate.toISOString(), completed, value: item.log?.value ?? null }) })
+      body: JSON.stringify({ habitId: item.habit.id, date: toLocalDateStr(selectedDate) + "T12:00:00.000Z", completed, value: item.log?.value ?? null }) })
     loadScores()
   }
 
@@ -179,7 +179,7 @@ export default function TodayPage() {
     const completed = item.habit.target != null && value >= item.habit.target
     setItems(prev => prev.map(i => i.habit.id === item.habit.id ? { ...i, log: { ...(i.log ?? {}), value, completed } } : i))
     await fetch('/api/life/logs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ habitId: item.habit.id, date: selectedDate.toISOString(), completed, value }) })
+      body: JSON.stringify({ habitId: item.habit.id, date: toLocalDateStr(selectedDate) + "T12:00:00.000Z", completed, value }) })
     loadScores()
   }
 
@@ -190,7 +190,7 @@ export default function TodayPage() {
     const completed = allDone || (item.log?.completed ?? false)
     setItems(p => p.map(i => i.habit.id === item.habit.id ? { ...i, log: { ...(i.log ?? {}), completed, completedSubTaskIds } } : i))
     await fetch('/api/life/logs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ habitId: item.habit.id, date: selectedDate.toISOString(), completed, value: item.log?.value ?? null, completedSubTaskIds }) })
+      body: JSON.stringify({ habitId: item.habit.id, date: toLocalDateStr(selectedDate) + "T12:00:00.000Z", completed, value: item.log?.value ?? null, completedSubTaskIds }) })
     loadScores()
   }
 

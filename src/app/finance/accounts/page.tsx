@@ -102,9 +102,10 @@ export default function AccountsPage() {
   }
 
   const fmt = (val: number, currency: string) => currency === 'RSD' ? formatRSD(val) : formatEUR(val)
+  const inputCls = "mt-1 w-full border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
 
   const renderCard = (a: any) => (
-    <div key={a.id} className="bg-white border border-gray-200 rounded-lg p-4">
+    <div key={a.id} className="bg-surface/90 border border-black/5 dark:border-white/5 rounded-2xl p-4 shadow-sm">
       <div className="flex items-start justify-between gap-2 mb-3">
         {renameId === a.id ? (
           <div className="flex items-center gap-2 flex-1">
@@ -116,30 +117,30 @@ export default function AccountsPage() {
                 if (e.key === 'Enter') saveRename(a)
                 if (e.key === 'Escape') setRenameId(null)
               }}
-              className="flex-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
+              className={inputCls + ' mt-0'}
             />
-            <button onClick={() => saveRename(a)} className="p-1.5 text-green-600 hover:bg-green-50 rounded">
+            <button onClick={() => saveRename(a)} className="p-1.5 text-emerald-600 hover:bg-emerald-500/10 rounded">
               <Check size={14} />
             </button>
-            <button onClick={() => setRenameId(null)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded">
+            <button onClick={() => setRenameId(null)} className="p-1.5 text-ink/30 hover:bg-black/5 dark:hover:bg-white/5 rounded">
               <X size={14} />
             </button>
           </div>
         ) : (
           <>
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-gray-900 truncate">{a.name}</h3>
-              <p className="text-xs text-gray-500">{a.currency} · {a.type}</p>
+              <h3 className="font-semibold text-ink truncate">{a.name}</h3>
+              <p className="text-xs text-ink/40">{a.currency} · {a.type}</p>
             </div>
             <div className="flex items-center gap-0.5 shrink-0">
-              <button onClick={() => startRename(a)} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded" title="Rename">
+              <button onClick={() => startRename(a)} className="p-1.5 text-ink/30 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5 rounded" title="Rename">
                 <Pencil className="w-4 h-4" />
               </button>
               <button onClick={() => { setEditId(editId === a.id ? null : a.id); setOverrideForm({ ...overrideForm, [a.id]: '' }) }}
-                className={`p-1.5 rounded ${editId === a.id ? 'text-blue-700 bg-blue-50' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'}`} title="Edit balance">
+                className={`p-1.5 rounded ${editId === a.id ? 'text-[rgb(232,120,90)] bg-[rgb(232,120,90)]/10' : 'text-ink/30 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5'}`} title="Edit balance">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
               </button>
-              <button onClick={() => deleteAccount(a)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded" title="Delete">
+              <button onClick={() => deleteAccount(a)} className="p-1.5 text-ink/30 hover:text-[rgb(232,120,90)] hover:bg-[rgb(232,120,90)]/10 rounded" title="Delete">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -150,65 +151,65 @@ export default function AccountsPage() {
       <div className="space-y-1 text-sm">
         {a.cryptoAutoSync ? (
           <div className="flex justify-between items-center pt-2">
-            <span className="flex items-center gap-1.5 text-gray-700 font-medium">
+            <span className="flex items-center gap-1.5 text-ink/80 font-medium">
               Live portfolio
-              <span className="text-[10px] font-semibold bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full">AUTO</span>
+              <span className="text-[10px] font-semibold bg-[rgb(167,120,160)]/15 text-[rgb(167,120,160)] px-1.5 py-0.5 rounded-full">AUTO</span>
             </span>
-            <span className="font-bold text-purple-600">{fmt(a.currentBalance ?? 0, a.currency)}</span>
+            <span className="font-bold text-[rgb(167,120,160)] tabular-nums">{fmt(a.currentBalance ?? 0, a.currency)}</span>
           </div>
         ) : (
           <>
             <div className="flex justify-between">
-              <span className="text-gray-500">Starting balance</span>
-              <span>{fmt(a.startingBalance, a.currency)}</span>
+              <span className="text-ink/40">Starting balance</span>
+              <span className="text-ink/80 tabular-nums">{fmt(a.startingBalance, a.currency)}</span>
             </div>
             {a.manualOverride != null && (
               <div className="flex justify-between items-center">
-                <span className="text-gray-500">Manual override</span>
+                <span className="text-ink/40">Manual override</span>
                 <span className="flex items-center gap-2">
-                  <span className="font-medium text-orange-600">{fmt(a.manualOverride, a.currency)}</span>
-                  <button onClick={() => clearOverride(a.id)} className="text-gray-400 hover:text-red-500">
+                  <span className="font-medium text-[rgb(220,161,84)] tabular-nums">{fmt(a.manualOverride, a.currency)}</span>
+                  <button onClick={() => clearOverride(a.id)} className="text-ink/30 hover:text-[rgb(232,120,90)]">
                     <X size={12} />
                   </button>
                 </span>
               </div>
             )}
-            <div className="flex justify-between pt-2 border-t border-gray-100 mt-2">
-              <span className="text-gray-700 font-medium">Current</span>
-              <span className="font-bold text-gray-900">{fmt(a.currentBalance ?? a.startingBalance, a.currency)}</span>
+            <div className="flex justify-between pt-2 border-t border-black/5 dark:border-white/5 mt-2">
+              <span className="text-ink/70 font-medium">Current</span>
+              <span className="font-black text-ink tabular-nums">{fmt(a.currentBalance ?? a.startingBalance, a.currency)}</span>
             </div>
           </>
         )}
       </div>
 
       {editId === a.id && (
-        <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+        <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5 space-y-3">
           <div>
-            <label className="text-xs font-medium text-gray-500">Starting balance ({a.currency})</label>
+            <label className="text-xs font-medium text-ink/40">Starting balance ({a.currency})</label>
             <input
               type="number"
               defaultValue={a.startingBalance}
               onChange={e => setStartingForm({ ...startingForm, [a.id]: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
+              className={inputCls}
             />
-            <button onClick={() => saveStarting(a.id)} className="mt-2 w-full bg-green-600 text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-green-700">
+            <button onClick={() => saveStarting(a.id)} className="mt-2 w-full bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-emerald-700">
               Update Starting Balance
             </button>
           </div>
 
-          <div className="border-t border-gray-100 pt-3">
-            <label className="text-xs font-medium text-gray-500">Or set manual override ({a.currency})</label>
+          <div className="border-t border-black/5 dark:border-white/5 pt-3">
+            <label className="text-xs font-medium text-ink/40">Or set manual override ({a.currency})</label>
             <input
               type="number"
               value={overrideForm[a.id] || ''}
               onChange={e => setOverrideForm({ ...overrideForm, [a.id]: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
+              className={inputCls}
               placeholder="e.g. 150000"
             />
-            <p className="text-[10px] text-gray-400 mt-1">Override = "as of today my balance is X". Tracks forward from this date.</p>
+            <p className="text-[10px] text-ink/30 mt-1">Override = "as of today my balance is X". Tracks forward from this date.</p>
             <div className="flex gap-2 mt-2">
               <button onClick={() => saveOverride(a.id)} className="flex-1 bg-[rgb(232,120,90)] text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-[rgb(212,100,72)]">Save Override</button>
-              <button onClick={() => setEditId(null)} className="flex-1 border border-gray-300 px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setEditId(null)} className="flex-1 border border-black/10 dark:border-white/10 text-ink/70 px-3 py-1.5 rounded text-xs font-medium hover:bg-black/5 dark:hover:bg-white/5">Cancel</button>
             </div>
           </div>
         </div>
@@ -222,58 +223,54 @@ export default function AccountsPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h2 className="text-2xl font-bold text-gray-900">Bank Accounts</h2>
+        <h2 className="text-2xl font-black text-ink tracking-tight">Bank Accounts</h2>
         <button onClick={() => setShowForm(!showForm)} className="flex items-center justify-center gap-2 bg-[rgb(232,120,90)] text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">
           <Plus size={16} /> Add Account
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">New Account</h3>
+        <div className="bg-surface/90 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm p-4 md:p-6">
+          <h3 className="font-semibold text-ink mb-4">New Account</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-medium text-gray-500">Name</label>
-              <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+              <label className="text-xs font-medium text-ink/40">Name</label>
+              <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className={inputCls} />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500">Starting Balance</label>
+              <label className="text-xs font-medium text-ink/40">Starting Balance</label>
               <input type="number" value={form.startingBalance}
-                onChange={e => setForm(p => ({ ...p, startingBalance: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                onChange={e => setForm(p => ({ ...p, startingBalance: e.target.value }))} className={inputCls} />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500">Type</label>
-              <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
+              <label className="text-xs font-medium text-ink/40">Type</label>
+              <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))} className={inputCls}>
                 {['personal','company'].map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500">Currency</label>
-              <select value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
+              <label className="text-xs font-medium text-ink/40">Currency</label>
+              <select value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))} className={inputCls}>
                 {['RSD','EUR'].map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
           </div>
           <div className="flex gap-3 mt-4">
             <button onClick={submit} className="flex-1 sm:flex-initial bg-[rgb(232,120,90)] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">Save</button>
-            <button onClick={() => setShowForm(false)} className="flex-1 sm:flex-initial border border-gray-300 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setShowForm(false)} className="flex-1 sm:flex-initial border border-black/10 dark:border-white/10 text-ink/70 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-black/5 dark:hover:bg-white/5">Cancel</button>
           </div>
         </div>
       )}
 
       <div>
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Personal</h3>
+        <h3 className="text-sm font-semibold text-ink/40 uppercase tracking-wide mb-3">Personal</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {personal.map(renderCard)}
         </div>
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Company</h3>
+        <h3 className="text-sm font-semibold text-ink/40 uppercase tracking-wide mb-3">Company</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {company.map(renderCard)}
         </div>

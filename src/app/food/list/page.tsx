@@ -109,7 +109,7 @@ export default function FoodListPage() {
         <div className="flex gap-2 flex-wrap">
           {cities.length > 1 && (
             <select value={filterCity} onChange={e => setFilterCity(e.target.value)}
-              className="border border-black/10 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs bg-white dark:bg-gray-800 outline-none">
+              className="border border-black/10 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs bg-surface dark:bg-surface outline-none">
               <option value="">All cities</option>
               {cities.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -127,13 +127,13 @@ export default function FoodListPage() {
           )}
           {cuisines.length > 1 && (
             <select value={filterCuisine} onChange={e => setFilterCuisine(e.target.value)}
-              className="border border-black/10 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs bg-white dark:bg-gray-800 outline-none">
+              className="border border-black/10 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs bg-surface dark:bg-surface outline-none">
               <option value="">All cuisines</option>
               {cuisines.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           )}
           <select value={sort} onChange={e => setSort(e.target.value as SortKey)}
-            className="border border-black/10 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs bg-white dark:bg-gray-800 outline-none ml-auto">
+            className="border border-black/10 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs bg-surface dark:bg-surface outline-none ml-auto">
             <option value="createdAt">Newest</option>
             <option value="rating">Top rated</option>
             <option value="name">A–Z</option>

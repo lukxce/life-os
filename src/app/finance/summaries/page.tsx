@@ -61,7 +61,7 @@ export default function SummariesPage() {
 
   // Helper to render a section as table on desktop, cards on mobile
   const renderSection = (title: string, color: string, rows: { label: string; data: number[]; ytdRSD: number; ytdEUR?: number }[], totalRSD: number, totalEUR?: number) => (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="bg-surface/90 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
       <div className="px-4 md:px-6 py-4 border-b border-gray-200">
         <h3 className={`text-lg font-semibold ${color === 'blue' ? 'text-blue-700' : color === 'red' ? 'text-red-700' : 'text-purple-700'}`}>{title}</h3>
       </div>

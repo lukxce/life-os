@@ -179,19 +179,19 @@ export default function FitnessBodyPage() {
             <div>
               <label className="text-xs text-gray-400 block mb-1">Metric</label>
               <select value={form.metric} onChange={e => setForm(f => ({ ...f, metric: e.target.value as MetricKey }))}
-                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800">
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-surface dark:bg-surface">
                 {METRICS.map(m => <option key={m.key} value={m.key}>{m.label} ({m.unit})</option>)}
               </select>
             </div>
             <div>
               <label className="text-xs text-gray-400 block mb-1">Value</label>
               <input type="number" step="0.1" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
-                placeholder="0.0" className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800" />
+                placeholder="0.0" className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-surface dark:bg-surface" />
             </div>
             <div>
               <label className="text-xs text-gray-400 block mb-1">Date</label>
               <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800" />
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-surface dark:bg-surface" />
             </div>
             <div className="col-span-3">
               <button type="submit" disabled={saving}

@@ -50,13 +50,13 @@ export default function Page() {
       {loading ? (
         <p className="text-center text-gray-400 py-12">Loading...</p>
       ) : items.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+        <div className="bg-surface/90 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm p-12 text-center">
           <Shield size={32} className="mx-auto text-gray-300 mb-3" />
           <p className="text-gray-500">No warranties yet.</p>
           <p className="text-sm text-gray-400 mt-1">Mark expenses with "Has warranty" when you add them.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-surface/90 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
           <ul className="divide-y divide-gray-100">
             {items.map(item => {
               const status = statusLabel(item.daysRemaining)

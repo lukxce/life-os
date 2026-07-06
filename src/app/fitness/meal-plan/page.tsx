@@ -127,24 +127,24 @@ export default function MealPlanPage() {
                           <textarea
                             value={form.name}
                             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                            className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 resize-none"
+                            className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-surface dark:bg-surface resize-none"
                             rows={2}
                           />
                           <div className="grid grid-cols-3 gap-2">
                             <div>
                               <label className="text-[10px] text-gray-400 block mb-1">kcal</label>
                               <input type="number" value={form.calories} onChange={e => setForm(f => ({ ...f, calories: e.target.value }))}
-                                className="w-full border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
+                                className="w-full border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-sm bg-surface dark:bg-surface" />
                             </div>
                             <div>
                               <label className="text-[10px] text-gray-400 block mb-1">protein (g)</label>
                               <input type="number" value={form.protein} onChange={e => setForm(f => ({ ...f, protein: e.target.value }))}
-                                className="w-full border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
+                                className="w-full border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-sm bg-surface dark:bg-surface" />
                             </div>
                             <div>
                               <label className="text-[10px] text-gray-400 block mb-1">notes</label>
                               <input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                                className="w-full border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
+                                className="w-full border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-sm bg-surface dark:bg-surface" />
                             </div>
                           </div>
                           <div className="flex gap-2">

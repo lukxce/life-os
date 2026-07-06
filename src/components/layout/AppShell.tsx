@@ -241,7 +241,7 @@ function BottomBar({ config }: { config: ModuleConfig }) {
               const inner = (
                 <span className="flex items-center gap-3"
                   style={{ animation: 'pageIn 0.18s ease both', animationDelay: `${i * 40}ms` }}>
-                  <span className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-semibold px-3 py-1.5 rounded-full shadow-md border border-black/5 dark:border-white/10 whitespace-nowrap">
+                  <span className="bg-surface dark:bg-surface text-gray-700 dark:text-gray-200 text-xs font-semibold px-3 py-1.5 rounded-full shadow-md border border-black/5 dark:border-white/10 whitespace-nowrap">
                     {a.label}
                   </span>
                   <span className={cn('w-12 h-12 rounded-full flex items-center justify-center shadow-lg text-white', a.color ?? config.accentFab)}>

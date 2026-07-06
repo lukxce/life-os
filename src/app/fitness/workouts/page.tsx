@@ -135,26 +135,26 @@ export default function WorkoutsPage() {
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Type</label>
                 <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-                  className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800">
+                  className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-surface dark:bg-surface">
                   {TYPES.map(t => <option key={t.value} value={t.value}>{t.icon} {t.label}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Duration (min)</label>
                 <input type="number" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))}
-                  placeholder="60" className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800" />
+                  placeholder="60" className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-surface dark:bg-surface" />
               </div>
             </div>
             <div>
               <label className="text-xs text-gray-400 block mb-1">Date</label>
               <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800" />
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-surface dark:bg-surface" />
             </div>
             <div>
               <label className="text-xs text-gray-400 block mb-1">Notes</label>
               <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="How did it go?" rows={2}
-                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-white dark:bg-gray-800 resize-none" />
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-surface dark:bg-surface resize-none" />
             </div>
             <button type="submit" disabled={saving}
               className="w-full bg-[rgb(220,161,84)] text-white rounded-xl py-2 text-sm font-semibold hover:bg-[rgb(200,141,64)] disabled:opacity-50 transition-colors">
