@@ -155,30 +155,29 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* ── Right Now: full-bleed dark hero — the one thing that matters, matching Finance/Fitness/Habits ── */}
-        <div className="page-in relative overflow-hidden bg-[#1f1815] text-white px-5 pt-7 pb-6 md:px-8">
-          <div aria-hidden className="pointer-events-none absolute inset-0"
-            style={{ background: `radial-gradient(640px 420px at 88% -20%, rgb(${glow} / 0.4), transparent 65%), radial-gradient(520px 400px at -10% 115%, rgb(${glow} / 0.18), transparent 60%)` }} />
-          <div className="relative max-w-4xl mx-auto">
+        <main className="page-in max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-7 pb-16">
+
+          {/* ── Right Now: the one thing that matters, right now ── */}
+          <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm p-5">
             <div className="flex items-start gap-4">
               <Mascot mood={habitList.length === 0 && rightNow?.top?.kind === 'habit' ? 'pleased' : (rightNow?.mood ?? 'content')} size={56} className="mascot-pop shrink-0" />
               <div className="flex-1 min-w-0">
                 {!rightNow ? (
-                  <div className="h-12 bg-white/10 rounded-xl animate-pulse" />
+                  <div className="h-12 bg-canvas-alt rounded-xl animate-pulse" />
                 ) : rightNow.top && habitList.length > 0 ? (
                   <>
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35 flex items-center gap-1.5">
                         {KindIcon && <KindIcon size={11} />} Right now
                       </p>
                       {streak && streak.count >= 3 && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-[rgb(220,161,84)] bg-[rgb(220,161,84)]/20 px-2 py-0.5 rounded-full shrink-0">
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-[rgb(220,161,84)] bg-[rgb(220,161,84)]/10 px-2 py-0.5 rounded-full shrink-0">
                           <Flame size={10} /> {streak.count}-day streak
                         </span>
                       )}
                     </div>
-                    <p className="text-xl font-black text-white tracking-tight leading-tight mt-0.5">{rightNow.top.title}</p>
-                    <p className="text-sm text-white/50 mt-0.5">{rightNow.top.detail}</p>
+                    <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">{rightNow.top.title}</p>
+                    <p className="text-sm text-ink/50 mt-0.5">{rightNow.top.detail}</p>
 
                     {rightNow.top.kind === 'habit' ? (
                       <div className="mt-3 space-y-1.5">
@@ -187,30 +186,30 @@ export default function HomePage() {
                           return (
                             <button key={h.id} onClick={() => !done && toggleHabit(h.id)}
                               className={cn('flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-xl transition-all duration-500',
-                                done ? 'bg-emerald-500/15' : 'bg-white/10 hover:bg-white/[0.15] group')}>
+                                done ? 'bg-emerald-500/10' : 'bg-canvas-alt hover:bg-black/[0.04] dark:hover:bg-white/[0.04] group')}>
                               <span className={cn('w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
-                                done ? 'bg-emerald-500 border-emerald-500 scale-110' : 'border-white/25 group-hover:border-[rgb(232,150,120)]')}>
+                                done ? 'bg-emerald-500 border-emerald-500 scale-110' : 'border-ink/20 group-hover:border-[rgb(var(--coral))]')}>
                                 {done && <Check size={12} className="text-white" strokeWidth={3} />}
                               </span>
-                              <span className={cn('text-sm transition-all', done ? 'text-white/40 line-through' : 'text-white/80 group-hover:text-white')}>{h.name}</span>
+                              <span className={cn('text-sm transition-all', done ? 'text-ink/40 line-through' : 'text-ink/80 group-hover:text-ink')}>{h.name}</span>
                             </button>
                           )
                         })}
                       </div>
                     ) : (
                       <Link href={rightNow.top.href}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-[rgb(232,150,120)] hover:underline mt-2">
+                        className="inline-flex items-center gap-1 text-xs font-bold text-[rgb(var(--coral))] hover:underline mt-2">
                         Take a look <ChevronRight size={12} />
                       </Link>
                     )}
                   </>
                 ) : (
                   <>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Right now</p>
-                    <p className="text-xl font-black text-white tracking-tight leading-tight mt-0.5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35">Right now</p>
+                    <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">
                       {allJustFinished ? "That's everything — nicely done." : "You're clear for a bit."}
                     </p>
-                    <p className="text-sm text-white/50 mt-0.5">
+                    <p className="text-sm text-ink/50 mt-0.5">
                       {streak && streak.count >= 3
                         ? `${streak.icon ?? '🔥'} ${streak.count} days running on ${streak.name} — keep it going.`
                         : 'Nothing urgent right now.'}
@@ -221,17 +220,17 @@ export default function HomePage() {
             </div>
 
             {rightNow && rightNow.upcoming.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-white/10 flex gap-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5 flex gap-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                 {rightNow.upcoming.map(item => {
                   const Icon = KIND_ICON[item.kind]
                   return (
                     <Link key={item.id} href={item.href} className="flex items-center gap-2 shrink-0 group">
-                      <span className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                        <Icon size={13} className="text-white/60" />
+                      <span className="w-7 h-7 rounded-full bg-canvas-alt flex items-center justify-center shrink-0">
+                        <Icon size={13} className="text-ink/50" />
                       </span>
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-white/80 truncate max-w-[140px] group-hover:text-white">{item.title}</p>
-                        <p className="text-[10px] text-white/35">{item.detail}</p>
+                        <p className="text-xs font-medium text-ink/80 truncate max-w-[140px] group-hover:text-ink">{item.title}</p>
+                        <p className="text-[10px] text-ink/35">{item.detail}</p>
                       </div>
                     </Link>
                   )
@@ -239,9 +238,6 @@ export default function HomePage() {
               </div>
             )}
           </div>
-        </div>
-
-        <main className="max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-7 pb-16">
 
           {/* ── Quick actions — just the ones you actually reach for ── */}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>

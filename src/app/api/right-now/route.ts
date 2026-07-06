@@ -27,7 +27,11 @@ function toMinutes(hhmm: string): number {
   return h * 60 + (m ?? 0)
 }
 
+// Boundaries match the "Still up?" / "Good morning" greeting on Home —
+// 0-5am reads as still-night, not the start of a new "morning", so
+// morning-only habits don't get flagged as due before you've even slept
 function timeOfDayBucket(nowMin: number): string {
+  if (nowMin < 5 * 60) return 'night'
   if (nowMin < 12 * 60) return 'morning'
   if (nowMin < 18 * 60) return 'noon'
   return 'night'
