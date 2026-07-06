@@ -4,8 +4,9 @@ import { HabitCard } from '@/components/habits/HabitCard'
 import { ReentryModal } from '@/components/habits/ReentryModal'
 import { calcStreak, startOfDay } from '@/lib/utils'
 import { cn } from '@/lib/utils'
-import { ChevronLeft, ChevronRight, Pencil, TrendingUp, TrendingDown, Minus, Plane, Heart, Cake } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Plane, Heart, Cake } from 'lucide-react'
 import Link from 'next/link'
+import { ScoreRing, TrendBars, Delta, HeroStat } from '@/components/ui/synth'
 
 interface Contact {
   id: string; name: string; emoji?: string | null; birthday?: string | null
@@ -99,6 +100,8 @@ function greeting() {
 
 interface WeekScore { score: number; completed: number; total: number }
 interface ScoreData { thisWeek: WeekScore; lastWeek: WeekScore; delta: number; direction: 'up' | 'down' | 'same' }
+interface DayScore { date: string; score: number; completed: number; total: number }
+interface DayScores { days: DayScore[]; bestStreak: { name: string; icon: string | null; count: number } }
 
 export default function TodayPage() {
   const [items, setItems] = useState<TodayItem[]>([])
@@ -108,6 +111,7 @@ export default function TodayPage() {
   const [filterTime, setFilterTime] = useState('all')
   const [name, setName] = useState('')
   const [weekScore, setWeekScore] = useState<ScoreData | null>(null)
+  const [dayScores, setDayScores] = useState<DayScores | null>(null)
   const [showReentry, setShowReentry] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
@@ -128,16 +132,21 @@ export default function TodayPage() {
     localStorage.setItem('holidays', JSON.stringify(Array.from(next)))
   }
 
+  const loadScores = useCallback(() => {
+    fetch('/api/life/weekly-score').then(r => r.json()).then(setWeekScore).catch(() => {})
+    fetch('/api/life/day-scores?days=14').then(r => r.json()).then(setDayScores).catch(() => {})
+  }, [])
+
   useEffect(() => {
     const saved = localStorage.getItem('userName')
     if (saved) setName(saved)
-    fetch('/api/life/weekly-score').then(r => r.json()).then(setWeekScore).catch(() => {})
+    loadScores()
     fetch('/api/life/contacts').then(r => r.json()).then(setContacts).catch(() => {})
     try {
       const h = JSON.parse(localStorage.getItem('holidays') ?? '[]')
       setHolidays(new Set(h))
     } catch { /* ignore */ }
-  }, [])
+  }, [loadScores])
 
   function saveName() {
     const n = nameInput.trim()
@@ -163,6 +172,7 @@ export default function TodayPage() {
     setItems(prev => prev.map(i => i.habit.id === item.habit.id ? { ...i, log: { ...(i.log ?? {}), completed } } : i))
     await fetch('/api/life/logs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ habitId: item.habit.id, date: selectedDate.toISOString(), completed, value: item.log?.value ?? null }) })
+    loadScores()
   }
 
   async function handleQuantity(item: TodayItem, value: number) {
@@ -170,6 +180,7 @@ export default function TodayPage() {
     setItems(prev => prev.map(i => i.habit.id === item.habit.id ? { ...i, log: { ...(i.log ?? {}), value, completed } } : i))
     await fetch('/api/life/logs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ habitId: item.habit.id, date: selectedDate.toISOString(), completed, value }) })
+    loadScores()
   }
 
   async function handleSubTask(item: TodayItem, subTaskId: string, checked: boolean) {
@@ -177,9 +188,10 @@ export default function TodayPage() {
     const completedSubTaskIds = checked ? [...prev.filter(id => id !== subTaskId), subTaskId] : prev.filter(id => id !== subTaskId)
     const allDone = item.habit.subTasks.length > 0 && completedSubTaskIds.length >= item.habit.subTasks.length
     const completed = allDone || (item.log?.completed ?? false)
-    setItems(prev => prev.map(i => i.habit.id === item.habit.id ? { ...i, log: { ...(i.log ?? {}), completed, completedSubTaskIds } } : i))
+    setItems(p => p.map(i => i.habit.id === item.habit.id ? { ...i, log: { ...(i.log ?? {}), completed, completedSubTaskIds } } : i))
     await fetch('/api/life/logs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ habitId: item.habit.id, date: selectedDate.toISOString(), completed, value: item.log?.value ?? null, completedSubTaskIds }) })
+    loadScores()
   }
 
   const pending = dailyItems.filter(i => {
@@ -201,89 +213,93 @@ export default function TodayPage() {
     )
   }
 
+  function selectDay(dateStr: string) {
+    const d = startOfDay(new Date(dateStr + 'T12:00:00'))
+    if (d > today) return
+    setSelectedDate(d)
+    setWeekStart(mondayOf(d))
+  }
+
   const { birthdays, overdue } = getContactAlerts(contacts, today)
+  const streak = dayScores?.bestStreak
 
   return (
-    <div className="-mx-4 -mt-6 md:-mt-8">
-      {/* ── Hero ── */}
-      <div className="relative bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-500 px-5 pt-10 pb-6 text-white overflow-hidden rounded-b-[2.5rem]">
-        <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/5" />
-        <div className="absolute top-16 -left-10 w-32 h-32 rounded-full bg-white/5" />
+    <div className="-mx-4 -mt-6 md:-mx-6 md:-mt-8">
+      {/* ── Hero: the day, synthesized ── */}
+      <div className="relative overflow-hidden rounded-b-[2rem] bg-[#0e0f15] text-white px-5 pt-8 pb-5">
+        {/* aurora */}
+        <div aria-hidden className="pointer-events-none absolute inset-0"
+          style={{ background: 'radial-gradient(640px 420px at 85% -20%, rgba(99,102,241,0.35), transparent 65%), radial-gradient(500px 380px at -10% 110%, rgba(139,92,246,0.18), transparent 60%)' }} />
 
-        {/* Date + greeting */}
         <div className="relative">
-          <p className="text-xs font-semibold tracking-widest text-white/60 uppercase mb-1">
-            {selectedDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}
-          </p>
-
-          {editingName ? (
-            <div className="flex items-center gap-2 mb-3">
-              <input autoFocus className="text-2xl font-bold bg-white/20 rounded-xl px-3 py-1 text-white placeholder-white/50 outline-none w-40"
-                value={nameInput} onChange={e => setNameInput(e.target.value)}
-                onBlur={saveName} onKeyDown={e => e.key === 'Enter' && saveName()} placeholder="Your name" />
-            </div>
-          ) : (
-            <button onClick={() => { setNameInput(name); setEditingName(true) }} className="flex items-center gap-2 mb-3 group">
-              <h1 className="text-2xl font-bold">{name ? `Hi, ${name}` : greeting()} 👋</h1>
-              <Pencil size={14} className="text-white/40 group-hover:text-white/70 transition-colors" />
-            </button>
-          )}
-
-          {total > 0 && (
+          {/* Top row: identity + day controls */}
+          <div className="flex items-start justify-between mb-5">
             <div>
-              <div className="flex justify-between text-xs text-white/60 mb-1">
-                <span>{totalDone}/{total} done today</span>
-                <span>{pct}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-                <div className="h-full bg-white rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
-              </div>
+              <p className="text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase">
+                {selectedDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+              {editingName ? (
+                <input autoFocus className="text-xl font-bold bg-white/10 rounded-lg px-2 py-0.5 mt-0.5 text-white placeholder-white/40 outline-none w-40"
+                  value={nameInput} onChange={e => setNameInput(e.target.value)}
+                  onBlur={saveName} onKeyDown={e => e.key === 'Enter' && saveName()} placeholder="Your name" />
+              ) : (
+                <button onClick={() => { setNameInput(name); setEditingName(true) }} className="flex items-center gap-1.5 group mt-0.5">
+                  <h1 className="text-xl font-bold">{name ? `${greeting()}, ${name}` : greeting()}</h1>
+                  <Pencil size={11} className="text-white/25 group-hover:text-white/60 transition-colors" />
+                </button>
+              )}
             </div>
-          )}
-
-          {/* Weekly score row */}
-          <div className="flex items-center justify-between mt-3">
-            {weekScore ? (() => {
-              const DirIcon = weekScore.direction === 'up' ? TrendingUp : weekScore.direction === 'down' ? TrendingDown : Minus
-              const deltaStr = weekScore.delta > 0 ? `+${weekScore.delta}%` : weekScore.delta < 0 ? `${weekScore.delta}%` : '='
-              return (
-                <div className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1">
-                  <DirIcon size={12} className="text-white/70" />
-                  <span className="text-xs text-white/80 font-medium">Week: {weekScore.thisWeek.score}%</span>
-                  <span className="text-xs text-white/50">{deltaStr}</span>
-                </div>
-              )
-            })() : <div />}
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={toggleHoliday}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-full px-3 py-1 transition-colors',
-                  isHoliday ? 'bg-amber-400/90 text-amber-900' : 'bg-white/10 hover:bg-white/20 text-white/70'
-                )}
-              >
-                <span className="text-xs">🏖️</span>
-                <span className="text-xs font-medium">{isHoliday ? 'On holiday' : 'Holiday'}</span>
+            <div className="flex items-center gap-1.5 mt-1">
+              <button onClick={toggleHoliday}
+                className={cn('px-2.5 py-1.5 rounded-full text-xs transition-colors',
+                  isHoliday ? 'bg-amber-400/90 text-amber-950 font-semibold' : 'bg-white/10 hover:bg-white/20 text-white/60')}>
+                🏖️
               </button>
-              <button
-                onClick={() => setShowReentry(true)}
-                className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 transition-colors rounded-full px-3 py-1"
-              >
-                <Plane size={12} className="text-white/70" />
-                <span className="text-xs text-white/70">Just got back?</span>
+              <button onClick={() => setShowReentry(true)}
+                className="p-1.5 px-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors" title="Just got back?">
+                <Plane size={13} className="text-white/60" />
               </button>
             </div>
           </div>
-        </div>
 
-        {/* ── Week strip ── */}
-        <div className="relative mt-5">
-          <div className="flex items-center justify-between">
+          {/* Score row: ring + synthesized stats */}
+          <div className="flex items-center gap-6">
+            <ScoreRing value={pct} size={132} sub={isToday ? 'today' : 'day score'} track="rgba(255,255,255,0.08)" />
+            <div className="flex-1 grid grid-cols-1 gap-3.5 min-w-0">
+              <HeroStat label="Week"
+                value={
+                  <span className="flex items-center gap-2">
+                    {weekScore ? `${weekScore.thisWeek.score}%` : '—'}
+                    {weekScore && <Delta value={weekScore.delta} />}
+                  </span>
+                }
+                sub={weekScore ? `${weekScore.thisWeek.completed}/${weekScore.thisWeek.total} this week` : undefined} />
+              <HeroStat label="Best streak"
+                value={streak && streak.count > 0 ? `${streak.icon ?? '🔥'} ${streak.count} days` : '—'}
+                sub={streak && streak.count > 0 ? streak.name : 'complete habits to build one'} />
+              <HeroStat label="Done" value={`${totalDone} / ${total}`} sub={isToday ? 'so far today' : undefined} />
+            </div>
+          </div>
+
+          {/* 14-day trend — tap a bar to jump to that day */}
+          {dayScores && dayScores.days.length > 0 && (
+            <div className="mt-5">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-[10px] font-bold tracking-[0.18em] text-white/35 uppercase">Last 14 days</p>
+                <p className="text-[10px] text-white/35">
+                  avg {Math.round(dayScores.days.reduce((s, d) => s + d.score, 0) / dayScores.days.length)}%
+                </p>
+              </div>
+              <TrendBars days={dayScores.days} selected={selectedKey} onSelect={selectDay} height={40} />
+            </div>
+          )}
+
+          {/* Week strip */}
+          <div className="relative mt-5 flex items-center justify-between">
             <button onClick={() => setWeekStart(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}
-              className="p-1.5 rounded-full hover:bg-white/10 transition-colors text-white/60">
+              className="p-1.5 rounded-full hover:bg-white/10 transition-colors text-white/50">
               <ChevronLeft size={16} />
             </button>
-
             <div className="flex gap-1 flex-1 justify-center">
               {days.map(day => {
                 const isT = isSameDay(day, today)
@@ -294,7 +310,7 @@ export default function TodayPage() {
                     className={cn('flex flex-col items-center gap-0.5 rounded-2xl transition-all px-1.5 py-2 min-w-[38px]',
                       sel ? 'bg-white' : future ? 'opacity-30 cursor-default' : 'hover:bg-white/10')}>
                     <span className={cn('text-[9px] font-bold tracking-wider',
-                      sel ? 'text-indigo-600' : isT ? 'text-white' : 'text-white/50')}>
+                      sel ? 'text-indigo-600' : isT ? 'text-white' : 'text-white/40')}>
                       {isT ? 'TDY' : DAY_ABBR[day.getDay()]}
                     </span>
                     <span className={cn('text-sm font-bold', sel ? 'text-indigo-600' : 'text-white')}>
@@ -304,9 +320,8 @@ export default function TodayPage() {
                 )
               })}
             </div>
-
             <button onClick={() => setWeekStart(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })}
-              className="p-1.5 rounded-full hover:bg-white/10 transition-colors text-white/60">
+              className="p-1.5 rounded-full hover:bg-white/10 transition-colors text-white/50">
               <ChevronRight size={16} />
             </button>
           </div>
@@ -314,7 +329,7 @@ export default function TodayPage() {
       </div>
 
       {/* ── Filter tabs ── */}
-      <div className="flex gap-1.5 px-4 pt-3 pb-1 overflow-x-auto bg-gray-50 dark:bg-gray-950" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex gap-1.5 px-4 pt-4 pb-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         {FILTER_TABS.map(tab => (
           <button key={tab.key} onClick={() => setFilterTime(tab.key)}
             className={cn('px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors shrink-0',
@@ -326,7 +341,7 @@ export default function TodayPage() {
 
       {/* ── Contact alerts ── */}
       {(birthdays.length > 0 || overdue.length > 0) && (
-        <div className="px-4 pt-3 space-y-2 bg-gray-50 dark:bg-gray-950">
+        <div className="px-4 pt-3 space-y-2">
           {birthdays.map(c => {
             const [bm, bd] = (c.birthday ?? '').split('-')
             const isTodayBday = bm === String(today.getMonth() + 1).padStart(2, '0') && bd === String(today.getDate()).padStart(2, '0')
@@ -346,7 +361,7 @@ export default function TodayPage() {
           })}
 
           {overdue.map(c => {
-            const days = FREQ_DAYS[c.reachOutFrequency] ?? 30
+            const daysFreq = FREQ_DAYS[c.reachOutFrequency] ?? 30
             const daysSince = c.lastContactDate
               ? Math.floor((today.getTime() - new Date(c.lastContactDate).getTime()) / 86400000)
               : null
@@ -359,7 +374,7 @@ export default function TodayPage() {
                     Reach out to {c.name}
                   </p>
                   <p className="text-xs text-amber-500 dark:text-amber-400">
-                    {daysSince != null ? `Last contact ${daysSince}d ago · every ${days}d` : 'Never contacted'}
+                    {daysSince != null ? `Last contact ${daysSince}d ago · every ${daysFreq}d` : 'Never contacted'}
                   </p>
                 </div>
                 <Heart size={16} className="text-amber-400 shrink-0" />
@@ -370,7 +385,7 @@ export default function TodayPage() {
       )}
 
       {/* ── Habit list ── */}
-      <div className="px-4 pb-6 bg-gray-50 dark:bg-gray-950 min-h-screen">
+      <div className="px-4 pb-6">
         {isHoliday ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🏖️</div>
@@ -393,7 +408,10 @@ export default function TodayPage() {
             {filterTime === 'all' ? (
               pendingGrouped.map(group => (
                 <div key={group.key} className="mt-4">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 px-1">{group.label}</p>
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">{group.label}</p>
+                    <p className="text-[10px] font-bold text-gray-300 dark:text-gray-600">{group.items.length} left</p>
+                  </div>
                   <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
                     {group.items.map(renderHabit)}
                   </div>
@@ -405,6 +423,14 @@ export default function TodayPage() {
               </div>
             ) : (
               <p className="text-center text-gray-400 text-sm mt-10">No habits in this slot</p>
+            )}
+
+            {pending.length === 0 && filterTime === 'all' && done.length > 0 && (
+              <div className="text-center pt-10 pb-2">
+                <div className="text-5xl mb-3">🎉</div>
+                <p className="font-bold text-gray-700 dark:text-gray-200">All done for the day</p>
+                <p className="text-xs text-gray-400 mt-1">Every habit completed. Go live your life.</p>
+              </div>
             )}
 
             {done.length > 0 && (
