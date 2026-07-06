@@ -1,16 +1,17 @@
 'use client'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
-import { formatEUR, formatRSD } from '@/lib/utils'
+import { useEffect, useState, useCallback } from 'react'
+import { toast } from 'sonner'
+import { formatEUR } from '@/lib/utils'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { ModuleDock } from '@/components/layout/ModuleDock'
 import { Ambient } from '@/components/layout/AppShell'
 import { Mascot, MascotMood } from '@/components/ui/Mascot'
 import {
-  TrendingUp, TrendingDown, FileText, ArrowRight, ChevronRight, Wallet, BarChart3,
-  Sparkles, Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
+  FileText, ArrowRight, ChevronRight, Wallet, Sparkles,
+  Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
   Users, Utensils, Dumbbell as WorkoutIcon,
 } from 'lucide-react'
 
@@ -34,7 +35,10 @@ interface DashboardData {
   }
 }
 
-interface RightNowItem { id: string; kind: 'meeting' | 'meal' | 'habit' | 'training'; title: string; detail: string; href: string }
+interface RightNowItem {
+  id: string; kind: 'meeting' | 'meal' | 'habit' | 'training'; title: string; detail: string; href: string
+  habits?: { id: string; name: string }[]
+}
 interface RightNow { top: RightNowItem | null; upcoming: RightNowItem[]; timeOfDay: string; mood: MascotMood }
 
 const KIND_ICON: Record<string, any> = { meeting: Users, meal: Utensils, habit: Sparkles, training: WorkoutIcon }
@@ -50,28 +54,16 @@ const MODULES = [
   { href: '/watchlist', icon: Clapperboard, title: 'Watchlist', gradient: 'from-[rgb(217,138,148)] to-[rgb(232,120,90)]' },
 ]
 
-// Training plan by day of week (1=Mon … 7=Sun) — used only when Right Now
-// has nothing more pressing to show, as the "your day at a glance" fallback
-const DAY_PLAN: Record<number, { activity: string; emoji: string }> = {
-  1: { activity: 'PT Session',  emoji: '🏋️' },
-  2: { activity: 'Bike Ride',   emoji: '🚴' },
-  3: { activity: 'PT Session',  emoji: '🏋️' },
-  4: { activity: 'Active Rest', emoji: '🧘' },
-  5: { activity: 'PT Session',  emoji: '🏋️' },
-  6: { activity: 'Long Ride',   emoji: '🚴' },
-  7: { activity: 'Full Rest',   emoji: '😴' },
-}
-
-function greeting() {
-  const h = new Date().getHours()
+function greeting(h: number) {
+  if (h < 5) return 'Still up?'
   if (h < 12) return 'Good morning'
   if (h < 18) return 'Good afternoon'
-  return 'Good evening'
+  if (h < 22) return 'Good evening'
+  return 'Late one'
 }
 
 // Canvas tint drifts gently with the clock — warmer near dawn/dusk, quieter at midday
-function timeOfDayGlow(): string {
-  const h = new Date().getHours() + new Date().getMinutes() / 60
+function timeOfDayGlow(h: number): string {
   if (h < 6 || h >= 21) return '120 100 140'   // night — quiet plum
   if (h < 10) return '232 150 100'              // dawn — warm coral/gold
   if (h < 17) return '220 161 84'               // day — steady amber
@@ -102,23 +94,54 @@ function ActivityRing({ completed, total }: { completed: number; total: number }
   )
 }
 
+function toLocalDateStr(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [rightNow, setRightNow] = useState<RightNow | null>(null)
+  const [doneIds, setDoneIds] = useState<Set<string>>(new Set())
   const [name, setName] = useState('')
-  const today = new Date()
-  const dateStr = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
-  const todayDow = today.getDay() || 7
-  const plan = DAY_PLAN[todayDow]
+  const now = new Date()
+  const hour = now.getHours()
+  const dateStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+  const todayNum = now.getDate()
+
+  const loadRightNow = useCallback(() => {
+    const p = new URLSearchParams({
+      h: String(now.getHours()), m: String(now.getMinutes()),
+      dow: String(now.getDay()), date: toLocalDateStr(now),
+    })
+    fetch(`/api/right-now?${p}`).then(r => r.json()).then(setRightNow).catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetch('/api/dashboard').then(r => r.json()).then(setData).catch(() => {})
-    fetch('/api/right-now').then(r => r.json()).then(setRightNow).catch(() => {})
+    loadRightNow()
     setName(localStorage.getItem('userName') ?? '')
-  }, [])
+  }, [loadRightNow])
 
-  const glow = timeOfDayGlow()
+  async function toggleHabit(habitId: string) {
+    setDoneIds(prev => new Set(prev).add(habitId))
+    try {
+      const res = await fetch('/api/life/logs', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ habitId, date: toLocalDateStr(now) + 'T12:00:00.000Z', completed: true }),
+      })
+      if (!res.ok) throw new Error()
+      loadRightNow()
+    } catch {
+      toast.error("Couldn't save that — try again")
+      setDoneIds(prev => { const n = new Set(prev); n.delete(habitId); return n })
+    }
+  }
+
+  const glow = timeOfDayGlow(hour)
   const KindIcon = rightNow?.top ? KIND_ICON[rightNow.top.kind] : null
+  const habitsToShow = rightNow?.top?.habits?.filter(h => !doneIds.has(h.id)) ?? []
+  const billsToday = data?.finance.upcomingBills.filter(b => b.dayOfMonth === todayNum) ?? []
+  const billsLater = data?.finance.upcomingBills.filter(b => b.dayOfMonth !== todayNum) ?? []
 
   return (
     <div className="relative flex min-h-screen bg-canvas dark:bg-canvas">
@@ -129,7 +152,7 @@ export default function HomePage() {
           <div>
             <p className="text-xs font-semibold tracking-widest text-ink/40 uppercase">{dateStr}</p>
             <h1 className="text-[28px] font-black text-ink leading-tight tracking-tight">
-              {greeting()}{name ? `, ${name}` : ''}
+              {greeting(hour)}{name ? `, ${name}` : ''}
             </h1>
           </div>
           <div className="flex items-center gap-2 pb-1">
@@ -144,27 +167,41 @@ export default function HomePage() {
           {/* ── Right Now: the one thing that matters, right now ── */}
           <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm p-5">
             <div className="flex items-start gap-4">
-              <Mascot mood={rightNow?.mood ?? 'content'} size={56} className="mascot-pop shrink-0" />
+              <Mascot mood={habitsToShow.length === 0 && rightNow?.top?.kind === 'habit' ? 'pleased' : (rightNow?.mood ?? 'content')} size={56} className="mascot-pop shrink-0" />
               <div className="flex-1 min-w-0">
                 {!rightNow ? (
                   <div className="h-12 bg-canvas-alt rounded-xl animate-pulse" />
-                ) : rightNow.top ? (
+                ) : rightNow.top && !(rightNow.top.kind === 'habit' && habitsToShow.length === 0) ? (
                   <>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35 flex items-center gap-1.5">
                       {KindIcon && <KindIcon size={11} />} Right now
                     </p>
                     <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">{rightNow.top.title}</p>
                     <p className="text-sm text-ink/50 mt-0.5">{rightNow.top.detail}</p>
-                    <Link href={rightNow.top.href}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[rgb(var(--coral))] hover:underline mt-2">
-                      Take a look <ChevronRight size={12} />
-                    </Link>
+
+                    {/* Habits: check them off right here, no navigation needed */}
+                    {rightNow.top.kind === 'habit' && habitsToShow.length > 0 ? (
+                      <div className="mt-3 space-y-1.5">
+                        {habitsToShow.map(h => (
+                          <button key={h.id} onClick={() => toggleHabit(h.id)}
+                            className="flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-xl bg-canvas-alt hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors group">
+                            <span className="w-5 h-5 rounded-full border-2 border-ink/20 group-hover:border-[rgb(var(--coral))] shrink-0 flex items-center justify-center transition-colors" />
+                            <span className="text-sm text-ink/80 group-hover:text-ink">{h.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <Link href={rightNow.top.href}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-[rgb(var(--coral))] hover:underline mt-2">
+                        Take a look <ChevronRight size={12} />
+                      </Link>
+                    )}
                   </>
                 ) : (
                   <>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35">Right now</p>
                     <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">You're clear for a bit.</p>
-                    <p className="text-sm text-ink/50 mt-0.5">Nothing urgent — {plan.emoji} {plan.activity.toLowerCase()} is still on for today.</p>
+                    <p className="text-sm text-ink/50 mt-0.5">Nothing urgent right now.</p>
                   </>
                 )}
               </div>
@@ -190,38 +227,19 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* ── Your world: quieter, secondary, real numbers still a tap away ── */}
+          {/* ── Your world: only what's genuinely worth a daily glance ── */}
           <div>
             <h2 className="text-xs font-bold uppercase tracking-widest text-ink/40 mb-2 px-1">Your world</h2>
-            <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm divide-y divide-black/5 dark:divide-white/5">
-              <Link href="/life" className="flex items-center gap-3 px-4 py-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
-                {data ? <ActivityRing completed={data.life.habitsCompletedToday} total={data.life.habitsScheduledToday} />
-                      : <div className="w-16 h-16 rounded-full bg-canvas-alt animate-pulse shrink-0" />}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-ink">Habits today</p>
-                  <p className="text-xs text-ink/40">{data ? `${data.life.habitsCompletedToday} of ${data.life.habitsScheduledToday} done` : '…'}</p>
-                </div>
-                <ChevronRight size={16} className="text-ink/20 shrink-0" />
-              </Link>
-
-              <Link href="/finance" className="flex items-center gap-3 px-4 py-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
-                <span className="w-10 h-10 rounded-xl bg-[rgb(232,120,90)]/10 flex items-center justify-center shrink-0"><Wallet size={17} className="text-[rgb(232,120,90)]" /></span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-ink">{data ? formatEUR(data.finance.totalBalanceEUR) : '…'}</p>
-                  <p className="text-xs text-ink/40">Total balance</p>
-                </div>
-                <ChevronRight size={16} className="text-ink/20 shrink-0" />
-              </Link>
-
-              <Link href="/finance/insights" className="flex items-center gap-3 px-4 py-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
-                <span className="w-10 h-10 rounded-xl bg-[rgb(220,161,84)]/10 flex items-center justify-center shrink-0"><BarChart3 size={17} className="text-[rgb(220,161,84)]" /></span>
-                <div className="flex-1 min-w-0 flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1 text-emerald-500 font-medium"><TrendingUp size={11} /> {data ? formatRSD(data.finance.incomeThisMonthRSD) : '…'}</span>
-                  <span className="flex items-center gap-1 text-[rgb(var(--coral))] font-medium"><TrendingDown size={11} /> {data ? formatRSD(data.finance.expensesThisMonthRSD) : '…'}</span>
-                </div>
-                <ChevronRight size={16} className="text-ink/20 shrink-0" />
-              </Link>
-            </div>
+            <Link href="/life"
+              className="flex items-center gap-3 px-4 py-3 bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+              {data ? <ActivityRing completed={data.life.habitsCompletedToday} total={data.life.habitsScheduledToday} />
+                    : <div className="w-16 h-16 rounded-full bg-canvas-alt animate-pulse shrink-0" />}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-ink">Habits today</p>
+                <p className="text-xs text-ink/40">{data ? `${data.life.habitsCompletedToday} of ${data.life.habitsScheduledToday} done` : '…'}</p>
+              </div>
+              <ChevronRight size={16} className="text-ink/20 shrink-0" />
+            </Link>
           </div>
 
           {/* ── Quick actions ── */}
@@ -240,19 +258,30 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* ── Upcoming bills ── */}
+          {/* ── Upcoming bills — today's leads, the rest follows ── */}
           {data && data.finance.upcomingBills.length > 0 && (
             <div className="bg-surface/90 dark:bg-surface/70 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
               <div className="px-5 py-3.5 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
                 <h2 className="font-semibold text-ink text-sm flex items-center gap-2">
-                  <FileText size={15} className="text-ink/30" /> Upcoming bills
+                  <FileText size={15} className="text-ink/30" /> Bills
                 </h2>
                 <Link href="/finance/bills" className="text-xs text-[rgb(var(--coral))] hover:underline flex items-center gap-1">
                   View all <ArrowRight size={11} />
                 </Link>
               </div>
+              {billsToday.length > 0 && (
+                <div className="px-5 py-3 bg-[rgb(var(--coral))]/10 border-b border-black/5 dark:border-white/5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[rgb(var(--coral))] mb-1.5">Due today</p>
+                  {billsToday.map(bill => (
+                    <div key={bill.id} className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-ink">{bill.name}</span>
+                      <span className="text-sm font-bold text-ink">{bill.amount.toLocaleString()} {bill.currency}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="divide-y divide-black/5 dark:divide-white/5">
-                {data.finance.upcomingBills.map(bill => (
+                {billsLater.map(bill => (
                   <div key={bill.id} className="px-5 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-ink/40 w-6 text-center font-mono">{bill.dayOfMonth}</span>
@@ -267,8 +296,8 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* ── App grid ── */}
-          <div>
+          {/* ── App grid — mobile only; desktop already has the dock ── */}
+          <div className="lg:hidden">
             <h2 className="text-xs font-bold uppercase tracking-widest text-ink/40 mb-3 px-1">Modules</h2>
             <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:grid-cols-8 sm:gap-x-3">
               {MODULES.map(m => (

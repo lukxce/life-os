@@ -1,15 +1,13 @@
 export const dynamic = 'force-dynamic'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { isScheduledDay, startOfDay } from '@/lib/utils'
+import { isScheduledDay, utcMidnight } from '@/lib/utils'
 
 // ── Real, first-party data only. No invented urgency, no fake countdowns. ──
-// Sources: your own recurring weekly schedule (ScheduleBlock), the Fitness
-// meal plan (MealPlanSlot, real fixed meal times), and Habit/HabitLog
-// (real completion state, scoped to the current time-of-day bucket).
-// Live external calendar (ICS) meetings are NOT included yet — those are
-// fetched client-side per-calendar today; folding them in here is a
-// separate, larger piece of work.
+// "Now" is always the CLIENT's local clock, passed in as query params — the
+// server has no business deciding what time it is for you (the habit-log
+// bug earlier was exactly this mistake: server-local time silently used
+// where user-local time was meant).
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 const MEAL_TIMES: Record<string, string> = { breakfast: '12:00', snack: '15:30', dinner: '19:00' }
@@ -41,14 +39,22 @@ interface RightNowItem {
   title: string
   detail: string
   href: string
+  habits?: { id: string; name: string }[] // present only for kind === 'habit' — real records to check off inline
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const sp = req.nextUrl.searchParams
   const now = new Date()
-  const nowMin = now.getHours() * 60 + now.getMinutes()
-  const dow = now.getDay() || 7
-  const dayKey = DAY_KEYS[now.getDay()]
-  const today = startOfDay(now)
+  // Client-local time — falls back to server time only if the caller omits it
+  const localHour = sp.has('h') ? parseInt(sp.get('h')!) : now.getUTCHours()
+  const localMinute = sp.has('m') ? parseInt(sp.get('m')!) : now.getUTCMinutes()
+  const localDow = sp.has('dow') ? parseInt(sp.get('dow')!) : now.getUTCDay()
+  const localDate = sp.get('date') ?? now.toISOString().slice(0, 10)
+
+  const nowMin = localHour * 60 + localMinute
+  const dow = localDow || 7
+  const dayKey = DAY_KEYS[localDow]
+  const today = utcMidnight(localDate)
 
   const items: RightNowItem[] = []
 
@@ -64,23 +70,38 @@ export async function GET() {
     }
   }
 
-  // ── Fitness: meal window open or opening soon ─────────────────────────────
+  // ── Fitness: always know what's next to eat, not just in a narrow window ─
   const meals = await prisma.mealPlanSlot.findMany({ where: { dayOfWeek: dow } })
+  let bestMeal: { meal: (typeof meals)[number]; start: number; diff: number; upcoming: boolean } | null = null
   for (const meal of meals) {
     const mealTime = MEAL_TIMES[meal.mealType]
     if (!mealTime) continue
     const start = toMinutes(mealTime)
-    if (nowMin >= start && nowMin - start <= 90) {
-      items.push({
-        id: `meal-${meal.id}`, kind: 'meal', urgency: 20 + (nowMin - start),
-        title: meal.name, detail: `${meal.mealType} · ${meal.calories} kcal`, href: '/fitness',
-      })
-    } else if (start > nowMin && start - nowMin <= 45) {
-      items.push({
-        id: `meal-${meal.id}`, kind: 'meal', urgency: 20 + (start - nowMin),
-        title: meal.name, detail: `${meal.mealType} in ${start - nowMin} min`, href: '/fitness',
-      })
+    const diff = start - nowMin // positive = upcoming, negative = already open
+    // Prefer the meal whose window we're closest to being inside of:
+    // "just opened" (0 to +150 min ago) beats "still to come"
+    const withinOpen = diff <= 0 && diff >= -150
+    if (!bestMeal || withinOpen) {
+      if (!bestMeal || (withinOpen && !bestMeal.upcoming) || Math.abs(diff) < Math.abs(bestMeal.diff)) {
+        bestMeal = { meal, start, diff, upcoming: diff > 0 }
+      }
     }
+  }
+  if (bestMeal) {
+    const { meal, diff, upcoming } = bestMeal
+    const isOpen = diff <= 0 && diff >= -150
+    items.push({
+      id: `meal-${meal.id}`,
+      kind: 'meal',
+      urgency: isOpen ? 15 : upcoming ? 25 + diff : 200,
+      title: meal.name,
+      detail: isOpen
+        ? `${meal.mealType} · ${meal.calories} kcal · window's open`
+        : upcoming
+          ? `${meal.mealType} in ${diff > 60 ? `${Math.round(diff / 60)}h` : `${diff} min`} · ${meal.calories} kcal`
+          : `${meal.mealType} · ${meal.calories} kcal`,
+      href: '/fitness',
+    })
   }
 
   // ── Habits: due in the current time-of-day bucket, not yet done ──────────
@@ -98,7 +119,9 @@ export async function GET() {
     items.push({
       id: 'habits-now', kind: 'habit', urgency: 50,
       title: pendingHabits.length === 1 ? pendingHabits[0].name : `${pendingHabits.length} habits due this ${bucket}`,
-      detail: 'not logged yet', href: '/life',
+      detail: 'tap to check off',
+      href: '/life',
+      habits: pendingHabits.map(h => ({ id: h.id, name: h.name })),
     })
   }
 
@@ -120,7 +143,7 @@ export async function GET() {
   // or just steady (content). No invented composite score.
   const dueSoFar = habits.filter(h => isScheduledDay(h, today))
   const doneSoFar = dueSoFar.filter(h => h.logs.some(l => l.completed))
-  const mood = items.length > 0
+  const mood = items.some(i => i.urgency < 100)
     ? 'curious'
     : dueSoFar.length > 0 && doneSoFar.length === dueSoFar.length
       ? 'pleased'
