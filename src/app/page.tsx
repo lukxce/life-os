@@ -3,16 +3,16 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useEffect, useState, useCallback } from 'react'
 import { toast } from 'sonner'
-import { formatEUR } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { ModuleDock } from '@/components/layout/ModuleDock'
 import { Ambient } from '@/components/layout/AppShell'
 import { Mascot, MascotMood } from '@/components/ui/Mascot'
 import {
-  FileText, ArrowRight, ChevronRight, Wallet, Sparkles,
+  FileText, ChevronRight, Wallet, Sparkles, Flame,
   Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
-  Users, Utensils, Dumbbell as WorkoutIcon,
+  Users, Utensils, Dumbbell as WorkoutIcon, Check,
 } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
@@ -40,6 +40,7 @@ interface RightNowItem {
   habits?: { id: string; name: string }[]
 }
 interface RightNow { top: RightNowItem | null; upcoming: RightNowItem[]; timeOfDay: string; mood: MascotMood }
+interface DayScores { bestStreak: { name: string; icon: string | null; count: number } }
 
 const KIND_ICON: Record<string, any> = { meeting: Users, meal: Utensils, habit: Sparkles, training: WorkoutIcon }
 
@@ -70,30 +71,6 @@ function timeOfDayGlow(h: number): string {
   return '217 120 130'                          // dusk — deeper rose
 }
 
-/** Apple-Watch-style progress ring, warm-toned */
-function ActivityRing({ completed, total }: { completed: number; total: number }) {
-  const pct = total > 0 ? Math.min(completed / total, 1) : 0
-  const R = 26, C = 2 * Math.PI * R
-  return (
-    <div className="relative w-[64px] h-[64px] shrink-0">
-      <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">
-        <circle cx="32" cy="32" r={R} fill="none" strokeWidth="7" stroke="rgb(var(--canvas-alt))" />
-        <circle cx="32" cy="32" r={R} fill="none" strokeWidth="7" strokeLinecap="round"
-          stroke="url(#ringGrad)" strokeDasharray={C} strokeDashoffset={C * (1 - pct)}
-          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.25, 0.1, 0.25, 1)' }} />
-        <defs>
-          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgb(232,120,90)" /><stop offset="100%" stopColor="rgb(220,161,84)" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xs font-bold text-ink leading-none">{completed}<span className="text-ink/40">/{total}</span></span>
-      </div>
-    </div>
-  )
-}
-
 function toLocalDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
@@ -101,12 +78,13 @@ function toLocalDateStr(d: Date) {
 export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [rightNow, setRightNow] = useState<RightNow | null>(null)
-  const [doneIds, setDoneIds] = useState<Set<string>>(new Set())
+  const [dayScores, setDayScores] = useState<DayScores | null>(null)
+  const [justDone, setJustDone] = useState<Set<string>>(new Set())
+  const [removed, setRemoved] = useState<Set<string>>(new Set())
   const [name, setName] = useState('')
   const now = new Date()
   const hour = now.getHours()
   const dateStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
-  const todayNum = now.getDate()
 
   const loadRightNow = useCallback(() => {
     const p = new URLSearchParams({
@@ -117,31 +95,35 @@ export default function HomePage() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    fetch('/api/dashboard').then(r => r.json()).then(setData).catch(() => {})
+    const p = new URLSearchParams({ day: String(now.getDate()) })
+    fetch(`/api/dashboard?${p}`).then(r => r.json()).then(setData).catch(() => {})
+    fetch('/api/life/day-scores?days=1').then(r => r.json()).then(setDayScores).catch(() => {})
     loadRightNow()
     setName(localStorage.getItem('userName') ?? '')
-  }, [loadRightNow])
+  }, [loadRightNow]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function toggleHabit(habitId: string) {
-    setDoneIds(prev => new Set(prev).add(habitId))
+    setJustDone(prev => new Set(prev).add(habitId))
+    setTimeout(() => setRemoved(prev => new Set(prev).add(habitId)), 650)
     try {
       const res = await fetch('/api/life/logs', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ habitId, date: toLocalDateStr(now) + 'T12:00:00.000Z', completed: true }),
       })
       if (!res.ok) throw new Error()
-      loadRightNow()
+      setTimeout(loadRightNow, 700)
     } catch {
       toast.error("Couldn't save that — try again")
-      setDoneIds(prev => { const n = new Set(prev); n.delete(habitId); return n })
+      setJustDone(prev => { const n = new Set(prev); n.delete(habitId); return n })
     }
   }
 
   const glow = timeOfDayGlow(hour)
   const KindIcon = rightNow?.top ? KIND_ICON[rightNow.top.kind] : null
-  const habitsToShow = rightNow?.top?.habits?.filter(h => !doneIds.has(h.id)) ?? []
-  const billsToday = data?.finance.upcomingBills.filter(b => b.dayOfMonth === todayNum) ?? []
-  const billsLater = data?.finance.upcomingBills.filter(b => b.dayOfMonth !== todayNum) ?? []
+  const habitList = rightNow?.top?.habits?.filter(h => !removed.has(h.id)) ?? []
+  const allJustFinished = rightNow?.top?.kind === 'habit' && habitList.every(h => justDone.has(h.id)) && habitList.length > 0
+  const streak = dayScores?.bestStreak
+  const billsToday = data?.finance.upcomingBills ?? []
 
   return (
     <div className="relative flex min-h-screen bg-canvas dark:bg-canvas">
@@ -167,28 +149,41 @@ export default function HomePage() {
           {/* ── Right Now: the one thing that matters, right now ── */}
           <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm p-5">
             <div className="flex items-start gap-4">
-              <Mascot mood={habitsToShow.length === 0 && rightNow?.top?.kind === 'habit' ? 'pleased' : (rightNow?.mood ?? 'content')} size={56} className="mascot-pop shrink-0" />
+              <Mascot mood={habitList.length === 0 && rightNow?.top?.kind === 'habit' ? 'pleased' : (rightNow?.mood ?? 'content')} size={56} className="mascot-pop shrink-0" />
               <div className="flex-1 min-w-0">
                 {!rightNow ? (
                   <div className="h-12 bg-canvas-alt rounded-xl animate-pulse" />
-                ) : rightNow.top && !(rightNow.top.kind === 'habit' && habitsToShow.length === 0) ? (
+                ) : rightNow.top && habitList.length > 0 ? (
                   <>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35 flex items-center gap-1.5">
-                      {KindIcon && <KindIcon size={11} />} Right now
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35 flex items-center gap-1.5">
+                        {KindIcon && <KindIcon size={11} />} Right now
+                      </p>
+                      {streak && streak.count >= 3 && (
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-[rgb(220,161,84)] bg-[rgb(220,161,84)]/10 px-2 py-0.5 rounded-full shrink-0">
+                          <Flame size={10} /> {streak.count}-day streak
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">{rightNow.top.title}</p>
                     <p className="text-sm text-ink/50 mt-0.5">{rightNow.top.detail}</p>
 
-                    {/* Habits: check them off right here, no navigation needed */}
-                    {rightNow.top.kind === 'habit' && habitsToShow.length > 0 ? (
+                    {rightNow.top.kind === 'habit' ? (
                       <div className="mt-3 space-y-1.5">
-                        {habitsToShow.map(h => (
-                          <button key={h.id} onClick={() => toggleHabit(h.id)}
-                            className="flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-xl bg-canvas-alt hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors group">
-                            <span className="w-5 h-5 rounded-full border-2 border-ink/20 group-hover:border-[rgb(var(--coral))] shrink-0 flex items-center justify-center transition-colors" />
-                            <span className="text-sm text-ink/80 group-hover:text-ink">{h.name}</span>
-                          </button>
-                        ))}
+                        {habitList.map(h => {
+                          const done = justDone.has(h.id)
+                          return (
+                            <button key={h.id} onClick={() => !done && toggleHabit(h.id)}
+                              className={cn('flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-xl transition-all duration-500',
+                                done ? 'bg-emerald-500/10' : 'bg-canvas-alt hover:bg-black/[0.04] dark:hover:bg-white/[0.04] group')}>
+                              <span className={cn('w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
+                                done ? 'bg-emerald-500 border-emerald-500 scale-110' : 'border-ink/20 group-hover:border-[rgb(var(--coral))]')}>
+                                {done && <Check size={12} className="text-white" strokeWidth={3} />}
+                              </span>
+                              <span className={cn('text-sm transition-all', done ? 'text-ink/40 line-through' : 'text-ink/80 group-hover:text-ink')}>{h.name}</span>
+                            </button>
+                          )
+                        })}
                       </div>
                     ) : (
                       <Link href={rightNow.top.href}
@@ -200,8 +195,14 @@ export default function HomePage() {
                 ) : (
                   <>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35">Right now</p>
-                    <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">You're clear for a bit.</p>
-                    <p className="text-sm text-ink/50 mt-0.5">Nothing urgent right now.</p>
+                    <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">
+                      {allJustFinished ? "That's everything — nicely done." : "You're clear for a bit."}
+                    </p>
+                    <p className="text-sm text-ink/50 mt-0.5">
+                      {streak && streak.count >= 3
+                        ? `${streak.icon ?? '🔥'} ${streak.count} days running on ${streak.name} — keep it going.`
+                        : 'Nothing urgent right now.'}
+                    </p>
                   </>
                 )}
               </div>
@@ -227,28 +228,11 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* ── Your world: only what's genuinely worth a daily glance ── */}
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-ink/40 mb-2 px-1">Your world</h2>
-            <Link href="/life"
-              className="flex items-center gap-3 px-4 py-3 bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
-              {data ? <ActivityRing completed={data.life.habitsCompletedToday} total={data.life.habitsScheduledToday} />
-                    : <div className="w-16 h-16 rounded-full bg-canvas-alt animate-pulse shrink-0" />}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-ink">Habits today</p>
-                <p className="text-xs text-ink/40">{data ? `${data.life.habitsCompletedToday} of ${data.life.habitsScheduledToday} done` : '…'}</p>
-              </div>
-              <ChevronRight size={16} className="text-ink/20 shrink-0" />
-            </Link>
-          </div>
-
-          {/* ── Quick actions ── */}
+          {/* ── Quick actions — just the ones you actually reach for ── */}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>
             {[
               { href: '/finance/scan', label: '📷 Scan receipt' },
               { href: '/finance/expenses/personal', label: '💸 Add expense' },
-              { href: '/life', label: '☀️ Check habits' },
-              { href: '/fitness/body', label: '⚖️ Log weight' },
               { href: '/schedule', label: '📅 My schedule' },
             ].map(q => (
               <Link key={q.href} href={q.href}
@@ -258,41 +242,18 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* ── Upcoming bills — today's leads, the rest follows ── */}
-          {data && data.finance.upcomingBills.length > 0 && (
-            <div className="bg-surface/90 dark:bg-surface/70 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
-                <h2 className="font-semibold text-ink text-sm flex items-center gap-2">
-                  <FileText size={15} className="text-ink/30" /> Bills
-                </h2>
-                <Link href="/finance/bills" className="text-xs text-[rgb(var(--coral))] hover:underline flex items-center gap-1">
-                  View all <ArrowRight size={11} />
-                </Link>
-              </div>
-              {billsToday.length > 0 && (
-                <div className="px-5 py-3 bg-[rgb(var(--coral))]/10 border-b border-black/5 dark:border-white/5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[rgb(var(--coral))] mb-1.5">Due today</p>
-                  {billsToday.map(bill => (
-                    <div key={bill.id} className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-ink">{bill.name}</span>
-                      <span className="text-sm font-bold text-ink">{bill.amount.toLocaleString()} {bill.currency}</span>
-                    </div>
-                  ))}
+          {/* ── Bills — only ever what's due today, nothing else ── */}
+          {billsToday.length > 0 && (
+            <div className="bg-[rgb(var(--coral))]/10 rounded-3xl border border-[rgb(var(--coral))]/20 shadow-sm p-5">
+              <h2 className="text-[10px] font-bold uppercase tracking-widest text-[rgb(var(--coral))] mb-2 flex items-center gap-1.5">
+                <FileText size={12} /> Due today
+              </h2>
+              {billsToday.map(bill => (
+                <div key={bill.id} className="flex items-center justify-between">
+                  <span className="text-base font-semibold text-ink">{bill.name}</span>
+                  <span className="text-base font-black text-ink">{bill.amount.toLocaleString()} {bill.currency}</span>
                 </div>
-              )}
-              <div className="divide-y divide-black/5 dark:divide-white/5">
-                {billsLater.map(bill => (
-                  <div key={bill.id} className="px-5 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-ink/40 w-6 text-center font-mono">{bill.dayOfMonth}</span>
-                      <span className="text-sm text-ink/80">{bill.name}</span>
-                    </div>
-                    <span className="text-sm font-semibold text-ink">
-                      {bill.amount.toLocaleString()} {bill.currency}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           )}
 

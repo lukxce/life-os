@@ -1,24 +1,36 @@
 export const dynamic = 'force-dynamic'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getLiveRate, getDateRange } from '@/lib/utils'
 import { computeCryptoPortfolioEUR } from '@/lib/crypto'
 import { startOfDay, endOfDay } from 'date-fns'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const today = new Date()
   const range = getDateRange('month', today)
   const where = range ? { date: { gte: range.start, lte: range.end } } : {}
 
-  const [settings, liveRate, accounts, incomeRSD, incomeEUR, expensesThisMonth, bills] = await Promise.all([
+  // Which day-of-month is "today" — client-supplied so a server/user
+  // timezone mismatch near midnight can't show the wrong day's bill
+  const dayOfMonth = req.nextUrl.searchParams.has('day')
+    ? parseInt(req.nextUrl.searchParams.get('day')!)
+    : today.getDate()
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+
+  const [settings, liveRate, accounts, incomeRSD, incomeEUR, expensesThisMonth, billsDueToday] = await Promise.all([
     prisma.settings.findFirst(),
     getLiveRate(),
     prisma.account.findMany(),
     prisma.incomeEntry.aggregate({ where: { ...where, currency: 'RSD' }, _sum: { netAmount: true } }),
     prisma.incomeEntry.aggregate({ where: { ...where, currency: 'EUR' }, _sum: { netAmount: true } }),
     prisma.expenseEntry.aggregate({ where, _sum: { amountRSD: true } }),
-    prisma.bill.findMany({ where: { active: true }, take: 5, orderBy: { dayOfMonth: 'asc' } }),
+    prisma.bill.findMany({
+      where: { active: true, dayOfMonth },
+      include: { payments: { where: { paidDate: { gte: monthStart } }, take: 1 } },
+    }),
   ])
+  // Only bills due today that haven't already been paid this month
+  const bills = billsDueToday.filter(b => b.payments.length === 0)
 
   const manualRate = settings?.manualRate ?? 117.5
 

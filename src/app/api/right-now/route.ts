@@ -110,9 +110,12 @@ export async function GET(req: NextRequest) {
     where: { active: true, paused: false, category: { not: 'Weekly Check-in' } },
     include: { logs: { where: { date: { gte: today } }, select: { completed: true } } },
   })
+  // Only habits genuinely scoped to THIS time block — an 'all_day' habit
+  // isn't time-bound, so it shouldn't masquerade as a "morning" or "night"
+  // item here (it still shows normally on the full Habits page)
   const pendingHabits = habits.filter(h =>
     isScheduledDay(h, today) &&
-    (h.timeOfDay === bucket || h.timeOfDay === 'all_day') &&
+    h.timeOfDay === bucket &&
     !h.logs.some(l => l.completed)
   )
   if (pendingHabits.length > 0) {
