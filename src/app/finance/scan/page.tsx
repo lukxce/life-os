@@ -283,14 +283,14 @@ function ScanInner() {
 
       {!parsed && (
         <div className="space-y-3">
-          <section className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/10 dark:border-white/10 p-4 space-y-3">
+          <section className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/10 dark:border-white/10 p-4 space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <button onClick={startScanner} disabled={scanning || loading}
                 className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white py-3 rounded-xl font-semibold transition-colors">
                 Scan QR
               </button>
               <button onClick={() => photoInputRef.current?.click()} disabled={scanning || loading}
-                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                className="bg-[rgb(232,120,90)] hover:bg-[rgb(212,100,72)] disabled:opacity-40 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
                 <Camera size={17} /> Photo
               </button>
             </div>
@@ -305,7 +305,7 @@ function ScanInner() {
               }} />
           </section>
 
-          <section className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/10 dark:border-white/10 p-4 space-y-2">
+          <section className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/10 dark:border-white/10 p-4 space-y-2">
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Paste URL</p>
             <input
               value={url}
@@ -321,11 +321,11 @@ function ScanInner() {
               }}
               placeholder="https://suf.purs.gov.rs/v/?vl=..."
               autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-              className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-3 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-3 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
             />
             {url && !isSufUrl(url) && (
               <button onClick={() => handleSufUrl(url.trim())} disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors">
+                className="w-full bg-[rgb(232,120,90)] hover:bg-[rgb(212,100,72)] disabled:opacity-40 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors">
                 {loading ? 'Parsing…' : 'Parse'}
               </button>
             )}
@@ -340,13 +340,13 @@ function ScanInner() {
       )}
 
       {loading && !parsed && (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/10 dark:border-white/10 p-8 text-center text-sm text-gray-400 animate-pulse">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/10 dark:border-white/10 p-8 text-center text-sm text-gray-400 animate-pulse">
           Fetching receipt details…
         </div>
       )}
 
       {parsed && (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/10 dark:border-white/10 p-5 space-y-4">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/10 dark:border-white/10 p-5 space-y-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100">Receipt details</h3>
 
           {parsed.warning && (
@@ -359,7 +359,7 @@ function ScanInner() {
             <div>
               <label className="text-xs text-gray-400 block mb-1">Merchant</label>
               <input
-                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
                 value={parsed.merchantName ?? ''}
                 onChange={e => setParsed(p => p && ({ ...p, merchantName: e.target.value }))}
                 placeholder="e.g. Maxi, Lidl, DM…"
@@ -369,7 +369,7 @@ function ScanInner() {
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Amount (RSD)</label>
                 <input type="number"
-                  className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
                   value={parsed.total ?? ''}
                   onChange={e => setParsed(p => p && ({ ...p, total: parseFloat(e.target.value) || null }))}
                   placeholder="0.00"
@@ -378,7 +378,7 @@ function ScanInner() {
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Date</label>
                 <input type="date"
-                  className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
                   value={parsed.date ? new Date(parsed.date).toISOString().split('T')[0] : ''}
                   onChange={e => setParsed(p => p && ({ ...p, date: e.target.value ? new Date(e.target.value).toISOString() : null }))}
                 />
@@ -411,7 +411,7 @@ function ScanInner() {
               })
               router.push(`/finance/expenses/${expenseType}?${p.toString()}`)
             }}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-colors">
+            className="w-full bg-[rgb(232,120,90)] hover:bg-[rgb(212,100,72)] text-white py-3 rounded-xl font-semibold transition-colors">
             Continue → Add Expense
           </button>
           <button onClick={() => { setParsed(null); setUrl('') }}

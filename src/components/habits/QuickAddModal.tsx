@@ -123,7 +123,7 @@ export function QuickAddModal({ onClose, onCreated, embedded }: Props) {
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-lg bg-white/85 dark:bg-gray-900/70 rounded-t-3xl md:rounded-2xl p-5 pb-8 md:pb-5 shadow-2xl"
+        className="relative w-full max-w-lg bg-surface/90 dark:bg-surface/70 rounded-t-3xl md:rounded-2xl p-5 pb-8 md:pb-5 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         {content}

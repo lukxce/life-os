@@ -6,10 +6,10 @@ const config: ModuleConfig = {
   name: 'Personal',
   emoji: '🗂️',
   home: '/personal',
-  accentActive: 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
-  accentText: 'text-teal-600 dark:text-teal-400',
-  accentFab: 'bg-teal-600 hover:bg-teal-700',
-  glow: '20 184 166',
+  accentActive: 'bg-[rgb(167,120,160)]/10 text-[rgb(167,120,160)] dark:bg-[rgb(167,120,160)]/15 dark:text-[rgb(167,120,160)]',
+  accentText: 'text-[rgb(167,120,160)] dark:text-[rgb(167,120,160)]',
+  accentFab: 'bg-[rgb(167,120,160)] hover:bg-[rgb(147,100,140)]',
+  glow: '167 120 160',
   groups: [
     { items: [
       { href: '/personal', label: 'Overview', icon: LayoutDashboard },

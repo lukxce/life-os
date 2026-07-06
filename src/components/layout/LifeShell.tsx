@@ -9,10 +9,10 @@ const baseConfig: Omit<ModuleConfig, 'fab'> = {
   name: 'Habits',
   emoji: '🧘',
   home: '/life',
-  accentActive: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
-  accentText: 'text-indigo-600 dark:text-indigo-400',
-  accentFab: 'bg-indigo-600 hover:bg-indigo-700',
-  glow: '99 102 241',
+  accentActive: 'bg-[rgb(167,120,160)]/10 text-[rgb(167,120,160)] dark:bg-[rgb(167,120,160)]/15 dark:text-[rgb(167,120,160)]',
+  accentText: 'text-[rgb(167,120,160)] dark:text-[rgb(167,120,160)]',
+  accentFab: 'bg-[rgb(167,120,160)] hover:bg-[rgb(147,100,140)]',
+  glow: '167 120 160',
   contentClassName: 'max-w-2xl md:max-w-3xl',
   groups: [
     { title: 'Daily', items: [

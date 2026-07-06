@@ -82,9 +82,9 @@ export default function FitnessTodayPage() {
   return (
     <div className="-mx-4 -mt-6 md:-mx-6 md:-mt-8">
       {/* ── Hero: the day's plan, synthesized ── */}
-      <div className="relative overflow-hidden rounded-b-[2rem] bg-[#0c1410] text-white px-5 pt-8 pb-6">
+      <div className="relative overflow-hidden rounded-b-[2rem] bg-[#1f1815] text-white px-5 pt-8 pb-6">
         <div aria-hidden className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(620px 420px at 88% -20%, rgba(34,197,94,0.32), transparent 65%), radial-gradient(500px 380px at -10% 115%, rgba(16,185,129,0.16), transparent 60%)' }} />
+          style={{ background: 'radial-gradient(620px 420px at 88% -20%, rgba(220,161,84,0.32), transparent 65%), radial-gradient(500px 380px at -10% 115%, rgba(217,138,148,0.16), transparent 60%)' }} />
         <div className="relative">
           <div className="flex items-start justify-between mb-5">
             <div>
@@ -98,7 +98,7 @@ export default function FitnessTodayPage() {
               <span className="text-xs font-bold text-emerald-300 bg-emerald-500/20 px-3 py-1.5 rounded-full mt-1">✓ Done</span>
             ) : (
               <Link href="/fitness/workouts"
-                className="text-xs font-bold text-white bg-green-600 px-3.5 py-1.5 rounded-full hover:bg-green-500 transition-colors mt-1 whitespace-nowrap">
+                className="text-xs font-bold text-white bg-[rgb(220,161,84)] px-3.5 py-1.5 rounded-full hover:bg-green-500 transition-colors mt-1 whitespace-nowrap">
                 Log it
               </Link>
             )}
@@ -128,10 +128,10 @@ export default function FitnessTodayPage() {
 
       <div className="px-4 pt-4 pb-6 space-y-4">
         {/* ── Today's meals ── */}
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
           <div className="px-4 py-3 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Today's meals</h2>
-            <Link href="/fitness/meal-plan" className="text-xs text-green-600 dark:text-green-400 hover:underline flex items-center gap-1">
+            <Link href="/fitness/meal-plan" className="text-xs text-[rgb(220,161,84)] dark:text-[rgb(220,161,84)] hover:underline flex items-center gap-1">
               Full plan <ChevronRight size={12} />
             </Link>
           </div>
@@ -171,7 +171,7 @@ export default function FitnessTodayPage() {
         </div>
 
         {/* ── Daily non-negotiables ── */}
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
           <div className="px-4 py-3 border-b border-black/5 dark:border-white/5">
             <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Daily non-negotiables</h2>
           </div>

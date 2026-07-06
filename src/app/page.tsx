@@ -7,6 +7,7 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { ModuleDock } from '@/components/layout/ModuleDock'
 import { Ambient } from '@/components/layout/AppShell'
+import { Mascot, MascotMood } from '@/components/ui/Mascot'
 import { TrendingUp, TrendingDown, FileText, ArrowRight, ChevronRight } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
@@ -29,15 +30,17 @@ interface DashboardData {
   }
 }
 
+interface Nudge { id: string; mood: 'curious' | 'content'; message: string; href: string }
+
 const MODULES = [
-  { href: '/finance',   emoji: '💰', title: 'Finance',   gradient: 'from-blue-500 to-blue-600' },
-  { href: '/life',      emoji: '🧘', title: 'Habits',    gradient: 'from-indigo-500 to-violet-600' },
-  { href: '/fitness',   emoji: '💪', title: 'Fitness',   gradient: 'from-green-500 to-emerald-600' },
-  { href: '/schedule',  emoji: '📅', title: 'Schedule',  gradient: 'from-sky-400 to-blue-500' },
-  { href: '/journal',   emoji: '📓', title: 'Journal',   gradient: 'from-amber-400 to-orange-500' },
-  { href: '/food',      emoji: '🗺️', title: 'Food Map',  gradient: 'from-orange-400 to-red-500' },
-  { href: '/personal',  emoji: '🗂️', title: 'Personal',  gradient: 'from-teal-400 to-cyan-600' },
-  { href: '/watchlist', emoji: '🎬', title: 'Watchlist', gradient: 'from-violet-500 to-purple-600' },
+  { href: '/finance',   emoji: '💰', title: 'Finance',   gradient: 'from-[rgb(232,120,90)] to-[rgb(220,161,84)]' },
+  { href: '/life',      emoji: '🧘', title: 'Habits',    gradient: 'from-[rgb(167,120,160)] to-[rgb(217,138,148)]' },
+  { href: '/fitness',   emoji: '💪', title: 'Fitness',   gradient: 'from-[rgb(220,161,84)] to-[rgb(232,120,90)]' },
+  { href: '/schedule',  emoji: '📅', title: 'Schedule',  gradient: 'from-[rgb(217,138,148)] to-[rgb(167,120,160)]' },
+  { href: '/journal',   emoji: '📓', title: 'Journal',   gradient: 'from-[rgb(220,161,84)] to-[rgb(217,138,148)]' },
+  { href: '/food',      emoji: '🗺️', title: 'Food Map',  gradient: 'from-[rgb(232,120,90)] to-[rgb(217,138,148)]' },
+  { href: '/personal',  emoji: '🗂️', title: 'Personal',  gradient: 'from-[rgb(167,120,160)] to-[rgb(220,161,84)]' },
+  { href: '/watchlist', emoji: '🎬', title: 'Watchlist', gradient: 'from-[rgb(217,138,148)] to-[rgb(232,120,90)]' },
 ]
 
 // Training plan by day of week (1=Mon … 7=Sun)
@@ -51,29 +54,28 @@ const DAY_PLAN: Record<number, { activity: string; emoji: string }> = {
   7: { activity: 'Full Rest',   emoji: '😴' },
 }
 
-/** Apple-Watch-style progress ring */
+/** Apple-Watch-style progress ring, warm-toned */
 function ActivityRing({ completed, total }: { completed: number; total: number }) {
   const pct = total > 0 ? Math.min(completed / total, 1) : 0
   const R = 34, C = 2 * Math.PI * R
   return (
     <div className="relative w-[88px] h-[88px]">
       <svg viewBox="0 0 88 88" className="w-full h-full -rotate-90">
-        <circle cx="44" cy="44" r={R} fill="none" strokeWidth="9"
-          className="stroke-indigo-100 dark:stroke-indigo-950" />
+        <circle cx="44" cy="44" r={R} fill="none" strokeWidth="9" stroke="rgb(var(--canvas-alt))" />
         <circle cx="44" cy="44" r={R} fill="none" strokeWidth="9" strokeLinecap="round"
           stroke="url(#ringGrad)"
           strokeDasharray={C} strokeDashoffset={C * (1 - pct)}
           style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.25, 0.1, 0.25, 1)' }} />
         <defs>
           <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#818cf8" />
-            <stop offset="100%" stopColor="#6366f1" />
+            <stop offset="0%" stopColor="rgb(232,120,90)" />
+            <stop offset="100%" stopColor="rgb(220,161,84)" />
           </linearGradient>
         </defs>
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-lg font-bold text-gray-900 dark:text-white leading-none">
-          {completed}<span className="text-xs font-medium text-gray-400">/{total}</span>
+        <span className="text-lg font-bold text-ink leading-none">
+          {completed}<span className="text-xs font-medium text-ink/40">/{total}</span>
         </span>
       </div>
     </div>
@@ -90,6 +92,8 @@ function greeting() {
 export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [name, setName] = useState('')
+  const [nudges, setNudges] = useState<Nudge[]>([])
+  const [mascotMood, setMascotMood] = useState<MascotMood>('content')
   const today = new Date()
   const dateStr = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
   const todayDow = today.getDay() || 7
@@ -97,19 +101,25 @@ export default function HomePage() {
 
   useEffect(() => {
     fetch('/api/dashboard').then(r => r.json()).then(setData).catch(() => {})
+    fetch('/api/life/nudges').then(r => r.json()).then(d => {
+      setNudges(d.nudges ?? [])
+      setMascotMood(d.nudges?.length ? 'curious' : 'pleased')
+    }).catch(() => {})
     setName(localStorage.getItem('userName') ?? '')
   }, [])
 
+  const topNudge = nudges[0]
+
   return (
-    <div className="relative flex min-h-screen bg-[#f5f5f7] dark:bg-[#0a0a0f]">
-      <Ambient glow="99 102 241" />
+    <div className="relative flex min-h-screen bg-canvas dark:bg-canvas">
+      <Ambient glow="232 120 90" />
       <ModuleDock />
       <div className="relative z-10 flex-1 min-w-0">
         {/* Large-title header */}
-        <header className="sticky top-0 z-30 bg-[#f5f5f7]/60 dark:bg-[#0a0a0f]/60 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-5 md:px-8 py-4 flex items-end justify-between">
+        <header className="sticky top-0 z-30 bg-canvas/60 dark:bg-canvas/60 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-5 md:px-8 py-4 flex items-end justify-between">
           <div>
-            <p className="text-xs font-semibold tracking-widest text-gray-400 dark:text-gray-500 uppercase">{dateStr}</p>
-            <h1 className="text-[28px] font-bold text-gray-900 dark:text-white leading-tight">
+            <p className="text-xs font-semibold tracking-widest text-ink/40 uppercase">{dateStr}</p>
+            <h1 className="text-[28px] font-black text-ink leading-tight tracking-tight">
               {greeting()}{name ? `, ${name}` : ''}
             </h1>
           </div>
@@ -122,65 +132,82 @@ export default function HomePage() {
 
         <main className="page-in max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-7 pb-16">
 
+          {/* ── Companion nudge ── */}
+          <div className="bg-surface/90 dark:bg-surface/70 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm px-5 py-4 flex items-center gap-4">
+            <Mascot mood={mascotMood} size={52} className="mascot-pop shrink-0" />
+            <div className="flex-1 min-w-0">
+              {topNudge ? (
+                <>
+                  <p className="text-sm font-semibold text-ink leading-snug">{topNudge.message}</p>
+                  <Link href={topNudge.href} className="text-xs font-bold text-[rgb(var(--coral))] hover:underline mt-0.5 inline-block">
+                    Take care of it →
+                  </Link>
+                </>
+              ) : (
+                <p className="text-sm font-semibold text-ink leading-snug">All caught up — nothing needs you right now.</p>
+              )}
+            </div>
+          </div>
+
           {/* ── Widgets row ── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
 
             {/* Habits ring widget */}
             <Link href="/life"
-              className="bg-white/85 dark:bg-gray-900/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col items-center justify-center gap-2">
+              className="bg-surface/90 dark:bg-surface/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col items-center justify-center gap-2">
               {data ? (
                 <ActivityRing completed={data.life.habitsCompletedToday} total={data.life.habitsScheduledToday} />
               ) : (
-                <div className="w-[88px] h-[88px] rounded-full bg-gray-100 dark:bg-gray-800 animate-pulse" />
+                <div className="w-[88px] h-[88px] rounded-full bg-canvas-alt animate-pulse" />
               )}
-              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Habits today</span>
+              <span className="text-xs font-semibold text-ink/50">Habits today</span>
             </Link>
 
             {/* Balance widget */}
             <Link href="/finance"
-              className="bg-white/85 dark:bg-gray-900/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
+              className="bg-surface/90 dark:bg-surface/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
               <span className="text-xl">💰</span>
               <div>
-                <p className="text-[10px] font-semibold tracking-wide text-gray-400 uppercase mb-0.5">Total balance</p>
+                <p className="text-[10px] font-semibold tracking-wide text-ink/40 uppercase mb-0.5">Total balance</p>
                 {data ? (
-                  <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{formatEUR(data.finance.totalBalanceEUR)}</p>
+                  <p className="text-xl font-black text-ink leading-tight tracking-tight">{formatEUR(data.finance.totalBalanceEUR)}</p>
                 ) : (
-                  <div className="h-6 w-24 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                  <div className="h-6 w-24 bg-canvas-alt rounded animate-pulse" />
                 )}
               </div>
             </Link>
 
             {/* Month flow widget */}
             <Link href="/finance/insights"
-              className="bg-white/85 dark:bg-gray-900/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
+              className="bg-surface/90 dark:bg-surface/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
               <span className="text-xl">📊</span>
               <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold tracking-wide text-gray-400 uppercase">This month</p>
+                <p className="text-[10px] font-semibold tracking-wide text-ink/40 uppercase">This month</p>
                 {data ? (
                   <>
-                    <p className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
-                      <TrendingUp size={12} className="text-green-500 shrink-0" />
+                    <p className="flex items-center gap-1.5 text-xs text-ink/70">
+                      <TrendingUp size={12} className="text-emerald-500 shrink-0" />
                       <span className="truncate font-medium">{formatRSD(data.finance.incomeThisMonthRSD)}</span>
                     </p>
-                    <p className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
-                      <TrendingDown size={12} className="text-red-500 shrink-0" />
+                    <p className="flex items-center gap-1.5 text-xs text-ink/70">
+                      <TrendingDown size={12} className="text-[rgb(var(--coral))] shrink-0" />
                       <span className="truncate font-medium">{formatRSD(data.finance.expensesThisMonthRSD)}</span>
                     </p>
                   </>
                 ) : (
-                  <div className="h-8 w-20 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                  <div className="h-8 w-20 bg-canvas-alt rounded animate-pulse" />
                 )}
               </div>
             </Link>
 
             {/* Today's training widget */}
             <Link href="/fitness"
-              className="bg-white/85 dark:bg-gray-900/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
+              className="bg-surface/90 dark:bg-surface/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
               <span className="text-xl">{plan.emoji}</span>
               <div>
-                <p className="text-[10px] font-semibold tracking-wide text-gray-400 uppercase mb-0.5">Today's training</p>
-                <p className="text-base font-bold text-gray-900 dark:text-white leading-tight">{plan.activity}</p>
-                <p className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-0.5">Open Fitness <ChevronRight size={10} /></p>
+                <p className="text-[10px] font-semibold tracking-wide text-ink/40 uppercase mb-0.5">Today's training</p>
+                <p className="text-base font-bold text-ink leading-tight">{plan.activity}</p>
+                <p className="text-[11px] text-ink/40 mt-0.5 flex items-center gap-0.5">Open Fitness <ChevronRight size={10} /></p>
               </div>
             </Link>
           </div>
@@ -195,7 +222,7 @@ export default function HomePage() {
               { href: '/schedule', label: '📅 My schedule' },
             ].map(q => (
               <Link key={q.href} href={q.href}
-                className="shrink-0 bg-white/85 dark:bg-gray-900/70 border border-black/5 dark:border-white/5 shadow-sm rounded-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:shadow-md active:scale-95 transition-all duration-300 ease-apple whitespace-nowrap">
+                className="shrink-0 bg-surface/90 dark:bg-surface/70 border border-black/5 dark:border-white/5 shadow-sm rounded-full px-4 py-2 text-sm font-medium text-ink/80 hover:shadow-md active:scale-95 transition-all duration-300 ease-apple whitespace-nowrap">
                 {q.label}
               </Link>
             ))}
@@ -203,12 +230,12 @@ export default function HomePage() {
 
           {/* ── Upcoming bills ── */}
           {data && data.finance.upcomingBills.length > 0 && (
-            <div className="bg-white/85 dark:bg-gray-900/70 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+            <div className="bg-surface/90 dark:bg-surface/70 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
               <div className="px-5 py-3.5 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
-                <h2 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2">
-                  <FileText size={15} className="text-gray-400" /> Upcoming bills
+                <h2 className="font-semibold text-ink text-sm flex items-center gap-2">
+                  <FileText size={15} className="text-ink/30" /> Upcoming bills
                 </h2>
-                <Link href="/finance/bills" className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                <Link href="/finance/bills" className="text-xs text-[rgb(var(--coral))] hover:underline flex items-center gap-1">
                   View all <ArrowRight size={11} />
                 </Link>
               </div>
@@ -216,10 +243,10 @@ export default function HomePage() {
                 {data.finance.upcomingBills.map(bill => (
                   <div key={bill.id} className="px-5 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-400 w-6 text-center font-mono">{bill.dayOfMonth}</span>
-                      <span className="text-sm text-gray-700 dark:text-gray-200">{bill.name}</span>
+                      <span className="text-xs text-ink/40 w-6 text-center font-mono">{bill.dayOfMonth}</span>
+                      <span className="text-sm text-ink/80">{bill.name}</span>
                     </div>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <span className="text-sm font-semibold text-ink">
                       {bill.amount.toLocaleString()} {bill.currency}
                     </span>
                   </div>
@@ -230,14 +257,14 @@ export default function HomePage() {
 
           {/* ── App grid ── */}
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3 px-1">Modules</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-ink/40 mb-3 px-1">Modules</h2>
             <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:grid-cols-8 sm:gap-x-3">
               {MODULES.map(m => (
                 <Link key={m.href} href={m.href} className="group flex flex-col items-center gap-1.5">
                   <span className={`flex items-center justify-center w-[60px] h-[60px] rounded-[18px] bg-gradient-to-br ${m.gradient} text-[28px] shadow-md shadow-black/10 group-hover:scale-105 group-active:scale-95 transition-transform duration-300 ease-apple`}>
                     {m.emoji}
                   </span>
-                  <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300">{m.title}</span>
+                  <span className="text-[11px] font-medium text-ink/70">{m.title}</span>
                 </Link>
               ))}
             </div>
@@ -245,7 +272,7 @@ export default function HomePage() {
 
           {/* ── Food map ── */}
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3 px-1">Food map</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-ink/40 mb-3 px-1">Food map</h2>
             <div className="rounded-3xl overflow-hidden border border-black/5 dark:border-white/5 shadow-sm">
               <FoodMapPreview />
             </div>

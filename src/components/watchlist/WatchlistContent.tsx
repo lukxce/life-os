@@ -239,7 +239,7 @@ function AddSheet({ defaultTab, onClose, onAdded }: {
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white/85 dark:bg-gray-900/70 rounded-t-2xl max-h-[88vh] flex flex-col shadow-2xl">
+      <div className="relative bg-surface/90 dark:bg-surface/70 rounded-t-2xl max-h-[88vh] flex flex-col shadow-2xl">
         <div className="flex-none pt-3 pb-1 flex justify-center">
           <div className="w-10 h-1 rounded-full bg-gray-200 dark:bg-gray-700" />
         </div>
@@ -424,7 +424,7 @@ function DetailSheet({ item, onClose, onUpdated, onDeleted }: {
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white/85 dark:bg-gray-900/70 rounded-t-2xl max-h-[92vh] flex flex-col shadow-2xl">
+      <div className="relative bg-surface/90 dark:bg-surface/70 rounded-t-2xl max-h-[92vh] flex flex-col shadow-2xl">
         <div className="flex-none pt-3 pb-1 flex justify-center">
           <div className="w-10 h-1 rounded-full bg-gray-200 dark:bg-gray-700" />
         </div>

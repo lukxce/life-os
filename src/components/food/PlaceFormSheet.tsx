@@ -113,7 +113,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-lg bg-white/85 dark:bg-gray-900/70 rounded-t-3xl md:rounded-2xl shadow-2xl max-h-[92vh] flex flex-col"
+        className="relative w-full max-w-lg bg-surface/90 dark:bg-surface/70 rounded-t-3xl md:rounded-2xl shadow-2xl max-h-[92vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -138,7 +138,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
               />
               {searching && <p className="text-xs text-gray-400 mt-1 px-1">Searching…</p>}
               {results.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white/85 dark:bg-gray-900/70 border border-black/10 dark:border-white/10 rounded-xl shadow-xl overflow-hidden">
+                <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-surface/90 dark:bg-surface/70 border border-black/10 dark:border-white/10 rounded-xl shadow-xl overflow-hidden">
                   {results.map((r, i) => (
                     <button key={i} onClick={() => pickResult(r)}
                       className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 border-b last:border-0 border-black/5 dark:border-white/5 transition-colors">

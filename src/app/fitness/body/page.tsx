@@ -45,7 +45,7 @@ function MetricCard({ cfg, rows }: { cfg: typeof METRICS[number]; rows: BodyRow[
     : ['auto', 'auto']
 
   return (
-    <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+    <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
       <div className="flex items-center justify-between px-5 pt-4 pb-3">
         <div className="flex items-center gap-2.5">
           <span className="text-2xl">{cfg.icon}</span>
@@ -162,16 +162,16 @@ export default function FitnessBodyPage() {
           <p className="text-sm text-gray-400 mt-0.5">Track weight and measurements</p>
         </div>
         <button onClick={() => setShowLog(true)}
-          className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors">
+          className="flex items-center gap-1.5 bg-[rgb(220,161,84)] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[rgb(200,141,64)] transition-colors">
           <Plus size={15} /> Log
         </button>
       </div>
 
       {showLog && (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <Scale size={16} className="text-green-600" /> Log measurement
+              <Scale size={16} className="text-[rgb(220,161,84)]" /> Log measurement
             </h2>
             <button onClick={() => setShowLog(false)}><X size={16} className="text-gray-400" /></button>
           </div>
@@ -195,7 +195,7 @@ export default function FitnessBodyPage() {
             </div>
             <div className="col-span-3">
               <button type="submit" disabled={saving}
-                className="w-full bg-green-600 text-white rounded-xl py-2 text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors">
+                className="w-full bg-[rgb(220,161,84)] text-white rounded-xl py-2 text-sm font-semibold hover:bg-[rgb(200,141,64)] disabled:opacity-50 transition-colors">
                 {saving ? 'Saving…' : 'Save'}
               </button>
             </div>

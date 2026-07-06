@@ -22,7 +22,7 @@ function LocateMeButton() {
   }
   return (
     <button onClick={locate} title="Go to my location"
-      className="absolute bottom-24 md:bottom-6 left-4 md:left-6 z-10 w-10 h-10 bg-white/85 dark:bg-gray-900/70 rounded-full shadow-lg border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+      className="absolute bottom-24 md:bottom-6 left-4 md:left-6 z-10 w-10 h-10 bg-surface/90 dark:bg-surface/70 rounded-full shadow-lg border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
       <Crosshair size={17} className="text-gray-600 dark:text-gray-300" />
     </button>
   )
@@ -89,7 +89,7 @@ export function FoodMapView({ places, onReload }: Props) {
 
       {/* Filter bar */}
       <div className="absolute top-3 left-3 right-3 z-10 flex flex-wrap gap-2 pointer-events-none">
-        <div className="flex gap-1 bg-white/95 dark:bg-gray-900/95 backdrop-blur rounded-xl shadow-md p-1 pointer-events-auto">
+        <div className="flex gap-1 bg-surface/95 dark:bg-surface/90 backdrop-blur rounded-xl shadow-md p-1 pointer-events-auto">
           {(Object.entries(CATEGORY_CONFIG) as [string, { label: string; color: string }][]).map(([key, cfg]) => (
             <button key={key}
               onClick={() => setCats(c => c.includes(key) ? c.filter(x => x !== key) : [...c, key])}
@@ -103,7 +103,7 @@ export function FoodMapView({ places, onReload }: Props) {
 
         {cities.length > 1 && (
           <select value={filterCity} onChange={e => setFilterCity(e.target.value)}
-            className="bg-white/95 dark:bg-gray-900/95 backdrop-blur shadow-md rounded-xl px-3 py-1.5 text-xs font-medium outline-none pointer-events-auto">
+            className="bg-surface/95 dark:bg-surface/90 backdrop-blur shadow-md rounded-xl px-3 py-1.5 text-xs font-medium outline-none pointer-events-auto">
             <option value="">All cities</option>
             {cities.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -111,13 +111,13 @@ export function FoodMapView({ places, onReload }: Props) {
 
         {cuisines.length > 1 && (
           <select value={filterCuisine} onChange={e => setFilterCuisine(e.target.value)}
-            className="bg-white/95 dark:bg-gray-900/95 backdrop-blur shadow-md rounded-xl px-3 py-1.5 text-xs font-medium outline-none pointer-events-auto">
+            className="bg-surface/95 dark:bg-surface/90 backdrop-blur shadow-md rounded-xl px-3 py-1.5 text-xs font-medium outline-none pointer-events-auto">
             <option value="">All cuisines</option>
             {cuisines.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         )}
 
-        <div className="ml-auto bg-white/95 dark:bg-gray-900/95 backdrop-blur shadow-md rounded-xl px-3 py-1.5 text-xs font-medium text-gray-500 pointer-events-auto">
+        <div className="ml-auto bg-surface/95 dark:bg-surface/90 backdrop-blur shadow-md rounded-xl px-3 py-1.5 text-xs font-medium text-gray-500 pointer-events-auto">
           {filtered.length} place{filtered.length !== 1 ? 's' : ''}
         </div>
       </div>
@@ -125,7 +125,7 @@ export function FoodMapView({ places, onReload }: Props) {
       {/* Empty state */}
       {places.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur rounded-2xl p-6 text-center shadow-xl">
+          <div className="bg-surface/90 dark:bg-surface/85 backdrop-blur rounded-2xl p-6 text-center shadow-xl">
             <p className="text-3xl mb-2">🍽️</p>
             <p className="font-semibold text-gray-700 dark:text-gray-200">No places yet</p>
             <p className="text-sm text-gray-400 mt-1">Tap + to add your first spot</p>
@@ -136,7 +136,7 @@ export function FoodMapView({ places, onReload }: Props) {
       {/* Detail sheet */}
       {selected && editing === undefined && (
         <div className="absolute bottom-0 left-0 right-0 z-20 md:bottom-6 md:left-6 md:right-auto md:w-80">
-          <div className="bg-white/85 dark:bg-gray-900/70 rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-surface/90 dark:bg-surface/70 rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
             <div className="h-1 w-full" style={{ background: CATEGORY_CONFIG[selected.category as keyof typeof CATEGORY_CONFIG]?.color ?? '#6366f1' }} />
             <div className="p-5 pb-28 md:pb-5">
               <div className="flex items-start justify-between gap-3 mb-3">

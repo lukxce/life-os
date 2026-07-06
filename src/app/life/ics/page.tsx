@@ -38,7 +38,7 @@ function EventCard({ ev }: { ev: ICSEvent }) {
   const color = ev.calendarColor ?? '#6366f1'
   return (
     <div
-      className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/5 dark:border-white/5 overflow-hidden cursor-pointer hover:shadow-sm transition-shadow"
+      className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/5 dark:border-white/5 overflow-hidden cursor-pointer hover:shadow-sm transition-shadow"
       onClick={() => setOpen(!open)}
       style={{ borderLeftColor: color, borderLeftWidth: 3 }}
     >
@@ -135,11 +135,11 @@ export default function ICSPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Calendar</h1>
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-10 text-center">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-10 text-center">
           <Calendar size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
           <p className="text-sm font-medium text-gray-500">No calendars connected</p>
           <p className="text-xs text-gray-400 mt-1">Add your Google Calendar or Outlook ICS URL in settings.</p>
-          <Link href="/schedule/settings" className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold">
+          <Link href="/schedule/settings" className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-[rgb(167,120,160)] text-white rounded-xl text-sm font-semibold">
             <Settings size={15} /> Open Settings
           </Link>
         </div>

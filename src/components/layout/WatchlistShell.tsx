@@ -6,10 +6,10 @@ const config: ModuleConfig = {
   name: 'Watchlist',
   emoji: '🎬',
   home: '/watchlist',
-  accentActive: 'bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
-  accentText: 'text-violet-600 dark:text-violet-400',
-  accentFab: 'bg-violet-600 hover:bg-violet-700',
-  glow: '139 92 246',
+  accentActive: 'bg-[rgb(217,138,148)]/10 text-[rgb(217,138,148)] dark:bg-[rgb(217,138,148)]/15 dark:text-[rgb(217,138,148)]',
+  accentText: 'text-[rgb(217,138,148)] dark:text-[rgb(217,138,148)]',
+  accentFab: 'bg-[rgb(217,138,148)] hover:bg-[rgb(197,118,128)]',
+  glow: '217 138 148',
   contentClassName: 'max-w-5xl',
   groups: [
     { items: [

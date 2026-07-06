@@ -21,7 +21,7 @@ export function ModuleDock() {
   const pathname = usePathname()
   return (
     <aside className="hidden lg:flex flex-col items-center gap-1 w-[68px] shrink-0 h-screen sticky top-0 py-4 z-40
-                      bg-white/40 dark:bg-white/[0.02] backdrop-blur-2xl border-r border-black/5 dark:border-white/5">
+                      bg-surface/40 dark:bg-white/[0.02] backdrop-blur-2xl border-r border-black/5 dark:border-white/5">
       {MODULES.map(m => {
         const active = m.match(pathname)
         return (

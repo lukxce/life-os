@@ -4,11 +4,13 @@ import { cn } from '@/lib/utils'
 // ── Whoop-style data synthesis primitives ─────────────────────────────────────
 // Graded colors: the score itself carries meaning at a glance.
 
+// Graded but never alarming — the lowest bracket is warm terracotta, not a
+// stop-sign red. This is a deliberate brand choice: momentum, not guilt.
 export function grade(pct: number) {
   if (pct >= 100) return { stroke: '#34d399', text: 'text-emerald-500', chip: 'bg-emerald-500/15 text-emerald-500' }
   if (pct >= 70)  return { stroke: '#4ade80', text: 'text-green-500',   chip: 'bg-green-500/15 text-green-500' }
-  if (pct >= 40)  return { stroke: '#fbbf24', text: 'text-amber-500',   chip: 'bg-amber-500/15 text-amber-500' }
-  return              { stroke: '#f87171', text: 'text-red-400',    chip: 'bg-red-500/15 text-red-400' }
+  if (pct >= 40)  return { stroke: 'rgb(var(--amber))', text: 'text-amber-600', chip: 'bg-amber-500/15 text-amber-600' }
+  return              { stroke: 'rgb(var(--coral))', text: 'text-[rgb(var(--coral))]', chip: 'bg-[rgb(var(--coral))]/15 text-[rgb(var(--coral))]' }
 }
 
 /** Big graded progress ring with the value front and center */

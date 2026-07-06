@@ -454,7 +454,7 @@ export default function WeeklyPage() {
         </div>
 
         {/* Weekly: weight + waist */}
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden mb-3">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden mb-3">
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800/50">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Weekly — every Sunday</p>
           </div>
@@ -474,7 +474,7 @@ export default function WeeklyPage() {
         </div>
 
         {/* Monthly: chest, bicep, shoulders, thigh */}
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Monthly measurements</p>
             {!showMonthly && (
@@ -505,7 +505,7 @@ export default function WeeklyPage() {
 
       {/* Weekly habits by category */}
       {items.length === 0 ? (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-6 text-center text-gray-400">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-6 text-center text-gray-400">
           <div className="text-3xl mb-2">📅</div>
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No weekly habits yet</p>
           <p className="text-xs mt-1 text-gray-400">Add habits with a specific day schedule (e.g. every Sunday) and they'll appear here.</p>
@@ -516,7 +516,7 @@ export default function WeeklyPage() {
             <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">
               {category}
             </h2>
-            <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
+            <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
               {categoryItems.map(item => (
                 <WeeklyHabitRow
                   key={item.habit.id}
@@ -532,7 +532,7 @@ export default function WeeklyPage() {
 
       {/* Last week score */}
       {scoreData && scoreData.lastWeek.total > 0 && (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-4 flex items-center justify-between">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Last week</p>
             <p className="text-2xl font-bold text-gray-700 dark:text-gray-300 mt-0.5">{scoreData.lastWeek.score}%</p>

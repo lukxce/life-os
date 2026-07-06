@@ -15,7 +15,7 @@ function GoalCard({ goal, onEdit, onDelete, onDeposit }: { goal: any; onEdit: ()
     : null
 
   return (
-    <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
+    <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center shrink-0">
@@ -59,13 +59,13 @@ function GoalCard({ goal, onEdit, onDelete, onDeposit }: { goal: any; onEdit: ()
       </div>
 
       {goal.accountId && (
-        <p className="text-xs text-blue-500 dark:text-blue-400 mb-3">Auto-tracking from linked account</p>
+        <p className="text-xs text-blue-500 dark:text-[rgb(232,120,90)] mb-3">Auto-tracking from linked account</p>
       )}
 
       {goal.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">{goal.notes}</p>}
 
       <button onClick={onDeposit}
-        className="w-full border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors">
+        className="w-full border border-blue-200 dark:border-blue-800 text-[rgb(232,120,90)] dark:text-[rgb(232,120,90)] py-2 rounded-lg text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors">
         + Log deposit
       </button>
     </div>
@@ -135,37 +135,37 @@ export default function GoalsPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Saving Goals</h2>
         <button onClick={() => { setEditingId(null); setForm(defaultForm); setShowForm(s => !s) }}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700">
+          className="flex items-center gap-2 bg-[rgb(232,120,90)] text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">
           <Plus size={16} /> Add Goal
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{editingId ? 'Edit Goal' : 'New Goal'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Goal name</label>
               <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                 placeholder="e.g. Vacation, New laptop, Emergency fund"
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Target amount</label>
               <NumberInput value={form.targetAmount} onChange={v => setForm(p => ({ ...p, targetAmount: v }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Currency</label>
               <select value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
                 <option>EUR</option><option>RSD</option>
               </select>
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Link to savings account (optional)</label>
               <select value={form.accountId} onChange={e => setForm(p => ({ ...p, accountId: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
                 <option value="">None — manual deposits only</option>
                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name} ({a.currency})</option>)}
               </select>
@@ -173,51 +173,51 @@ export default function GoalsPage() {
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Target date (optional)</label>
               <input type="date" value={form.targetDate} onChange={e => setForm(p => ({ ...p, targetDate: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white/85 dark:bg-gray-900/70 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-surface/90 dark:bg-surface/70 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
             </div>
             <div className="md:col-span-2">
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Notes</label>
               <input type="text" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
                 placeholder="What are you saving for?"
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
             </div>
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={submit} className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">{editingId ? 'Update' : 'Save'}</button>
+            <button onClick={submit} className="bg-[rgb(232,120,90)] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">{editingId ? 'Update' : 'Save'}</button>
             <button onClick={() => { setShowForm(false); setEditingId(null); setForm(defaultForm) }} className="border border-gray-300 dark:border-gray-600 px-5 py-2 rounded-lg text-sm">Cancel</button>
           </div>
         </div>
       )}
 
       {depositGoal && (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Log deposit — {depositGoal.name}</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Amount</label>
               <NumberInput value={depositForm.amount} onChange={v => setDepositForm(p => ({ ...p, amount: v }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Currency</label>
               <select value={depositForm.currency} onChange={e => setDepositForm(p => ({ ...p, currency: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
                 <option>EUR</option><option>RSD</option>
               </select>
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Date</label>
               <input type="date" value={depositForm.date} onChange={e => setDepositForm(p => ({ ...p, date: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white/85 dark:bg-gray-900/70 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-surface/90 dark:bg-surface/70 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Notes</label>
               <input type="text" value={depositForm.notes} onChange={e => setDepositForm(p => ({ ...p, notes: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
             </div>
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={logDeposit} className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Log</button>
+            <button onClick={logDeposit} className="bg-[rgb(232,120,90)] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">Log</button>
             <button onClick={() => setDepositGoal(null)} className="border border-gray-300 dark:border-gray-600 px-5 py-2 rounded-lg text-sm">Cancel</button>
           </div>
         </div>
@@ -225,7 +225,7 @@ export default function GoalsPage() {
 
       <div className="grid grid-cols-1 gap-4">
         {goals.length === 0 ? (
-          <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-8 text-center text-gray-400 dark:text-gray-500">No goals yet</div>
+          <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-8 text-center text-gray-400 dark:text-gray-500">No goals yet</div>
         ) : goals.map(g => (
           <GoalCard key={g.id} goal={g}
             onEdit={() => startEdit(g)}

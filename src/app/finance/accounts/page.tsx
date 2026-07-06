@@ -116,7 +116,7 @@ export default function AccountsPage() {
                 if (e.key === 'Enter') saveRename(a)
                 if (e.key === 'Escape') setRenameId(null)
               }}
-              className="flex-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
             />
             <button onClick={() => saveRename(a)} className="p-1.5 text-green-600 hover:bg-green-50 rounded">
               <Check size={14} />
@@ -189,7 +189,7 @@ export default function AccountsPage() {
               type="number"
               defaultValue={a.startingBalance}
               onChange={e => setStartingForm({ ...startingForm, [a.id]: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
             />
             <button onClick={() => saveStarting(a.id)} className="mt-2 w-full bg-green-600 text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-green-700">
               Update Starting Balance
@@ -202,12 +202,12 @@ export default function AccountsPage() {
               type="number"
               value={overrideForm[a.id] || ''}
               onChange={e => setOverrideForm({ ...overrideForm, [a.id]: e.target.value })}
-              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
               placeholder="e.g. 150000"
             />
             <p className="text-[10px] text-gray-400 mt-1">Override = "as of today my balance is X". Tracks forward from this date.</p>
             <div className="flex gap-2 mt-2">
-              <button onClick={() => saveOverride(a.id)} className="flex-1 bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-blue-700">Save Override</button>
+              <button onClick={() => saveOverride(a.id)} className="flex-1 bg-[rgb(232,120,90)] text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-[rgb(212,100,72)]">Save Override</button>
               <button onClick={() => setEditId(null)} className="flex-1 border border-gray-300 px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-50">Cancel</button>
             </div>
           </div>
@@ -223,7 +223,7 @@ export default function AccountsPage() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-2xl font-bold text-gray-900">Bank Accounts</h2>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700">
+        <button onClick={() => setShowForm(!showForm)} className="flex items-center justify-center gap-2 bg-[rgb(232,120,90)] text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">
           <Plus size={16} /> Add Account
         </button>
       </div>
@@ -235,31 +235,31 @@ export default function AccountsPage() {
             <div>
               <label className="text-xs font-medium text-gray-500">Name</label>
               <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500">Starting Balance</label>
               <input type="number" value={form.startingBalance}
                 onChange={e => setForm(p => ({ ...p, startingBalance: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500">Type</label>
               <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
                 {['personal','company'].map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500">Currency</label>
               <select value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
                 {['RSD','EUR'].map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={submit} className="flex-1 sm:flex-initial bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700">Save</button>
+            <button onClick={submit} className="flex-1 sm:flex-initial bg-[rgb(232,120,90)] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">Save</button>
             <button onClick={() => setShowForm(false)} className="flex-1 sm:flex-initial border border-gray-300 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
           </div>
         </div>

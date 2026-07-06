@@ -74,7 +74,7 @@ export default function FoodListPage() {
   return (
     <div className="h-full overflow-auto pb-24 md:pb-6">
       {/* Filters + sort */}
-      <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-black/5 dark:border-white/5 px-4 py-3 space-y-2">
+      <div className="sticky top-0 z-10 bg-surface/95 dark:bg-surface/90 backdrop-blur border-b border-black/5 dark:border-white/5 px-4 py-3 space-y-2">
         {/* Text search */}
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -185,7 +185,7 @@ export default function FoodListPage() {
       {/* Detail sheet */}
       {selected && !editing && (
         <div className="fixed inset-x-0 bottom-0 z-30 md:inset-auto md:fixed md:bottom-6 md:right-6 md:w-80">
-          <div className="bg-white/85 dark:bg-gray-900/70 rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-surface/90 dark:bg-surface/70 rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
             <div className="h-1 w-full" style={{ background: CATEGORY_CONFIG[selected.category as keyof typeof CATEGORY_CONFIG]?.color }} />
             {selected.photoUrl && (
               // eslint-disable-next-line @next/next/no-img-element

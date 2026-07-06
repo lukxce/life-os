@@ -18,7 +18,7 @@ function PreviewInner() {
     : { lat: 43.32, lng: 21.9 }
 
   return (
-    <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+    <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
       <div className="relative h-44 md:h-52">
         <Map
           center={places.length > 0 ? center : undefined}
@@ -42,7 +42,7 @@ function PreviewInner() {
 
         {places.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur rounded-xl px-4 py-2 text-center">
+            <div className="bg-surface/90 dark:bg-surface/85 backdrop-blur rounded-xl px-4 py-2 text-center">
               <p className="text-2xl mb-0.5">🍽️</p>
               <p className="text-xs text-gray-500">No places saved yet</p>
             </div>
@@ -53,7 +53,7 @@ function PreviewInner() {
         {places.length > 0 && (
           <div className="absolute bottom-2 left-2 flex gap-1.5 pointer-events-none">
             {(Object.entries(CATEGORY_CONFIG) as [string, { label: string; color: string }][]).map(([, cfg]) => (
-              <span key={cfg.label} className="flex items-center gap-1 bg-white/90 dark:bg-gray-900/90 backdrop-blur rounded-full px-2 py-0.5 text-xs font-medium">
+              <span key={cfg.label} className="flex items-center gap-1 bg-surface/90 dark:bg-surface/85 backdrop-blur rounded-full px-2 py-0.5 text-xs font-medium">
                 <span className="w-2 h-2 rounded-full inline-block" style={{ background: cfg.color }} />
                 {cfg.label}
               </span>

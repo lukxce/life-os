@@ -265,7 +265,7 @@ function HabitsPage() {
               .map((h) => (
                 <div
                   key={h.id}
-                  className="flex items-center gap-3 p-3 bg-white/85 dark:bg-gray-900/70 border border-black/5 dark:border-white/5 rounded-xl"
+                  className="flex items-center gap-3 p-3 bg-surface/90 dark:bg-surface/70 border border-black/5 dark:border-white/5 rounded-xl"
                 >
                   <span className="text-xl">{h.icon ?? '📋'}</span>
                   <div className="flex-1 min-w-0">
@@ -345,7 +345,7 @@ function HabitsPage() {
 
       {/* Add / Edit form */}
       {showForm && (
-        <div className="bg-white/85 dark:bg-gray-900/70 border border-black/5 dark:border-white/5 rounded-2xl p-5 space-y-4">
+        <div className="bg-surface/90 dark:bg-surface/70 border border-black/5 dark:border-white/5 rounded-2xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">{editId ? 'Edit habit' : 'New habit'}</h3>
             <button onClick={resetForm} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -585,7 +585,7 @@ function HabitsPage() {
       {/* Delete confirm */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl p-6 max-w-sm w-full shadow-xl">
+          <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl p-6 max-w-sm w-full shadow-xl">
             <h3 className="font-semibold mb-2">Delete habit?</h3>
             <p className="text-sm text-gray-500 mb-4">
               This will permanently delete the habit and all its logs.

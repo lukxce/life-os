@@ -41,7 +41,7 @@ function GoalCard({ goal, isBucket, onUpdate, onDelete, onAddMilestone, onToggle
     : null
 
   return (
-    <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+    <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-start gap-3">
           <span className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0" style={{ backgroundColor: color + '22' }}>
@@ -140,7 +140,7 @@ function AddGoalModal({ onClose, onAdd, defaultType }: { onClose: () => void; on
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl w-full max-w-sm p-5 space-y-4">
+      <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl w-full max-w-sm p-5 space-y-4">
         <h2 className="text-lg font-bold">New goal</h2>
 
         <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
@@ -187,7 +187,7 @@ function AddGoalModal({ onClose, onAdd, defaultType }: { onClose: () => void; on
           <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-400">Cancel</button>
           <button
             onClick={() => { if (name.trim()) { onAdd({ name: name.trim(), emoji, color, targetDate: targetDate || null, type }); onClose() } }}
-            className="flex-1 py-3 rounded-xl bg-indigo-600 text-sm font-semibold text-white"
+            className="flex-1 py-3 rounded-xl bg-[rgb(167,120,160)] text-sm font-semibold text-white"
           >
             Create
           </button>
@@ -254,7 +254,7 @@ export default function GoalsPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Goals</h1>
-        <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold">
+        <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 px-4 py-2 bg-[rgb(167,120,160)] text-white rounded-xl text-sm font-semibold">
           <Plus size={16} /> New
         </button>
       </div>
@@ -267,7 +267,7 @@ export default function GoalsPage() {
             <button key={t.key} onClick={() => setActiveTab(t.key)} className={cn('flex-1 text-xs font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-1', activeTab === t.key ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500')}>
               <span>{t.emoji}</span>
               <span>{t.label}</span>
-              {count > 0 && <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded-full px-1.5">{count}</span>}
+              {count > 0 && <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900 text-[rgb(167,120,160)] dark:text-[rgb(167,120,160)] rounded-full px-1.5">{count}</span>}
             </button>
           )
         })}
@@ -292,10 +292,10 @@ export default function GoalsPage() {
       )}
 
       {tabGoals.length === 0 && (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-10 text-center">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-10 text-center">
           <Target size={32} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
           <p className="text-sm font-medium text-gray-500">No {TABS.find(t => t.key === activeTab)?.label.toLowerCase()} yet</p>
-          <button onClick={() => setShowAdd(true)} className="mt-4 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold">Add one</button>
+          <button onClick={() => setShowAdd(true)} className="mt-4 px-5 py-2.5 bg-[rgb(167,120,160)] text-white rounded-xl text-sm font-semibold">Add one</button>
         </div>
       )}
 

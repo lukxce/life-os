@@ -8,6 +8,28 @@
   margin: 0;
 }
 
+/* ── Warm palette tokens ──────────────────────────────────────────────────────
+   Warm-neutral base (paper, not hospital-white / cold blue-black), plus one
+   warm color family used across the whole app instead of per-module rainbow
+   tinting. Habits/Fitness keep sharp precision; everything else stays quiet. */
+:root {
+  --canvas: 250 247 242;       /* warm ivory */
+  --canvas-alt: 245 240 232;
+  --surface: 255 253 250;      /* card surface, warm-tinted white */
+  --ink: 28 23 20;             /* warm near-black text */
+
+  --coral:  232 120 90;   /* signature accent */
+  --amber:  220 161 84;
+  --rose:   217 138 148;
+  --plum:   167 120 160;
+}
+.dark {
+  --canvas: 26 22 19;          /* warm charcoal, brown undertone — not navy */
+  --canvas-alt: 32 27 24;
+  --surface: 38 33 29;
+  --ink: 240 235 229;
+}
+
 html,
 body {
   max-width: 100vw;
@@ -34,18 +56,32 @@ body {
 
 /* Soft focus rings instead of harsh outlines */
 :focus-visible {
-  outline: 2px solid rgb(99 102 241 / 0.5);
+  outline: 2px solid rgb(var(--coral) / 0.5);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Uniform soft elevation for every glass surface */
+/* Uniform soft elevation for every glass surface — warm shadow, not cold black */
 [class*='bg-white/85'] {
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.03), 0 12px 32px -16px rgb(0 0 0 / 0.10);
+  box-shadow: 0 1px 2px rgb(60 40 30 / 0.04), 0 12px 32px -16px rgb(60 40 30 / 0.12);
 }
 .dark [class*='bg-white/85'] {
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2), 0 12px 32px -16px rgb(0 0 0 / 0.5);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25), 0 12px 32px -16px rgb(0 0 0 / 0.55);
 }
+
+/* Mascot blob — gentle idle breath, quick reaction to state changes */
+@keyframes mascotBreathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.035); }
+}
+.mascot-idle { animation: mascotBreathe 4s ease-in-out infinite; }
+
+@keyframes mascotPop {
+  0%   { transform: scale(0.8); opacity: 0; }
+  60%  { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.mascot-pop { animation: mascotPop 0.4s cubic-bezier(0.25, 0.1, 0.25, 1) both; }
 
 /* Page entrance — every route change eases up into place */
 @keyframes pageIn {

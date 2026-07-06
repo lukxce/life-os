@@ -98,7 +98,7 @@ export default function TransfersPage() {
       </div>
 
       {showForm && (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-4 md:p-6">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-4 md:p-6">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 dark:text-gray-100 mb-4">{editingId ? 'Edit Transfer' : 'Company → Personal Transfer'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -146,7 +146,7 @@ export default function TransfersPage() {
       )}
 
       {/* Desktop table */}
-      <div className="hidden md:block bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 overflow-hidden">
+      <div className="hidden md:block bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800 dark:bg-gray-800 dark:bg-gray-800 border-b border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700">
             <tr>
@@ -181,9 +181,9 @@ export default function TransfersPage() {
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
         {entries.length === 0 ? (
-          <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">No transfers yet</div>
+          <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">No transfers yet</div>
         ) : entries.map(e => (
-          <div key={e.id} className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-4">
+          <div key={e.id} className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 dark:border-gray-700 dark:border-gray-700 p-4">
             <div className="flex items-start justify-between mb-2">
               <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(e.date)}</span>
               <div className="flex items-center gap-1">

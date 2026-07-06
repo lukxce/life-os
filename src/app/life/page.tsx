@@ -226,10 +226,10 @@ export default function TodayPage() {
   return (
     <div className="-mx-4 -mt-6 md:-mx-6 md:-mt-8">
       {/* ── Hero: the day, synthesized ── */}
-      <div className="relative overflow-hidden rounded-b-[2rem] bg-[#0e0f15] text-white px-5 pt-8 pb-5">
+      <div className="relative overflow-hidden rounded-b-[2rem] bg-[#1f1815] text-white px-5 pt-8 pb-5">
         {/* aurora */}
         <div aria-hidden className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(640px 420px at 85% -20%, rgba(99,102,241,0.35), transparent 65%), radial-gradient(500px 380px at -10% 110%, rgba(139,92,246,0.18), transparent 60%)' }} />
+          style={{ background: 'radial-gradient(640px 420px at 85% -20%, rgba(167,120,160,0.35), transparent 65%), radial-gradient(500px 380px at -10% 110%, rgba(232,120,90,0.18), transparent 60%)' }} />
 
         <div className="relative">
           {/* Top row: identity + day controls */}
@@ -310,10 +310,10 @@ export default function TodayPage() {
                     className={cn('flex flex-col items-center gap-0.5 rounded-2xl transition-all px-1.5 py-2 min-w-[38px]',
                       sel ? 'bg-white' : future ? 'opacity-30 cursor-default' : 'hover:bg-white/10')}>
                     <span className={cn('text-[9px] font-bold tracking-wider',
-                      sel ? 'text-indigo-600' : isT ? 'text-white' : 'text-white/40')}>
+                      sel ? 'text-[rgb(167,120,160)]' : isT ? 'text-white' : 'text-white/40')}>
                       {isT ? 'TDY' : DAY_ABBR[day.getDay()]}
                     </span>
-                    <span className={cn('text-sm font-bold', sel ? 'text-indigo-600' : 'text-white')}>
+                    <span className={cn('text-sm font-bold', sel ? 'text-[rgb(167,120,160)]' : 'text-white')}>
                       {day.getDate()}
                     </span>
                   </button>
@@ -333,7 +333,7 @@ export default function TodayPage() {
         {FILTER_TABS.map(tab => (
           <button key={tab.key} onClick={() => setFilterTime(tab.key)}
             className={cn('px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors shrink-0',
-              filterTime === tab.key ? 'bg-indigo-600 text-white' : 'bg-white/85 dark:bg-gray-900/70 text-gray-500 dark:text-gray-400 border border-black/5 dark:border-white/5')}>
+              filterTime === tab.key ? 'bg-[rgb(167,120,160)] text-white' : 'bg-surface/90 dark:bg-surface/70 text-gray-500 dark:text-gray-400 border border-black/5 dark:border-white/5')}>
             {tab.label}
           </button>
         ))}
@@ -412,13 +412,13 @@ export default function TodayPage() {
                     <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">{group.label}</p>
                     <p className="text-[10px] font-bold text-gray-300 dark:text-gray-600">{group.items.length} left</p>
                   </div>
-                  <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
+                  <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
                     {group.items.map(renderHabit)}
                   </div>
                 </div>
               ))
             ) : pending.length > 0 ? (
-              <div className="mt-4 bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
+              <div className="mt-4 bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
                 {pending.map(renderHabit)}
               </div>
             ) : (
@@ -436,7 +436,7 @@ export default function TodayPage() {
             {done.length > 0 && (
               <div className="mt-6">
                 <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 px-1">✅ Completed</p>
-                <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden opacity-60">
+                <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden opacity-60">
                   {done.map(renderHabit)}
                 </div>
               </div>

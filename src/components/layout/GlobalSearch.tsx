@@ -95,14 +95,14 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
     >
       <Search size={14} />
       <span>Search everything...</span>
-      <kbd className="ml-2 text-xs bg-white/85 dark:bg-gray-900/70 border border-black/10 dark:border-white/10 rounded px-1.5 py-0.5">⌘K</kbd>
+      <kbd className="ml-2 text-xs bg-surface/90 dark:bg-surface/70 border border-black/10 dark:border-white/10 rounded px-1.5 py-0.5">⌘K</kbd>
     </button>
   )
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] px-4">
       <div className="fixed inset-0 bg-black/50" onClick={() => setOpen(false)} />
-      <div className="relative w-full max-w-lg bg-white/85 dark:bg-gray-900/70 rounded-2xl shadow-2xl border border-black/10 dark:border-white/10 overflow-hidden">
+      <div className="relative w-full max-w-lg bg-surface/90 dark:bg-surface/70 rounded-2xl shadow-2xl border border-black/10 dark:border-white/10 overflow-hidden">
         {/* Search input */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-black/10 dark:border-white/10">
           <Search size={16} className="text-gray-400 shrink-0" />

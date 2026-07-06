@@ -55,7 +55,7 @@ function ContactCard({ contact, onMarkContacted, onEdit, onDelete }: {
   const birthday = nextBirthday(contact.birthday)
 
   return (
-    <div className={cn('bg-white/85 dark:bg-gray-900/70 rounded-2xl border overflow-hidden transition-all', status.urgent ? 'border-red-200 dark:border-red-900/40' : 'border-black/5 dark:border-white/5')}>
+    <div className={cn('bg-surface/90 dark:bg-surface/70 rounded-2xl border overflow-hidden transition-all', status.urgent ? 'border-red-200 dark:border-red-900/40' : 'border-black/5 dark:border-white/5')}>
       <div className="px-4 py-3.5 flex items-center gap-3">
         <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0" style={{ backgroundColor: color + '22' }}>
           {contact.emoji ?? '👤'}
@@ -118,7 +118,7 @@ function ContactModal({ contact, onClose, onSave }: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl w-full max-w-sm p-5 space-y-4">
+      <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl w-full max-w-sm p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold dark:text-white">{contact ? 'Edit contact' : 'Add contact'}</h2>
           <button onClick={onClose}><X size={18} className="text-gray-400" /></button>
@@ -270,7 +270,7 @@ export default function ContactsPage() {
       )}
 
       {contacts.length === 0 && (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-10 text-center">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-10 text-center">
           <div className="text-4xl mb-3">👥</div>
           <p className="text-sm font-medium text-gray-500">No contacts yet</p>
           <p className="text-xs mt-1 text-gray-400">Add the people who matter — get nudged when it's time to reach out.</p>

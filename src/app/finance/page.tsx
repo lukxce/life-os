@@ -62,9 +62,9 @@ export default function Dashboard() {
   return (
     <div className="-mx-4 -mt-6 md:-mx-6 md:-mt-8 max-w-none">
       {/* ── Hero: net worth, synthesized ── */}
-      <div className="relative overflow-hidden rounded-b-[2rem] bg-[#0d1220] text-white px-5 pt-8 pb-6 md:px-8">
+      <div className="relative overflow-hidden rounded-b-[2rem] bg-[#1f1815] text-white px-5 pt-8 pb-6 md:px-8">
         <div aria-hidden className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(640px 420px at 88% -20%, rgba(59,130,246,0.4), transparent 65%), radial-gradient(520px 400px at -10% 115%, rgba(37,99,235,0.2), transparent 60%)' }} />
+          style={{ background: 'radial-gradient(640px 420px at 88% -20%, rgba(232,120,90,0.4), transparent 65%), radial-gradient(520px 400px at -10% 115%, rgba(220,161,84,0.2), transparent 60%)' }} />
         <div className="relative max-w-5xl mx-auto">
           <p className="text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase">Net worth</p>
           {data ? (
@@ -105,8 +105,8 @@ export default function Dashboard() {
               <button key={s.label}
                 onClick={() => { setPeriod(s.period); setDate(dStr) }}
                 className={cn('shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors',
-                  active ? 'bg-blue-600 text-white'
-                         : 'bg-white/85 dark:bg-gray-900/70 text-gray-500 dark:text-gray-400 border border-black/5 dark:border-white/5')}>
+                  active ? 'bg-[rgb(232,120,90)] text-white'
+                         : 'bg-surface/90 dark:bg-surface/70 text-gray-500 dark:text-gray-400 border border-black/5 dark:border-white/5')}>
                 {s.label}
               </button>
             )
@@ -118,7 +118,7 @@ export default function Dashboard() {
           <div>
             <div className="flex items-center justify-between mb-2 px-1">
               <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Accounts</h3>
-              <Link href="/finance/accounts" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Manage</Link>
+              <Link href="/finance/accounts" className="text-xs text-[rgb(232,120,90)] dark:text-[rgb(232,120,90)] hover:underline">Manage</Link>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 snap-x" style={{ scrollbarWidth: 'none' }}>
               {data.accounts.map(acc => {
@@ -146,7 +146,7 @@ export default function Dashboard() {
 
         {/* ── Recent activity ── */}
         {recent.length > 0 && (
-          <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+          <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
             <div className="px-5 py-3.5 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Recent activity</h3>
             </div>
@@ -174,10 +174,10 @@ export default function Dashboard() {
 
         {/* ── Budgets ── */}
         {budgets.length > 0 && (
-          <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
+          <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Budgets · this month</h3>
-              <Link href="/finance/budgets" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Manage</Link>
+              <Link href="/finance/budgets" className="text-xs text-[rgb(232,120,90)] dark:text-[rgb(232,120,90)] hover:underline">Manage</Link>
             </div>
             <div className="space-y-4">
               {budgets.map(b => {
@@ -216,7 +216,7 @@ export default function Dashboard() {
               { title: 'Personal spending', data: data.personalExpenses, color: 'text-red-500' },
               { title: 'Business spending', data: data.businessExpenses, color: 'text-purple-500' },
             ].map(section => (
-              <div key={section.title} className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
+              <div key={section.title} className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">{section.title}</h3>
                 {section.data.filter(e => e.amountRSD > 0).length === 0 ? (
                   <p className="text-sm text-gray-400 text-center py-8">Nothing this period</p>
@@ -258,10 +258,10 @@ export default function Dashboard() {
 
         {/* ── Saving goals ── */}
         {goals.length > 0 && (
-          <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
+          <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Saving goals</h3>
-              <Link href="/finance/goals" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Manage</Link>
+              <Link href="/finance/goals" className="text-xs text-[rgb(232,120,90)] dark:text-[rgb(232,120,90)] hover:underline">Manage</Link>
             </div>
             <div className="space-y-4">
               {goals.map((g: any) => {
@@ -286,7 +286,7 @@ export default function Dashboard() {
 
         {/* ── Income ── */}
         {data && (
-          <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
+          <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Income · {period === 'month' ? 'this month' : period}</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 mb-4">
               {[

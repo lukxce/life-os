@@ -125,13 +125,13 @@ export default function BillsPage() {
       <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
         {(['bills', 'loans'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors capitalize ${tab === t ? 'bg-white/85 dark:bg-gray-900/70 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}>
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors capitalize ${tab === t ? 'bg-surface/90 dark:bg-surface/70 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}>
             {t} <span className="ml-1 text-xs text-gray-400">({t === 'bills' ? allBills.length : allLoans.length})</span>
           </button>
         ))}
         <button onClick={() => setTab('calendar')}
           className={cn('flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
-            tab === 'calendar' ? 'bg-white/85 dark:bg-gray-900/70 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200')}>
+            tab === 'calendar' ? 'bg-surface/90 dark:bg-surface/70 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200')}>
           <CalendarDays size={14} /> Calendar
         </button>
       </div>
@@ -159,27 +159,27 @@ export default function BillsPage() {
       )}
 
       {showForm && (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4 md:p-6">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4 md:p-6">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{editingId ? `Edit ${form.isLoan ? 'Loan' : 'Bill'}` : `New ${tab === 'loans' ? 'Loan' : 'Bill'}`}</h3>
           <div className="grid grid-cols-2 gap-4">
             {/* Row 1: Name + Lender (loans) or Monthly Amount (bills) */}
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Name</label>
               <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800 dark:text-gray-100" />
             </div>
             {(tab === 'loans' || form.isLoan) ? (
               <div>
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Lender</label>
                 <input type="text" value={form.lender} onChange={e => setForm(p => ({ ...p, lender: e.target.value }))}
                   placeholder="e.g. Erste Bank"
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800 dark:text-gray-100" />
               </div>
             ) : (
               <div>
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Monthly Amount</label>
                 <NumberInput value={form.amount} onChange={v => setForm(p => ({ ...p, amount: v }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800 dark:text-gray-100" />
               </div>
             )}
 
@@ -188,13 +188,13 @@ export default function BillsPage() {
               <div>
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Monthly Amount</label>
                 <NumberInput value={form.amount} onChange={v => setForm(p => ({ ...p, amount: v }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800 dark:text-gray-100" />
               </div>
             )}
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Currency</label>
               <select value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800 dark:text-gray-100">
                 <option>RSD</option><option>EUR</option>
               </select>
             </div>
@@ -203,19 +203,19 @@ export default function BillsPage() {
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Payment Day of Month</label>
               <input type="number" min="1" max="31" value={form.dayOfMonth} onChange={e => setForm(p => ({ ...p, dayOfMonth: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800 dark:text-gray-100" />
             </div>
             {(tab === 'loans' || form.isLoan) ? (
               <div>
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Loan End Date</label>
                 <input type="date" value={form.loanEndDate} onChange={e => setForm(p => ({ ...p, loanEndDate: e.target.value }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100" />
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800 dark:text-gray-100" />
               </div>
             ) : (
               <div>
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Category</label>
                 <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800 dark:text-gray-100">
                   <option value="">None</option>
                   {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
@@ -227,7 +227,7 @@ export default function BillsPage() {
               <div>
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Category</label>
                 <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800 dark:text-gray-100">
                   <option value="">None</option>
                   {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
@@ -236,7 +236,7 @@ export default function BillsPage() {
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Account</label>
               <select value={form.accountId} onChange={e => setForm(p => ({ ...p, accountId: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800 dark:text-gray-100">
                 <option value="">Select account</option>
                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
@@ -259,7 +259,7 @@ export default function BillsPage() {
               <div className="col-span-2">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Subcategory</label>
                 <select value={form.subcategory} onChange={e => setForm(p => ({ ...p, subcategory: e.target.value }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100">
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800 dark:text-gray-100">
                   <option value="">None</option>
                   {subcats.map((s: string) => <option key={s} value={s}>{s}</option>)}
                 </select>
@@ -274,11 +274,11 @@ export default function BillsPage() {
       )}
 
       {payingBill && (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Mark as paid — {payingBill.name}</h3>
           <div className="flex gap-3">
             <NumberInput value={payAmount || String(payingBill.amount)} onChange={setPayAmount} placeholder={String(payingBill.amount)}
-              className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
             <button onClick={markPaid} className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-teal-700">Confirm</button>
             <button onClick={() => { setPayingBill(null); setPayAmount('') }} className="border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg text-sm">Cancel</button>
           </div>
@@ -290,7 +290,7 @@ export default function BillsPage() {
       ) : (
       <div className="space-y-3">
         {shown.length === 0 ? (
-          <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-8 text-center text-gray-400 dark:text-gray-500">
+          <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-8 text-center text-gray-400 dark:text-gray-500">
             No {tab} yet
           </div>
         ) : shown.map(b => {
@@ -298,7 +298,7 @@ export default function BillsPage() {
           const paid = isPaidThisMonth(b.payments)
           const eq = rate > 0 ? equivalent(b.amount, b.currency, rate) : null
           return (
-            <div key={b.id} className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
+            <div key={b.id} className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -404,7 +404,7 @@ function BillCalendar({ bills, rate, onMarkPaid }: { bills: any[]; rate: number;
             <div key={day}
               className={cn(
                 'min-h-[60px] rounded-lg border p-1 transition-colors',
-                isToday ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30' : 'border-black/5 dark:border-white/5 bg-white/85 dark:bg-gray-900/70',
+                isToday ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30' : 'border-black/5 dark:border-white/5 bg-surface/90 dark:bg-surface/70',
                 hasBills && !allPaid && !hasOverdue && 'border-amber-200 dark:border-amber-800',
                 hasOverdue && 'border-red-200 dark:border-red-800'
               )}>

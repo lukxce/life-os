@@ -6,10 +6,10 @@ const config: ModuleConfig = {
   name: 'Schedule',
   emoji: '📅',
   home: '/schedule',
-  accentActive: 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
-  accentText: 'text-sky-600 dark:text-sky-400',
-  accentFab: 'bg-sky-600 hover:bg-sky-700',
-  glow: '14 165 233',
+  accentActive: 'bg-[rgb(217,138,148)]/10 text-[rgb(217,138,148)] dark:bg-[rgb(217,138,148)]/15 dark:text-[rgb(217,138,148)]',
+  accentText: 'text-[rgb(217,138,148)] dark:text-[rgb(217,138,148)]',
+  accentFab: 'bg-[rgb(217,138,148)] hover:bg-[rgb(197,118,128)]',
+  glow: '217 138 148',
   contentClassName: 'max-w-6xl',
   groups: [
     { items: [

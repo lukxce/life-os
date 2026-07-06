@@ -10,10 +10,10 @@ const config: ModuleConfig = {
   name: 'Finance',
   emoji: '💰',
   home: '/finance',
-  accentActive: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  accentText: 'text-blue-600 dark:text-blue-400',
-  accentFab: 'bg-blue-600 hover:bg-blue-700',
-  glow: '59 130 246',
+  accentActive: 'bg-[rgb(232,120,90)]/10 text-[rgb(232,120,90)] dark:bg-[rgb(232,120,90)]/15 dark:text-[rgb(232,120,90)]',
+  accentText: 'text-[rgb(232,120,90)] dark:text-[rgb(232,120,90)]',
+  accentFab: 'bg-[rgb(232,120,90)] hover:bg-[rgb(212,100,72)]',
+  glow: '232 120 90',
   contentClassName: 'max-w-none',
   groups: [
     { items: [

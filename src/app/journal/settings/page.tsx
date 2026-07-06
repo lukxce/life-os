@@ -50,7 +50,7 @@ export default function JournalSettingsPage() {
       </div>
 
       {/* Add new question */}
-      <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 p-4">
+      <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-4">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Add Question</p>
         <div className="flex gap-2">
           <input
@@ -73,7 +73,7 @@ export default function JournalSettingsPage() {
       </div>
 
       {/* Question list */}
-      <div className="bg-white/85 dark:bg-gray-900/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
+      <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
         <div className="px-4 py-3 border-b border-black/5 dark:border-white/5">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
             Current Questions <span className="text-gray-300 dark:text-gray-600 ml-1">{questions.length}</span>

@@ -128,13 +128,13 @@ export default function PlannerPage() {
       </div>
 
       {/* Currency + Income + Horizon */}
-      <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4 space-y-4">
+      <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4 space-y-4">
         <div>
           <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Plan in</label>
           <div className="flex gap-2 mt-1">
             {(['RSD', 'EUR'] as const).map(c => (
               <button key={c} onClick={() => switchCurrency(c)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${currency === c ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${currency === c ? 'bg-[rgb(232,120,90)] text-white border-[rgb(232,120,90)]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 {c}
               </button>
             ))}
@@ -144,7 +144,7 @@ export default function PlannerPage() {
         <div>
           <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Expected monthly income ({unit})</label>
           <NumberInput value={income} onChange={setIncome}
-            className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
           {income && currency === 'EUR' && (
             <p className="text-xs text-gray-400 mt-1">≈ {Math.round(+income * rate).toLocaleString()} RSD</p>
           )}
@@ -158,7 +158,7 @@ export default function PlannerPage() {
           <div className="flex gap-2 mt-1">
             {HORIZON_OPTIONS.map(h => (
               <button key={h} onClick={() => setHorizon(h)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${horizon === h ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${horizon === h ? 'bg-[rgb(232,120,90)] text-white border-[rgb(232,120,90)]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 {h}mo
               </button>
             ))}
@@ -169,11 +169,11 @@ export default function PlannerPage() {
       {/* Mode toggle */}
       <div className="flex gap-2">
         <button onClick={() => switchMode('auto')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-colors ${mode === 'auto' ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-colors ${mode === 'auto' ? 'bg-[rgb(232,120,90)] text-white border-[rgb(232,120,90)]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
           <Sparkles size={15} /> Use my averages
         </button>
         <button onClick={() => switchMode('manual')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-colors ${mode === 'manual' ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-colors ${mode === 'manual' ? 'bg-[rgb(232,120,90)] text-white border-[rgb(232,120,90)]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
           <SlidersHorizontal size={15} /> Set manually
         </button>
       </div>
@@ -182,14 +182,14 @@ export default function PlannerPage() {
       {loading ? (
         <div className="text-center text-gray-400 py-8 animate-pulse">Loading your data…</div>
       ) : (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 divide-y divide-black/5 dark:divide-white/5">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 divide-y divide-black/5 dark:divide-white/5">
           {rows.map((row, i) => (
             <div key={row.category} className="flex items-center gap-3 px-4 py-3">
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
               <span className="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{row.category}</span>
               <div className="w-32">
                 <NumberInput value={row.amount} onChange={v => updateRow(row.category, v)}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
               </div>
               <span className="text-xs text-gray-400 w-8 shrink-0">{unit}</span>
             </div>
@@ -227,7 +227,7 @@ export default function PlannerPage() {
 
           {/* Impact on current totals */}
           {currentTotals && monthlySurplus !== 0 && (
-            <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
+            <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                 Impact on your balance after {horizon} month{horizon > 1 ? 's' : ''}
               </h3>
@@ -262,7 +262,7 @@ export default function PlannerPage() {
 
           {/* Breakdown chart */}
           {chartData.length > 0 && (
-            <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
+            <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Monthly breakdown</h3>
               <ResponsiveContainer width="100%" height={Math.max(160, chartData.length * 36)}>
                 <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 16 }}>
@@ -281,7 +281,7 @@ export default function PlannerPage() {
 
           {/* Savings + total projection over time */}
           {horizon > 1 && monthlySurplus > 0 && (
-            <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
+            <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
                 Projected total balance over {horizon} months
               </h3>

@@ -162,7 +162,7 @@ export default function MerchantsPage() {
         </div>
       </div>
 
-      <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+      <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
         <div className="flex items-center gap-3 p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Sort by:</span>
           {[{ key: 'total', label: 'Total Spent' }, { key: 'count', label: 'Visits' }, { key: 'last', label: 'Last Visit' }].map(s => (
@@ -199,7 +199,7 @@ export default function MerchantsPage() {
                           value={editingName}
                           onChange={e => setEditingName(e.target.value)}
                           onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit() }}
-                          className="border border-blue-400 rounded px-2 py-0.5 text-sm w-40 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
+                          className="border border-blue-400 rounded px-2 py-0.5 text-sm w-40 focus:outline-none focus:ring-1 focus:ring-[rgb(232,120,90)] dark:bg-gray-800 dark:text-gray-100"
                         />
                         <button onClick={saveEdit} className="text-green-600 hover:text-green-700 p-0.5"><Check size={14} /></button>
                         <button onClick={cancelEdit} className="text-gray-400 hover:text-gray-600 p-0.5"><X size={14} /></button>

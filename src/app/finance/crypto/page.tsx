@@ -56,7 +56,7 @@ export default function CryptoPage() {
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Crypto Holdings</h2>
         <div className="flex gap-2">
           <button onClick={() => { setEditingId(null); setForm(defaultForm); setShowForm(s => !s) }}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700">
+            className="flex items-center gap-2 bg-[rgb(232,120,90)] text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">
             <Plus size={16} /> Add Holding
           </button>
         </div>
@@ -69,30 +69,30 @@ export default function CryptoPage() {
       </div>
 
       {showForm && (
-        <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
+        <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{editingId ? 'Edit Holding' : 'Add Holding'}</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Coin</label>
               <select value={form.symbol} onChange={e => setForm(p => ({ ...p, symbol: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
                 {SUPPORTED_SYMBOLS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Quantity</label>
               <input type="number" step="any" value={form.quantity} onChange={e => setForm(p => ({ ...p, quantity: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
             </div>
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={submit} className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">{editingId ? 'Update' : 'Save'}</button>
+            <button onClick={submit} className="bg-[rgb(232,120,90)] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">{editingId ? 'Update' : 'Save'}</button>
             <button onClick={() => { setShowForm(false); setEditingId(null); setForm(defaultForm) }} className="border border-gray-300 dark:border-gray-600 px-5 py-2 rounded-lg text-sm">Cancel</button>
           </div>
         </div>
       )}
 
-      <div className="bg-white/85 dark:bg-gray-900/70 rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+      <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
         {holdings.length === 0 ? (
           <p className="text-center text-gray-400 dark:text-gray-500 py-12">No holdings yet</p>
         ) : (

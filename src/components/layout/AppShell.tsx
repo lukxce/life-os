@@ -72,7 +72,7 @@ function Sidebar({ config }: { config: ModuleConfig }) {
   const isActive = useIsActive(config.home)
   const primary = config.actions?.[0]
   return (
-    <aside className="relative z-10 hidden md:flex flex-col w-56 shrink-0 h-screen border-r border-black/5 dark:border-white/5 bg-white/60 dark:bg-white/[0.03] backdrop-blur-2xl">
+    <aside className="relative z-10 hidden md:flex flex-col w-56 shrink-0 h-screen border-r border-black/5 dark:border-white/5 bg-surface/60 dark:bg-white/[0.03] backdrop-blur-2xl">
       <div className="px-5 pt-5 pb-3">
         <Link href="/" className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
           <Home size={11} /> Dashboard
@@ -131,7 +131,7 @@ function Sheet({ onClose, children }: { onClose: () => void; children: React.Rea
   return (
     <>
       <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl rounded-t-3xl px-4 pt-3 pb-28 max-h-[75vh] overflow-y-auto page-in">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface/90 dark:bg-surface/85 backdrop-blur-2xl rounded-t-3xl px-4 pt-3 pb-28 max-h-[75vh] overflow-y-auto page-in">
         <div className="w-9 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto mb-3" />
         {children}
       </div>
@@ -259,7 +259,7 @@ function BottomBar({ config }: { config: ModuleConfig }) {
         </>
       )}
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 pb-4 pt-1.5 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-t border-black/5 dark:border-white/5">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 pb-4 pt-1.5 bg-surface/70 dark:bg-surface/60 backdrop-blur-xl border-t border-black/5 dark:border-white/5">
         <div className="flex items-center">
           <button onClick={() => setSheet(s => s === 'apps' ? null : 'apps')}
             className={cn('flex-1 flex flex-col items-center gap-0.5 py-1.5 transition-colors',
@@ -297,14 +297,14 @@ function BottomBar({ config }: { config: ModuleConfig }) {
 export function AppShell({ config, children }: { config: ModuleConfig; children: React.ReactNode }) {
   const path = usePathname()
   return (
-    <div className="relative flex h-screen overflow-hidden bg-[#f5f5f7] dark:bg-[#0a0a0f]">
+    <div className="relative flex h-screen overflow-hidden bg-canvas dark:bg-canvas">
       <Ambient glow={config.glow} />
       <ModuleDock />
       <Sidebar config={config} />
 
       <div className="relative z-10 flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header */}
-        <header className="md:hidden bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-4 py-3 flex items-center justify-between shrink-0 z-30">
+        <header className="md:hidden bg-surface/70 dark:bg-surface/60 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-4 py-3 flex items-center justify-between shrink-0 z-30">
           <span className="font-bold text-gray-900 dark:text-white text-lg">{config.emoji} {config.name}</span>
           <div className="flex items-center gap-1">
             <GlobalSearch mobileIconOnly />
@@ -314,7 +314,7 @@ export function AppShell({ config, children }: { config: ModuleConfig; children:
         </header>
 
         {/* Desktop header */}
-        <header className="hidden md:flex items-center justify-end px-6 py-3 bg-white/60 dark:bg-white/[0.03] backdrop-blur-2xl border-b border-black/5 dark:border-white/5 gap-2 shrink-0 z-30">
+        <header className="hidden md:flex items-center justify-end px-6 py-3 bg-surface/60 dark:bg-white/[0.03] backdrop-blur-2xl border-b border-black/5 dark:border-white/5 gap-2 shrink-0 z-30">
           <GlobalSearch />
           <ThemeToggle />
           {config.headerExtra}
