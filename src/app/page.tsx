@@ -7,7 +7,7 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { ModuleDock } from '@/components/layout/ModuleDock'
 import { Ambient } from '@/components/layout/AppShell'
-import { NudgeBanner } from '@/components/ui/NudgeBanner'
+import { FloatingMascot } from '@/components/ui/FloatingMascot'
 import {
   TrendingUp, TrendingDown, FileText, ArrowRight, ChevronRight,
   Wallet, BarChart3, Sparkles, Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
@@ -124,9 +124,6 @@ export default function HomePage() {
         </header>
 
         <main className="page-in max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-7 pb-16">
-
-          {/* ── Companion nudge ── */}
-          <NudgeBanner />
 
           {/* ── Widgets row ── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -259,6 +256,7 @@ export default function HomePage() {
 
         </main>
       </div>
+      <FloatingMascot />
       <GlobalSearch keyboardOnly />
     </div>
   )

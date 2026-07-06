@@ -5,7 +5,6 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { HeroStat } from '@/components/ui/synth'
-import { NudgeBanner } from '@/components/ui/NudgeBanner'
 
 const COLORS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4']
 
@@ -87,9 +86,6 @@ export default function Dashboard() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 md:px-6 space-y-6 pt-4 pb-8">
-
-        <NudgeBanner />
-
         {/* ── Period pills ── */}
         <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {[

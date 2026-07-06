@@ -74,6 +74,18 @@ export function startOfDay(date: Date): Date {
   return d
 }
 
+// startOfDay() truncates using the RUNNING PROCESS's local timezone —
+// fine for purely client-side comparisons, but wrong for anything that
+// crosses the client/server boundary (habit log dates): if the server
+// process isn't in the same timezone the client assumed, the "day" shifts
+// and logs land in the wrong bucket. Use this instead for habit-log dates —
+// pure string slicing + Date.UTC, zero dependency on process timezone.
+export function utcMidnight(input: string): Date {
+  const ymd = input.slice(0, 10) // "YYYY-MM-DD" from either a bare date or a full ISO string
+  const [y, m, d] = ymd.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0))
+}
+
 type HabitSchedule = {
   frequency: string
   frequencyDays: number[]

@@ -1,14 +1,14 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { isScheduledDay, startOfDay } from '@/lib/utils'
+import { isScheduledDay, utcMidnight } from '@/lib/utils'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const dateParam = searchParams.get('date')
-  const day = dateParam ? startOfDay(new Date(dateParam + 'T12:00:00')) : startOfDay(new Date())
+  const day = utcMidnight(dateParam ?? new Date().toISOString())
   const tomorrow = new Date(day)
-  tomorrow.setDate(tomorrow.getDate() + 1)
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
 
   const habits = await prisma.habit.findMany({
     where: { active: true, paused: false },

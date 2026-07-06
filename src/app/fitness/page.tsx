@@ -3,7 +3,6 @@ import { useEffect, useState, useCallback } from 'react'
 import { ChevronRight, Droplets, Footprints, Moon } from 'lucide-react'
 import Link from 'next/link'
 import { ScoreRing, HeroStat, Delta } from '@/components/ui/synth'
-import { NudgeBanner } from '@/components/ui/NudgeBanner'
 
 interface MealSlot { id: string; dayOfWeek: number; mealType: string; name: string; calories: number; protein: number }
 interface WorkoutLog { id: string; date: string; type: string; duration: number | null }
@@ -127,9 +126,7 @@ export default function FitnessTodayPage() {
         </div>
       </div>
 
-      <div className="px-4 pt-4 pb-6 space-y-4">
-        <NudgeBanner />
-        {/* ── Today's meals ── */}
+      <div className="px-4 pt-4 pb-6 space-y-4">        {/* ── Today's meals ── */}
         <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
           <div className="px-4 py-3 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Today's meals</h2>

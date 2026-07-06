@@ -7,6 +7,7 @@ import { LayoutGrid, Command, X, Home, Plus } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 import { GlobalSearch } from './GlobalSearch'
 import { ModuleDock } from './ModuleDock'
+import { FloatingMascot } from '@/components/ui/FloatingMascot'
 import { cn } from '@/lib/utils'
 
 // ── Life OS navigation, v3 ────────────────────────────────────────────────────
@@ -332,6 +333,7 @@ export function AppShell({ config, children }: { config: ModuleConfig; children:
       </div>
 
       <BottomBar config={config} />
+      <FloatingMascot />
       <GlobalSearch keyboardOnly />
     </div>
   )

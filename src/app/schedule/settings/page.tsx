@@ -22,12 +22,12 @@ function AddCalendarModal({ onClose, onAdd }: { onClose: () => void; onAdd: (dat
         </div>
 
         <input autoFocus type="text" placeholder="Name (e.g. Work, Personal)"
-          className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10 dark:text-white"
+          className="w-full text-sm bg-canvas-alt dark:bg-surface rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10 dark:text-white"
           value={name} onChange={e => setName(e.target.value)} />
 
         <div>
           <input type="url" placeholder="ICS URL (https://…/basic.ics)"
-            className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10 dark:text-white"
+            className="w-full text-sm bg-canvas-alt dark:bg-surface rounded-xl px-4 py-3 outline-none border border-black/10 dark:border-white/10 dark:text-white"
             value={url} onChange={e => setUrl(e.target.value)} />
           <p className="text-xs text-gray-400 mt-1.5">Google Calendar: Settings → calendar → Secret iCal address</p>
         </div>
@@ -44,7 +44,7 @@ function AddCalendarModal({ onClose, onAdd }: { onClose: () => void; onAdd: (dat
         </div>
 
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-400">Cancel</button>
+          <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-canvas-alt dark:bg-surface text-sm font-medium text-ink/70">Cancel</button>
           <button
             onClick={() => { if (name.trim() && url.trim()) { onAdd({ name: name.trim(), url: url.trim(), color }); onClose() } }}
             className="flex-1 py-3 rounded-xl bg-indigo-600 text-sm font-semibold text-white disabled:opacity-50"
@@ -124,7 +124,7 @@ export default function ScheduleSettingsPage() {
     <div className="min-h-screen bg-canvas dark:bg-canvas">
       {/* Header */}
       <header className="bg-surface/90 dark:bg-surface/70 border-b border-black/5 dark:border-white/5 px-4 sm:px-6 py-3 flex items-center gap-3">
-        <Link href="/schedule" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <Link href="/schedule" className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
           <ArrowLeft size={17} />
         </Link>
         <div>
@@ -148,7 +148,7 @@ export default function ScheduleSettingsPage() {
               <input
                 type="text"
                 placeholder="e.g. Dubai, UAE"
-                className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2.5 outline-none border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 dark:text-white"
+                className="w-full text-sm bg-canvas-alt dark:bg-surface rounded-xl px-4 py-2.5 outline-none border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 dark:text-white"
                 value={location}
                 onChange={e => setLocation(e.target.value)}
               />
@@ -161,7 +161,7 @@ export default function ScheduleSettingsPage() {
               <input
                 type="url"
                 placeholder="e.g. https://calendly.com/yourname"
-                className="w-full text-sm bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2.5 outline-none border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 dark:text-white"
+                className="w-full text-sm bg-canvas-alt dark:bg-surface rounded-xl px-4 py-2.5 outline-none border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 dark:text-white"
                 value={meetingLink}
                 onChange={e => setMeetingLink(e.target.value)}
               />

@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { ChevronLeft, ChevronRight, Pencil, Plane, Heart, Cake } from 'lucide-react'
 import Link from 'next/link'
 import { ScoreRing, TrendBars, Delta, HeroStat } from '@/components/ui/synth'
+import { toast } from 'sonner'
 
 interface Contact {
   id: string; name: string; emoji?: string | null; birthday?: string | null
@@ -168,18 +169,32 @@ export default function TodayPage() {
   const total = dailyItems.length
   const pct = total > 0 ? Math.round((totalDone / total) * 100) : 0
 
+  async function postLog(body: Record<string, unknown>) {
+    try {
+      const res = await fetch('/api/life/logs', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      return true
+    } catch (err) {
+      console.error('[habits] save failed', err)
+      toast.error("Couldn't save — check the connection and try again")
+      return false
+    }
+  }
+
   async function handleToggle(item: TodayItem, completed: boolean) {
     setItems(prev => prev.map(i => i.habit.id === item.habit.id ? { ...i, log: { ...(i.log ?? {}), completed } } : i))
-    await fetch('/api/life/logs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ habitId: item.habit.id, date: toLocalDateStr(selectedDate) + "T12:00:00.000Z", completed, value: item.log?.value ?? null }) })
+    const ok = await postLog({ habitId: item.habit.id, date: toLocalDateStr(selectedDate) + 'T12:00:00.000Z', completed, value: item.log?.value ?? null })
+    if (!ok) setItems(prev => prev.map(i => i.habit.id === item.habit.id ? { ...i, log: { ...(i.log ?? {}), completed: !completed } } : i))
     loadScores()
   }
 
   async function handleQuantity(item: TodayItem, value: number) {
     const completed = item.habit.target != null && value >= item.habit.target
     setItems(prev => prev.map(i => i.habit.id === item.habit.id ? { ...i, log: { ...(i.log ?? {}), value, completed } } : i))
-    await fetch('/api/life/logs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ habitId: item.habit.id, date: toLocalDateStr(selectedDate) + "T12:00:00.000Z", completed, value }) })
+    const ok = await postLog({ habitId: item.habit.id, date: toLocalDateStr(selectedDate) + 'T12:00:00.000Z', completed, value })
+    if (!ok) load(selectedDate)
     loadScores()
   }
 
@@ -189,8 +204,8 @@ export default function TodayPage() {
     const allDone = item.habit.subTasks.length > 0 && completedSubTaskIds.length >= item.habit.subTasks.length
     const completed = allDone || (item.log?.completed ?? false)
     setItems(p => p.map(i => i.habit.id === item.habit.id ? { ...i, log: { ...(i.log ?? {}), completed, completedSubTaskIds } } : i))
-    await fetch('/api/life/logs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ habitId: item.habit.id, date: toLocalDateStr(selectedDate) + "T12:00:00.000Z", completed, value: item.log?.value ?? null, completedSubTaskIds }) })
+    const ok = await postLog({ habitId: item.habit.id, date: toLocalDateStr(selectedDate) + 'T12:00:00.000Z', completed, value: item.log?.value ?? null, completedSubTaskIds })
+    if (!ok) load(selectedDate)
     loadScores()
   }
 
