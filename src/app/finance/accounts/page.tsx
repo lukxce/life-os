@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { formatRSD, formatEUR } from '@/lib/utils'
-import { Plus, Pencil, X, Trash2, Check } from 'lucide-react'
+import { Plus, Pencil, X, Trash2, Check, Star } from 'lucide-react'
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<any[]>([])
@@ -82,6 +82,14 @@ export default function AccountsPage() {
     load()
   }
 
+  const togglePin = async (acc: any) => {
+    setAccounts(prev => prev.map(x => x.id === acc.id ? { ...x, pinned: !acc.pinned } : x))
+    await fetch('/api/finance/accounts', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: acc.id, pinned: !acc.pinned })
+    })
+  }
+
   const deleteAccount = async (acc: any) => {
     const confirmed = confirm(`Delete "${acc.name}"?\n\nThis will fail if the account has any income, expenses, transfers, or conversions linked to it. You'll need to delete those first.`)
     if (!confirmed) return
@@ -133,6 +141,11 @@ export default function AccountsPage() {
               <p className="text-xs text-ink/40">{a.currency} · {a.type}</p>
             </div>
             <div className="flex items-center gap-0.5 shrink-0">
+              <button onClick={() => togglePin(a)}
+                className={`p-1.5 rounded ${a.pinned ? 'text-[rgb(220,161,84)]' : 'text-ink/30 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5'}`}
+                title={a.pinned ? 'Shown on dashboard — click to hide' : 'Pin to dashboard'}>
+                <Star className="w-4 h-4" fill={a.pinned ? 'currentColor' : 'none'} />
+              </button>
               <button onClick={() => startRename(a)} className="p-1.5 text-ink/30 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5 rounded" title="Rename">
                 <Pencil className="w-4 h-4" />
               </button>

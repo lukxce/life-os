@@ -82,25 +82,36 @@ export default function HomePage() {
   const [justDone, setJustDone] = useState<Set<string>>(new Set())
   const [removed, setRemoved] = useState<Set<string>>(new Set())
   const [name, setName] = useState('')
-  const now = new Date()
-  const hour = now.getHours()
-  const dateStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+  // Only for the header display at mount — NOT reused for any API call.
+  // Every fetch below computes its own fresh `new Date()` at call time;
+  // closing over a single outer `now` was the actual bug — a memoized
+  // callback with an empty dep array kept sending the time from whenever
+  // the page first loaded, forever, so a tab left open since morning
+  // kept reporting morning hours all afternoon.
+  const [displayNow] = useState(() => new Date())
+  const hour = displayNow.getHours()
+  const dateStr = displayNow.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
   const loadRightNow = useCallback(() => {
+    const n = new Date()
     const p = new URLSearchParams({
-      h: String(now.getHours()), m: String(now.getMinutes()),
-      dow: String(now.getDay()), date: toLocalDateStr(now),
+      h: String(n.getHours()), m: String(n.getMinutes()),
+      dow: String(n.getDay()), date: toLocalDateStr(n), ts: String(n.getTime()),
     })
     fetch(`/api/right-now?${p}`).then(r => r.json()).then(setRightNow).catch(() => {})
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
-    const p = new URLSearchParams({ day: String(now.getDate()) })
+    const n = new Date()
+    const p = new URLSearchParams({ day: String(n.getDate()) })
     fetch(`/api/dashboard?${p}`).then(r => r.json()).then(setData).catch(() => {})
     fetch('/api/life/day-scores?days=1').then(r => r.json()).then(setDayScores).catch(() => {})
     loadRightNow()
     setName(localStorage.getItem('userName') ?? '')
-  }, [loadRightNow]) // eslint-disable-line react-hooks/exhaustive-deps
+    // Keep Right Now honest if the tab stays open across a time-of-day boundary
+    const interval = setInterval(loadRightNow, 5 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [loadRightNow])
 
   async function toggleHabit(habitId: string) {
     setJustDone(prev => new Set(prev).add(habitId))
@@ -108,7 +119,7 @@ export default function HomePage() {
     try {
       const res = await fetch('/api/life/logs', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ habitId, date: toLocalDateStr(now) + 'T12:00:00.000Z', completed: true }),
+        body: JSON.stringify({ habitId, date: toLocalDateStr(new Date()) + 'T12:00:00.000Z', completed: true }),
       })
       if (!res.ok) throw new Error()
       setTimeout(loadRightNow, 700)

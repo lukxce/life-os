@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { isScheduledDay, utcMidnight } from '@/lib/utils'
+import { parseICS } from '@/lib/ics'
 
 // ── Real, first-party data only. No invented urgency, no fake countdowns. ──
 // "Now" is always the CLIENT's local clock, passed in as query params — the
@@ -32,6 +33,41 @@ function timeOfDayBucket(nowMin: number): string {
   return 'night'
 }
 
+// Live external calendars (Google/Hypefy/etc, whatever's configured under
+// ICSCalendar). Real events, real times — fetched with a short timeout each
+// so one dead calendar can't hang the whole Right Now response.
+async function liveCalendarEvents(nowMs: number) {
+  const calendars = await prisma.iCSCalendar.findMany()
+  const results = await Promise.allSettled(
+    calendars.map(async cal => {
+      const res = await fetch(cal.url, {
+        headers: { 'User-Agent': 'LifeOS/1.0' },
+        signal: AbortSignal.timeout(5000),
+        cache: 'no-store',
+      })
+      if (!res.ok) return []
+      return parseICS(await res.text())
+    })
+  )
+
+  const items: { id: string; kind: 'meeting'; urgency: number; title: string; detail: string; href: string }[] = []
+  for (const r of results) {
+    if (r.status !== 'fulfilled') continue
+    for (const ev of r.value) {
+      if (ev.allDay) continue
+      const startMs = new Date(ev.start).getTime()
+      const endMs = new Date(ev.end).getTime()
+      const diffMin = Math.round((startMs - nowMs) / 60000)
+      if (nowMs >= startMs && nowMs <= endMs) {
+        items.push({ id: `ics-${ev.uid}`, kind: 'meeting', urgency: 0, title: ev.summary, detail: 'happening now', href: '/schedule' })
+      } else if (diffMin > 0 && diffMin <= 60) {
+        items.push({ id: `ics-${ev.uid}`, kind: 'meeting', urgency: diffMin, title: ev.summary, detail: `in ${diffMin} min`, href: '/schedule' })
+      }
+    }
+  }
+  return items
+}
+
 interface RightNowItem {
   id: string
   kind: 'meeting' | 'meal' | 'habit' | 'training'
@@ -50,6 +86,9 @@ export async function GET(req: NextRequest) {
   const localMinute = sp.has('m') ? parseInt(sp.get('m')!) : now.getUTCMinutes()
   const localDow = sp.has('dow') ? parseInt(sp.get('dow')!) : now.getUTCDay()
   const localDate = sp.get('date') ?? now.toISOString().slice(0, 10)
+  // Absolute instant — needed for live ICS events (their start/end are real
+  // UTC timestamps, unlike the wall-clock minutes used for schedule/meals)
+  const nowMs = sp.has('ts') ? parseInt(sp.get('ts')!) : now.getTime()
 
   const nowMin = localHour * 60 + localMinute
   const dow = localDow || 7
@@ -58,7 +97,13 @@ export async function GET(req: NextRequest) {
 
   const items: RightNowItem[] = []
 
-  // ── Schedule: your recurring weekly blocks, current or starting soon ──────
+  // ── Live calendars: your actual Google/Hypefy/etc events ──────────────────
+  try {
+    const liveEvents = await liveCalendarEvents(nowMs)
+    items.push(...liveEvents)
+  } catch { /* one bad calendar feed shouldn't break Right Now */ }
+
+  // ── Schedule: your recurring weekly blocks — only fills gaps live events don't ──
   const blocks = await prisma.scheduleBlock.findMany({ where: { day: dayKey }, orderBy: { startTime: 'asc' } })
   for (const b of blocks) {
     const start = toMinutes(b.startTime)

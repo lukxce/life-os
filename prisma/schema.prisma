@@ -19,6 +19,7 @@ model Account {
   startingBalance Float     @default(0)
   manualOverride  Float?
   overrideDate    DateTime?
+  pinned          Boolean   @default(false) // shown on Home/Finance dashboard; rest live behind "See all"
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   incomeEntries   IncomeEntry[]

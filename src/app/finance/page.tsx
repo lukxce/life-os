@@ -112,16 +112,22 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* ── Accounts: scroll strip on mobile, full grid on desktop ── */}
-        {data && (
+        {/* ── Accounts: pinned ones only — the rest live behind "See all" ── */}
+        {data && (() => {
+          const pinned = data.accounts.filter((a: any) => a.pinned)
+          const shown = pinned.length > 0 ? pinned : data.accounts
+          const hiddenCount = data.accounts.length - shown.length
+          return (
           <div>
             <div className="flex items-center justify-between mb-2 px-1">
               <h3 className="text-xs font-bold uppercase tracking-widest text-ink/40">Accounts</h3>
-              <Link href="/finance/accounts" className="text-xs text-[rgb(232,120,90)] hover:underline">Manage</Link>
+              <Link href="/finance/accounts" className="text-xs text-[rgb(232,120,90)] hover:underline">
+                {pinned.length > 0 ? `See all ${data.accounts.length} →` : 'Pin your favorites →'}
+              </Link>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x md:grid md:grid-cols-3 md:gap-3 md:overflow-visible md:mx-0 md:px-0 md:pb-0"
               style={{ scrollbarWidth: 'none' }}>
-              {data.accounts.map(acc => {
+              {shown.map(acc => {
                 const isCompany = acc.type === 'company'
                 const isCrypto = acc.name.toLowerCase().includes('crypto')
                 return (
@@ -141,8 +147,12 @@ export default function Dashboard() {
                 )
               })}
             </div>
+            {hiddenCount > 0 && (
+              <p className="text-[11px] text-ink/30 mt-2 px-1">+{hiddenCount} more account{hiddenCount > 1 ? 's' : ''} hidden — pin the ones you use daily</p>
+            )}
           </div>
-        )}
+          )
+        })()}
 
         {/* ── Recent activity ── */}
         {recent.length > 0 && (
