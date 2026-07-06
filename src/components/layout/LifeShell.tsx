@@ -3,11 +3,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppShell, ModuleConfig } from './AppShell'
 import { QuickAddSheet } from './QuickAddSheet'
-import { CalendarDays, CalendarCheck, Target, BarChart2, History, ListChecks, Plus } from 'lucide-react'
+import { CalendarDays, CalendarCheck, Target, BarChart2, History, ListChecks, Plus, Sparkles } from 'lucide-react'
 
 const baseConfig: Omit<ModuleConfig, 'fab'> = {
   name: 'Habits',
-  emoji: '🧘',
+  icon: Sparkles,
   home: '/life',
   accentActive: 'bg-[rgb(167,120,160)]/10 text-[rgb(167,120,160)] dark:bg-[rgb(167,120,160)]/15 dark:text-[rgb(167,120,160)]',
   accentText: 'text-[rgb(167,120,160)] dark:text-[rgb(167,120,160)]',

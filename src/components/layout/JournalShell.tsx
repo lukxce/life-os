@@ -4,7 +4,7 @@ import { BookOpen, Settings } from 'lucide-react'
 
 const config: ModuleConfig = {
   name: 'Journal',
-  emoji: '📓',
+  icon: BookOpen,
   home: '/journal',
   accentActive: 'bg-[rgb(232,120,90)]/10 text-[rgb(232,120,90)] dark:bg-[rgb(232,120,90)]/15 dark:text-[rgb(232,120,90)]',
   accentText: 'text-[rgb(232,120,90)] dark:text-[rgb(232,120,90)]',

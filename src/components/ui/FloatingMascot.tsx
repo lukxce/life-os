@@ -1,21 +1,32 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Mascot, MascotMood } from './Mascot'
 
-interface Nudge { id: string; mood: 'curious' | 'content'; message: string; href: string }
+interface Nudge { id: string; mood: 'curious' | 'content'; message: string; href: string; module: string }
 
-/** Persistent companion — present on every screen, not just a few dashboards. */
+function moduleForPath(path: string): string {
+  if (path === '/') return 'home'
+  const seg = path.split('/')[1]
+  return seg === 'books' ? 'watchlist' : seg
+}
+
+/** Persistent companion — present on every screen, prioritizes whatever's
+ *  relevant to the module you're actually looking at, not just one thing. */
 export function FloatingMascot() {
   const [nudges, setNudges] = useState<Nudge[] | null>(null)
   const [open, setOpen] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     fetch('/api/life/nudges').then(r => r.json()).then(d => setNudges(d.nudges ?? [])).catch(() => setNudges([]))
   }, [])
 
   if (nudges === null) return null
-  const top = nudges[0]
+
+  const currentModule = moduleForPath(pathname)
+  const top = nudges.find(n => n.module === currentModule) ?? nudges[0]
   const mood: MascotMood = top ? 'curious' : 'pleased'
 
   return (
@@ -29,6 +40,9 @@ export function FloatingMascot() {
                 className="text-xs font-bold text-[rgb(var(--coral))] hover:underline mt-1.5 inline-block">
                 Take care of it →
               </Link>
+              {nudges.length > 1 && (
+                <p className="text-[10px] text-ink/30 mt-2">+{nudges.length - 1} more waiting elsewhere</p>
+              )}
             </>
           ) : (
             <p className="text-sm font-semibold text-ink leading-snug">All caught up — nothing needs you right now.</p>

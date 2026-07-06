@@ -4,7 +4,7 @@ import { LayoutDashboard, UtensilsCrossed, Scale, Dumbbell } from 'lucide-react'
 
 const config: ModuleConfig = {
   name: 'Fitness',
-  emoji: '💪',
+  icon: Dumbbell,
   home: '/fitness',
   accentActive: 'bg-[rgb(220,161,84)]/10 text-[rgb(220,161,84)] dark:bg-[rgb(220,161,84)]/15 dark:text-[rgb(220,161,84)]',
   accentText: 'text-[rgb(220,161,84)] dark:text-[rgb(220,161,84)]',

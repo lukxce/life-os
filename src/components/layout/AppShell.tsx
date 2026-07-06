@@ -3,7 +3,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { LayoutGrid, Command, X, Home, Plus } from 'lucide-react'
+import {
+  LayoutGrid, Command, X, Plus, LayoutDashboard, Wallet, Sparkles,
+  Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard, ChevronLeft,
+} from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 import { GlobalSearch } from './GlobalSearch'
 import { ModuleDock } from './ModuleDock'
@@ -23,7 +26,7 @@ export interface ModuleAction { label: string; icon: LucideIcon; color?: string;
 
 export interface ModuleConfig {
   name: string
-  emoji: string
+  icon: LucideIcon
   home: string
   /** Tailwind literal classes (JIT-safe) for the module accent */
   accentActive: string
@@ -39,15 +42,15 @@ export interface ModuleConfig {
 }
 
 const APPS = [
-  { href: '/',          emoji: '🏠', title: 'Dashboard', gradient: 'from-gray-500 to-gray-700' },
-  { href: '/finance',   emoji: '💰', title: 'Finance',   gradient: 'from-blue-500 to-blue-600' },
-  { href: '/life',      emoji: '🧘', title: 'Habits',    gradient: 'from-indigo-500 to-violet-600' },
-  { href: '/fitness',   emoji: '💪', title: 'Fitness',   gradient: 'from-green-500 to-emerald-600' },
-  { href: '/schedule',  emoji: '📅', title: 'Schedule',  gradient: 'from-sky-400 to-blue-500' },
-  { href: '/journal',   emoji: '📓', title: 'Journal',   gradient: 'from-amber-400 to-orange-500' },
-  { href: '/food',      emoji: '🗺️', title: 'Food Map',  gradient: 'from-orange-400 to-red-500' },
-  { href: '/personal',  emoji: '🗂️', title: 'Personal',  gradient: 'from-teal-400 to-cyan-600' },
-  { href: '/watchlist', emoji: '🎬', title: 'Watchlist', gradient: 'from-violet-500 to-purple-600' },
+  { href: '/',          icon: LayoutDashboard, title: 'Dashboard', gradient: 'from-gray-500 to-gray-700' },
+  { href: '/finance',   icon: Wallet,          title: 'Finance',   gradient: 'from-[rgb(232,120,90)] to-[rgb(220,161,84)]' },
+  { href: '/life',      icon: Sparkles,        title: 'Habits',    gradient: 'from-[rgb(167,120,160)] to-[rgb(217,138,148)]' },
+  { href: '/fitness',   icon: Dumbbell,        title: 'Fitness',   gradient: 'from-[rgb(220,161,84)] to-[rgb(232,120,90)]' },
+  { href: '/schedule',  icon: CalendarDays,    title: 'Schedule',  gradient: 'from-[rgb(217,138,148)] to-[rgb(167,120,160)]' },
+  { href: '/journal',   icon: BookOpen,        title: 'Journal',   gradient: 'from-[rgb(220,161,84)] to-[rgb(217,138,148)]' },
+  { href: '/food',      icon: MapPin,          title: 'Food Map',  gradient: 'from-[rgb(232,120,90)] to-[rgb(217,138,148)]' },
+  { href: '/personal',  icon: FolderLock,      title: 'Personal',  gradient: 'from-[rgb(167,120,160)] to-[rgb(220,161,84)]' },
+  { href: '/watchlist', icon: Clapperboard,    title: 'Watchlist', gradient: 'from-[rgb(217,138,148)] to-[rgb(232,120,90)]' },
 ]
 
 /** Module-tinted aurora canvas */
@@ -74,13 +77,14 @@ function Sidebar({ config }: { config: ModuleConfig }) {
   const primary = config.actions?.[0]
   return (
     <aside className="relative z-10 hidden md:flex flex-col w-56 shrink-0 h-screen border-r border-black/5 dark:border-white/5 bg-surface/60 dark:bg-white/[0.03] backdrop-blur-2xl">
-      <div className="px-5 pt-5 pb-3">
-        <Link href="/" className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-          <Home size={11} /> Dashboard
+      <div className="px-3 pt-4 pb-3">
+        <Link href="/"
+          className="flex items-center gap-2 px-2.5 py-2 rounded-xl text-sm font-semibold text-ink/70 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+          <ChevronLeft size={16} /> Dashboard
         </Link>
-        <div className="flex items-center gap-2 mt-2">
-          <span className="text-xl">{config.emoji}</span>
-          <span className="font-bold text-gray-900 dark:text-white">{config.name}</span>
+        <div className="flex items-center gap-2 mt-3 px-2.5">
+          <config.icon size={18} className="text-ink/70" />
+          <span className="font-bold text-ink">{config.name}</span>
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
@@ -156,9 +160,9 @@ function AppsSheet({ onClose }: { onClose: () => void }) {
           return (
             <Link key={m.href} href={m.href} onClick={onClose} className="flex flex-col items-center gap-1.5">
               <span className={cn(
-                'flex items-center justify-center w-[58px] h-[58px] rounded-[17px] bg-gradient-to-br text-[26px] shadow-md shadow-black/10 active:scale-95 transition-transform',
+                'flex items-center justify-center w-[58px] h-[58px] rounded-[17px] bg-gradient-to-br shadow-md shadow-black/10 active:scale-95 transition-transform',
                 m.gradient, active && 'ring-2 ring-white dark:ring-white/60 ring-offset-2 ring-offset-transparent')}>
-                {m.emoji}
+                <m.icon size={26} className="text-white" strokeWidth={1.8} />
               </span>
               <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300">{m.title}</span>
             </Link>
@@ -174,7 +178,7 @@ function GoSheet({ config, onClose }: { config: ModuleConfig; onClose: () => voi
   return (
     <Sheet onClose={onClose}>
       <div className="flex items-center justify-between mb-3 px-1">
-        <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{config.emoji} {config.name}</span>
+        <span className="flex items-center gap-1.5 font-semibold text-ink text-sm"><config.icon size={16} /> {config.name}</span>
         <button onClick={onClose} className="p-1.5 rounded-full bg-black/5 dark:bg-white/10">
           <X size={15} className="text-gray-500 dark:text-gray-400" />
         </button>
@@ -306,7 +310,7 @@ export function AppShell({ config, children }: { config: ModuleConfig; children:
       <div className="relative z-10 flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header */}
         <header className="md:hidden bg-surface/70 dark:bg-surface/60 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-4 py-3 flex items-center justify-between shrink-0 z-30">
-          <span className="font-bold text-gray-900 dark:text-white text-lg">{config.emoji} {config.name}</span>
+          <span className="flex items-center gap-2 font-bold text-ink text-lg"><config.icon size={19} /> {config.name}</span>
           <div className="flex items-center gap-1">
             <GlobalSearch mobileIconOnly />
             <ThemeToggle />

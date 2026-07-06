@@ -1,10 +1,10 @@
 'use client'
 import { AppShell, ModuleConfig } from './AppShell'
-import { LayoutDashboard, Users, ShieldCheck } from 'lucide-react'
+import { LayoutDashboard, Users, ShieldCheck, FolderLock } from 'lucide-react'
 
 const config: ModuleConfig = {
   name: 'Personal',
-  emoji: '🗂️',
+  icon: FolderLock,
   home: '/personal',
   accentActive: 'bg-[rgb(167,120,160)]/10 text-[rgb(167,120,160)] dark:bg-[rgb(167,120,160)]/15 dark:text-[rgb(167,120,160)]',
   accentText: 'text-[rgb(167,120,160)] dark:text-[rgb(167,120,160)]',

@@ -1,10 +1,10 @@
 'use client'
 import { AppShell, ModuleConfig } from './AppShell'
-import { Tv, BookOpen } from 'lucide-react'
+import { Tv, BookOpen, Clapperboard } from 'lucide-react'
 
 const config: ModuleConfig = {
   name: 'Watchlist',
-  emoji: '🎬',
+  icon: Clapperboard,
   home: '/watchlist',
   accentActive: 'bg-[rgb(217,138,148)]/10 text-[rgb(217,138,148)] dark:bg-[rgb(217,138,148)]/15 dark:text-[rgb(217,138,148)]',
   accentText: 'text-[rgb(217,138,148)] dark:text-[rgb(217,138,148)]',
