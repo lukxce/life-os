@@ -7,10 +7,11 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { ModuleDock } from '@/components/layout/ModuleDock'
 import { Ambient } from '@/components/layout/AppShell'
-import { FloatingMascot } from '@/components/ui/FloatingMascot'
+import { Mascot, MascotMood } from '@/components/ui/Mascot'
 import {
-  TrendingUp, TrendingDown, FileText, ArrowRight, ChevronRight,
-  Wallet, BarChart3, Sparkles, Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
+  TrendingUp, TrendingDown, FileText, ArrowRight, ChevronRight, Wallet, BarChart3,
+  Sparkles, Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
+  Users, Utensils, Dumbbell as WorkoutIcon,
 } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
@@ -33,6 +34,11 @@ interface DashboardData {
   }
 }
 
+interface RightNowItem { id: string; kind: 'meeting' | 'meal' | 'habit' | 'training'; title: string; detail: string; href: string }
+interface RightNow { top: RightNowItem | null; upcoming: RightNowItem[]; timeOfDay: string; mood: MascotMood }
+
+const KIND_ICON: Record<string, any> = { meeting: Users, meal: Utensils, habit: Sparkles, training: WorkoutIcon }
+
 const MODULES = [
   { href: '/finance',   icon: Wallet,       title: 'Finance',   gradient: 'from-[rgb(232,120,90)] to-[rgb(220,161,84)]' },
   { href: '/life',      icon: Sparkles,     title: 'Habits',    gradient: 'from-[rgb(167,120,160)] to-[rgb(217,138,148)]' },
@@ -44,7 +50,8 @@ const MODULES = [
   { href: '/watchlist', icon: Clapperboard, title: 'Watchlist', gradient: 'from-[rgb(217,138,148)] to-[rgb(232,120,90)]' },
 ]
 
-// Training plan by day of week (1=Mon … 7=Sun)
+// Training plan by day of week (1=Mon … 7=Sun) — used only when Right Now
+// has nothing more pressing to show, as the "your day at a glance" fallback
 const DAY_PLAN: Record<number, { activity: string; emoji: string }> = {
   1: { activity: 'PT Session',  emoji: '🏋️' },
   2: { activity: 'Bike Ride',   emoji: '🚴' },
@@ -55,34 +62,6 @@ const DAY_PLAN: Record<number, { activity: string; emoji: string }> = {
   7: { activity: 'Full Rest',   emoji: '😴' },
 }
 
-/** Apple-Watch-style progress ring, warm-toned */
-function ActivityRing({ completed, total }: { completed: number; total: number }) {
-  const pct = total > 0 ? Math.min(completed / total, 1) : 0
-  const R = 34, C = 2 * Math.PI * R
-  return (
-    <div className="relative w-[88px] h-[88px]">
-      <svg viewBox="0 0 88 88" className="w-full h-full -rotate-90">
-        <circle cx="44" cy="44" r={R} fill="none" strokeWidth="9" stroke="rgb(var(--canvas-alt))" />
-        <circle cx="44" cy="44" r={R} fill="none" strokeWidth="9" strokeLinecap="round"
-          stroke="url(#ringGrad)"
-          strokeDasharray={C} strokeDashoffset={C * (1 - pct)}
-          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.25, 0.1, 0.25, 1)' }} />
-        <defs>
-          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgb(232,120,90)" />
-            <stop offset="100%" stopColor="rgb(220,161,84)" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-lg font-bold text-ink leading-none">
-          {completed}<span className="text-xs font-medium text-ink/40">/{total}</span>
-        </span>
-      </div>
-    </div>
-  )
-}
-
 function greeting() {
   const h = new Date().getHours()
   if (h < 12) return 'Good morning'
@@ -90,8 +69,42 @@ function greeting() {
   return 'Good evening'
 }
 
+// Canvas tint drifts gently with the clock — warmer near dawn/dusk, quieter at midday
+function timeOfDayGlow(): string {
+  const h = new Date().getHours() + new Date().getMinutes() / 60
+  if (h < 6 || h >= 21) return '120 100 140'   // night — quiet plum
+  if (h < 10) return '232 150 100'              // dawn — warm coral/gold
+  if (h < 17) return '220 161 84'               // day — steady amber
+  return '217 120 130'                          // dusk — deeper rose
+}
+
+/** Apple-Watch-style progress ring, warm-toned */
+function ActivityRing({ completed, total }: { completed: number; total: number }) {
+  const pct = total > 0 ? Math.min(completed / total, 1) : 0
+  const R = 26, C = 2 * Math.PI * R
+  return (
+    <div className="relative w-[64px] h-[64px] shrink-0">
+      <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">
+        <circle cx="32" cy="32" r={R} fill="none" strokeWidth="7" stroke="rgb(var(--canvas-alt))" />
+        <circle cx="32" cy="32" r={R} fill="none" strokeWidth="7" strokeLinecap="round"
+          stroke="url(#ringGrad)" strokeDasharray={C} strokeDashoffset={C * (1 - pct)}
+          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.25, 0.1, 0.25, 1)' }} />
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="rgb(232,120,90)" /><stop offset="100%" stopColor="rgb(220,161,84)" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-xs font-bold text-ink leading-none">{completed}<span className="text-ink/40">/{total}</span></span>
+      </div>
+    </div>
+  )
+}
+
 export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null)
+  const [rightNow, setRightNow] = useState<RightNow | null>(null)
   const [name, setName] = useState('')
   const today = new Date()
   const dateStr = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -100,15 +113,18 @@ export default function HomePage() {
 
   useEffect(() => {
     fetch('/api/dashboard').then(r => r.json()).then(setData).catch(() => {})
+    fetch('/api/right-now').then(r => r.json()).then(setRightNow).catch(() => {})
     setName(localStorage.getItem('userName') ?? '')
   }, [])
 
+  const glow = timeOfDayGlow()
+  const KindIcon = rightNow?.top ? KIND_ICON[rightNow.top.kind] : null
+
   return (
     <div className="relative flex min-h-screen bg-canvas dark:bg-canvas">
-      <Ambient glow="232 120 90" />
+      <Ambient glow={glow} />
       <ModuleDock />
       <div className="relative z-10 flex-1 min-w-0">
-        {/* Large-title header */}
         <header className="sticky top-0 z-30 bg-canvas/60 dark:bg-canvas/60 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-5 md:px-8 py-4 flex items-end justify-between">
           <div>
             <p className="text-xs font-semibold tracking-widest text-ink/40 uppercase">{dateStr}</p>
@@ -125,67 +141,87 @@ export default function HomePage() {
 
         <main className="page-in max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-7 pb-16">
 
-          {/* ── Widgets row ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-
-            {/* Habits ring widget */}
-            <Link href="/life"
-              className="bg-surface/90 dark:bg-surface/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col items-center justify-center gap-2">
-              {data ? (
-                <ActivityRing completed={data.life.habitsCompletedToday} total={data.life.habitsScheduledToday} />
-              ) : (
-                <div className="w-[88px] h-[88px] rounded-full bg-canvas-alt animate-pulse" />
-              )}
-              <span className="text-xs font-semibold text-ink/50">Habits today</span>
-            </Link>
-
-            {/* Balance widget */}
-            <Link href="/finance"
-              className="bg-surface/90 dark:bg-surface/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
-              <Wallet size={20} className="text-[rgb(232,120,90)]" />
-              <div>
-                <p className="text-[10px] font-semibold tracking-wide text-ink/40 uppercase mb-0.5">Total balance</p>
-                {data ? (
-                  <p className="text-xl font-black text-ink leading-tight tracking-tight">{formatEUR(data.finance.totalBalanceEUR)}</p>
-                ) : (
-                  <div className="h-6 w-24 bg-canvas-alt rounded animate-pulse" />
-                )}
-              </div>
-            </Link>
-
-            {/* Month flow widget */}
-            <Link href="/finance/insights"
-              className="bg-surface/90 dark:bg-surface/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
-              <BarChart3 size={20} className="text-[rgb(220,161,84)]" />
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold tracking-wide text-ink/40 uppercase">This month</p>
-                {data ? (
+          {/* ── Right Now: the one thing that matters, right now ── */}
+          <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm p-5">
+            <div className="flex items-start gap-4">
+              <Mascot mood={rightNow?.mood ?? 'content'} size={56} className="mascot-pop shrink-0" />
+              <div className="flex-1 min-w-0">
+                {!rightNow ? (
+                  <div className="h-12 bg-canvas-alt rounded-xl animate-pulse" />
+                ) : rightNow.top ? (
                   <>
-                    <p className="flex items-center gap-1.5 text-xs text-ink/70">
-                      <TrendingUp size={12} className="text-emerald-500 shrink-0" />
-                      <span className="truncate font-medium">{formatRSD(data.finance.incomeThisMonthRSD)}</span>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35 flex items-center gap-1.5">
+                      {KindIcon && <KindIcon size={11} />} Right now
                     </p>
-                    <p className="flex items-center gap-1.5 text-xs text-ink/70">
-                      <TrendingDown size={12} className="text-[rgb(var(--coral))] shrink-0" />
-                      <span className="truncate font-medium">{formatRSD(data.finance.expensesThisMonthRSD)}</span>
-                    </p>
+                    <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">{rightNow.top.title}</p>
+                    <p className="text-sm text-ink/50 mt-0.5">{rightNow.top.detail}</p>
+                    <Link href={rightNow.top.href}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[rgb(var(--coral))] hover:underline mt-2">
+                      Take a look <ChevronRight size={12} />
+                    </Link>
                   </>
                 ) : (
-                  <div className="h-8 w-20 bg-canvas-alt rounded animate-pulse" />
+                  <>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35">Right now</p>
+                    <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">You're clear for a bit.</p>
+                    <p className="text-sm text-ink/50 mt-0.5">Nothing urgent — {plan.emoji} {plan.activity.toLowerCase()} is still on for today.</p>
+                  </>
                 )}
               </div>
-            </Link>
+            </div>
 
-            {/* Today's training widget */}
-            <Link href="/fitness"
-              className="bg-surface/90 dark:bg-surface/70 rounded-3xl p-4 border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ease-apple flex flex-col justify-between min-h-[140px]">
-              <span className="text-xl">{plan.emoji}</span>
-              <div>
-                <p className="text-[10px] font-semibold tracking-wide text-ink/40 uppercase mb-0.5">Today's training</p>
-                <p className="text-base font-bold text-ink leading-tight">{plan.activity}</p>
-                <p className="text-[11px] text-ink/40 mt-0.5 flex items-center gap-0.5">Open Fitness <ChevronRight size={10} /></p>
+            {rightNow && rightNow.upcoming.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5 flex gap-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                {rightNow.upcoming.map(item => {
+                  const Icon = KIND_ICON[item.kind]
+                  return (
+                    <Link key={item.id} href={item.href} className="flex items-center gap-2 shrink-0 group">
+                      <span className="w-7 h-7 rounded-full bg-canvas-alt flex items-center justify-center shrink-0">
+                        <Icon size={13} className="text-ink/50" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-ink/80 truncate max-w-[140px] group-hover:text-ink">{item.title}</p>
+                        <p className="text-[10px] text-ink/35">{item.detail}</p>
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
-            </Link>
+            )}
+          </div>
+
+          {/* ── Your world: quieter, secondary, real numbers still a tap away ── */}
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-ink/40 mb-2 px-1">Your world</h2>
+            <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm divide-y divide-black/5 dark:divide-white/5">
+              <Link href="/life" className="flex items-center gap-3 px-4 py-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                {data ? <ActivityRing completed={data.life.habitsCompletedToday} total={data.life.habitsScheduledToday} />
+                      : <div className="w-16 h-16 rounded-full bg-canvas-alt animate-pulse shrink-0" />}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-ink">Habits today</p>
+                  <p className="text-xs text-ink/40">{data ? `${data.life.habitsCompletedToday} of ${data.life.habitsScheduledToday} done` : '…'}</p>
+                </div>
+                <ChevronRight size={16} className="text-ink/20 shrink-0" />
+              </Link>
+
+              <Link href="/finance" className="flex items-center gap-3 px-4 py-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                <span className="w-10 h-10 rounded-xl bg-[rgb(232,120,90)]/10 flex items-center justify-center shrink-0"><Wallet size={17} className="text-[rgb(232,120,90)]" /></span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-ink">{data ? formatEUR(data.finance.totalBalanceEUR) : '…'}</p>
+                  <p className="text-xs text-ink/40">Total balance</p>
+                </div>
+                <ChevronRight size={16} className="text-ink/20 shrink-0" />
+              </Link>
+
+              <Link href="/finance/insights" className="flex items-center gap-3 px-4 py-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                <span className="w-10 h-10 rounded-xl bg-[rgb(220,161,84)]/10 flex items-center justify-center shrink-0"><BarChart3 size={17} className="text-[rgb(220,161,84)]" /></span>
+                <div className="flex-1 min-w-0 flex items-center gap-3 text-xs">
+                  <span className="flex items-center gap-1 text-emerald-500 font-medium"><TrendingUp size={11} /> {data ? formatRSD(data.finance.incomeThisMonthRSD) : '…'}</span>
+                  <span className="flex items-center gap-1 text-[rgb(var(--coral))] font-medium"><TrendingDown size={11} /> {data ? formatRSD(data.finance.expensesThisMonthRSD) : '…'}</span>
+                </div>
+                <ChevronRight size={16} className="text-ink/20 shrink-0" />
+              </Link>
+            </div>
           </div>
 
           {/* ── Quick actions ── */}
@@ -256,7 +292,6 @@ export default function HomePage() {
 
         </main>
       </div>
-      <FloatingMascot />
       <GlobalSearch keyboardOnly />
     </div>
   )
