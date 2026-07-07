@@ -291,7 +291,9 @@ model MealLog {
   mealType    String   // "breakfast" | "snack" | "dinner"
   description String?  // what was actually eaten — null/empty means skipped, not unanswered
   createdAt   DateTime @default(now())
-  @@unique([userId, date, mealType])
+  // Append-only: logging the same mealType twice records a second real meal
+  // (e.g. a second snack), it doesn't overwrite the first
+  @@index([userId, date])
 }
 
 model MealPlanSlot {

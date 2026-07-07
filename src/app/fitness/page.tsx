@@ -1,12 +1,14 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { ChevronRight, Droplets, Footprints, Moon } from 'lucide-react'
+import { ChevronRight, Droplets, Footprints, Moon, Check, Plus, X } from 'lucide-react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { ScoreRing, HeroStat, Delta } from '@/components/ui/synth'
 
 interface MealSlot { id: string; dayOfWeek: number; mealType: string; name: string; calories: number; protein: number }
 interface WorkoutLog { id: string; date: string; type: string; duration: number | null }
 interface BodyRow   { id: string; date: string; metric: string; value: number }
+interface MealLogRow { id: string; mealType: string; description: string | null; createdAt: string }
 
 const KCAL_TARGET = 2100
 const PROTEIN_TARGET = 150
@@ -36,27 +38,58 @@ export default function FitnessTodayPage() {
   const [meals,    setMeals]    = useState<MealSlot[]>([])
   const [workouts, setWorkouts] = useState<WorkoutLog[]>([])
   const [weights,  setWeights]  = useState<BodyRow[]>([])
+  const [mealLogs, setMealLogs] = useState<MealLogRow[]>([])
   const [loading,  setLoading]  = useState(true)
+  const [loggingType, setLoggingType] = useState<string | null>(null)
+  const [logText, setLogText] = useState('')
 
   const todayDow = (new Date().getDay() || 7)
   const todayStr = toLocalDate(new Date())
   const plan     = DAY_PLAN[todayDow]
 
   const load = useCallback(async () => {
-    const [mRes, wRes, hRes, bRes] = await Promise.all([
+    const [mRes, wRes, hRes, bRes, lRes] = await Promise.all([
       fetch('/api/fitness/meal-plan'),
       fetch('/api/fitness/workouts?limit=7'),
       fetch('/api/fitness/habit-workouts?days=2'),
       fetch('/api/life/body-metrics?metrics=weight'),
+      fetch(`/api/life/meal-log?date=${todayStr}`),
     ])
-    const [mData, wData, hData, bData] = await Promise.all([mRes.json(), wRes.json(), hRes.json(), bRes.json()])
+    const [mData, wData, hData, bData, lData] = await Promise.all([mRes.json(), wRes.json(), hRes.json(), bRes.json(), lRes.json()])
     setMeals(mData)
     setWorkouts([...(wData as WorkoutLog[]), ...(hData as WorkoutLog[])])
     setWeights((bData as BodyRow[]).filter(r => r.metric === 'weight'))
+    setMealLogs(lData)
     setLoading(false)
-  }, [])
+  }, [todayStr])
 
   useEffect(() => { load() }, [load])
+
+  async function logMeal(mealType: string, description: string | null) {
+    setLoggingType(null)
+    setLogText('')
+    try {
+      const res = await fetch('/api/life/meal-log', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: todayStr, mealType, description }),
+      })
+      if (!res.ok) throw new Error()
+      const created = await res.json()
+      setMealLogs(prev => [...prev, created])
+    } catch {
+      toast.error("Couldn't save that — try again")
+    }
+  }
+
+  async function deleteMealLog(id: string) {
+    setMealLogs(prev => prev.filter(l => l.id !== id))
+    try {
+      const res = await fetch(`/api/life/meal-log?id=${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
+    } catch {
+      toast.error("Couldn't remove that — refresh and try again")
+    }
+  }
 
   const todayMeals = meals.filter(m => m.dayOfWeek === todayDow)
   const totalCal   = todayMeals.reduce((a, m) => a + m.calories, 0)
@@ -142,17 +175,62 @@ export default function FitnessTodayPage() {
                 const meal = todayMeals.find(m => m.mealType === mt)
                 if (!meal) return null
                 const meta = MEAL_META[mt]
+                const logsForMeal = mealLogs.filter(l => l.mealType === mt)
+                const isLogging = loggingType === mt
                 return (
-                  <div key={mt} className="flex items-start gap-3 px-4 py-3">
-                    <div className="shrink-0 text-center w-8">
-                      <span className="text-lg">{meta.emoji}</span>
-                      <p className="text-[9px] text-gray-400 leading-none mt-0.5">{meta.time}</p>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-700 dark:text-gray-200 leading-snug">{meal.name}</p>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-[11px] font-semibold text-orange-500">{meal.calories} kcal</span>
-                        <span className="text-[11px] font-semibold text-red-500">{meal.protein}g protein</span>
+                  <div key={mt} className="px-4 py-3">
+                    <div className="flex items-start gap-3">
+                      <div className="shrink-0 text-center w-8">
+                        <span className="text-lg">{meta.emoji}</span>
+                        <p className="text-[9px] text-gray-400 leading-none mt-0.5">{meta.time}</p>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-700 dark:text-gray-200 leading-snug">{meal.name}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[11px] font-semibold text-orange-500">{meal.calories} kcal</span>
+                          <span className="text-[11px] font-semibold text-red-500">{meal.protein}g protein</span>
+                        </div>
+
+                        {logsForMeal.map(log => (
+                          <div key={log.id} className="flex items-center gap-2 mt-2 group">
+                            <Check size={12} className="text-emerald-500 shrink-0" />
+                            <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
+                              {log.description ? log.description : <em className="not-italic opacity-60">skipped</em>}
+                            </span>
+                            <button onClick={() => deleteMealLog(log.id)}
+                              className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-gray-500 transition-opacity">
+                              <X size={11} />
+                            </button>
+                          </div>
+                        ))}
+
+                        {isLogging ? (
+                          <div className="mt-2 space-y-1.5">
+                            <input
+                              autoFocus
+                              value={logText}
+                              onChange={e => setLogText(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter' && logText.trim()) logMeal(mt, logText.trim()) }}
+                              placeholder="What did you eat?"
+                              className="w-full border border-black/10 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs bg-surface dark:bg-surface focus:outline-none focus:border-[rgb(220,161,84)]"
+                            />
+                            <div className="flex gap-2">
+                              <button onClick={() => logText.trim() && logMeal(mt, logText.trim())}
+                                className="text-[11px] font-bold rounded-lg px-3 py-1 text-white bg-[rgb(220,161,84)]">
+                                Save
+                              </button>
+                              <button onClick={() => { setLoggingType(null); setLogText('') }}
+                                className="text-[11px] font-medium text-gray-400 hover:text-gray-600 px-2">
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button onClick={() => { setLoggingType(mt); setLogText('') }}
+                            className="flex items-center gap-1 text-[11px] font-semibold text-[rgb(220,161,84)] hover:underline mt-2">
+                            <Plus size={11} /> {logsForMeal.length > 0 ? 'Log another' : 'Log what you ate'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
