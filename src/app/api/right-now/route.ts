@@ -309,5 +309,11 @@ export async function GET(req: NextRequest) {
     todayCalendarEvents,
     timeOfDay: bucket,
     mood,
+  }, {
+    // "force-dynamic" only stops Next's own server cache — mobile Safari in
+    // particular will happily reuse a stale fetch() response without an
+    // explicit no-store header, which is how a phone can end up showing an
+    // old/wrong agenda while a fresh browser tab shows the current one
+    headers: { 'Cache-Control': 'no-store, max-age=0, must-revalidate' },
   })
 }

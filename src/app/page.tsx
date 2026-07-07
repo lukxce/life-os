@@ -150,7 +150,7 @@ export default function HomePage() {
       h: String(n.getHours()), m: String(n.getMinutes()),
       dow: String(n.getDay()), date: toLocalDateStr(n), ts: String(n.getTime()),
     })
-    fetch(`/api/right-now?${p}`).then(r => r.json()).then((rn: RightNow) => {
+    fetch(`/api/right-now?${p}`, { cache: 'no-store' }).then(r => r.json()).then((rn: RightNow) => {
       setRightNow(rn)
       // Today's agenda comes straight off this response — right-now already
       // fetched every calendar once; Home doesn't need a second round of
@@ -168,13 +168,13 @@ export default function HomePage() {
   useEffect(() => {
     const n = new Date()
     const p = new URLSearchParams({ day: String(n.getDate()) })
-    fetch(`/api/dashboard?${p}`).then(r => r.json()).then(setData).catch(() => {})
-    fetch('/api/life/day-scores?days=7').then(r => r.json()).then(setDayScores).catch(() => {})
+    fetch(`/api/dashboard?${p}`, { cache: 'no-store' }).then(r => r.json()).then(setData).catch(() => {})
+    fetch('/api/life/day-scores?days=7', { cache: 'no-store' }).then(r => r.json()).then(setDayScores).catch(() => {})
     loadRightNow()
     setName(localStorage.getItem('userName') ?? '')
 
     // Real pinned account balances
-    fetch('/api/finance/accounts').then(r => r.json()).then((accs: AccountRow[]) => setAccounts(accs)).catch(() => {})
+    fetch('/api/finance/accounts', { cache: 'no-store' }).then(r => r.json()).then((accs: AccountRow[]) => setAccounts(accs)).catch(() => {})
 
     const interval = setInterval(loadRightNow, 5 * 60 * 1000)
     return () => clearInterval(interval)

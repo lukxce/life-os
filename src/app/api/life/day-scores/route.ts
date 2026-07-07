@@ -77,5 +77,7 @@ export async function GET(req: NextRequest) {
     if (count > best.count) best = { name: h.name, icon: h.icon, count }
   }
 
-  return NextResponse.json({ days: result, bestStreak: best })
+  return NextResponse.json({ days: result, bestStreak: best }, {
+    headers: { 'Cache-Control': 'no-store, max-age=0, must-revalidate' },
+  })
 }
