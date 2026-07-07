@@ -3,7 +3,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useEffect, useState, useCallback } from 'react'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
+import { cn, formatEUR, formatRSD } from '@/lib/utils'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { ModuleDock } from '@/components/layout/ModuleDock'
@@ -12,7 +12,7 @@ import { Mascot, MascotMood } from '@/components/ui/Mascot'
 import {
   FileText, ChevronRight, Wallet, Sparkles, Flame,
   Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
-  Users, Utensils, Dumbbell as WorkoutIcon, Check, Beef,
+  Users, Utensils, Dumbbell as WorkoutIcon, Check,
 } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
@@ -31,15 +31,17 @@ interface RightNowItem {
 interface RightNow { top: RightNowItem | null; upcoming: RightNowItem[]; timeOfDay: string; mood: MascotMood }
 interface DayScore { date: string; score: number; completed: number; total: number }
 interface DayScores { days: DayScore[]; bestStreak: { name: string; icon: string | null; count: number } }
-interface MealSlot { dayOfWeek: number; calories: number; protein: number }
-interface WorkoutEntry { date: string; type: string }
+interface ScheduleBlockRow { id: string; startTime: string; endTime: string | null; name: string; category: string }
+interface AccountRow { id: string; name: string; currency: string; currentBalance: number; pinned: boolean }
 
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 const KIND_ICON: Record<string, any> = { meeting: Users, meal: Utensils, habit: Sparkles, training: WorkoutIcon }
 const KIND_TINT: Record<string, string> = {
   habit:    'bg-[rgb(167,120,160)]/[0.08] border-[rgb(167,120,160)]/20',
   meal:     'bg-[rgb(220,161,84)]/[0.08] border-[rgb(220,161,84)]/20',
   training: 'bg-[rgb(220,161,84)]/[0.08] border-[rgb(220,161,84)]/20',
   meeting:  'bg-[rgb(217,138,148)]/[0.08] border-[rgb(217,138,148)]/20',
+  default:  'bg-surface/90 border-black/5 dark:border-white/5',
 }
 const KIND_ACCENT: Record<string, string> = {
   habit: 'rgb(167,120,160)', meal: 'rgb(220,161,84)', training: 'rgb(220,161,84)', meeting: 'rgb(217,138,148)',
@@ -63,19 +65,18 @@ function greeting(h: number) {
   if (h < 22) return 'Good evening'
   return 'Late one'
 }
-
 function timeOfDayGlow(h: number): string {
   if (h < 6 || h >= 21) return '120 100 140'
   if (h < 10) return '232 150 100'
   if (h < 17) return '220 161 84'
   return '217 120 130'
 }
-
 function toLocalDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
+function toMinutes(hhmm: string) { const [h, m] = hhmm.split(':').map(Number); return h * 60 + (m ?? 0) }
 
-/** Loops-style flame calendar strip — real per-day scores, not decoration */
+/** Real per-day completion states — flame calendar, not decoration */
 function StreakStrip({ days }: { days: DayScore[] }) {
   const today = toLocalDateStr(new Date())
   return (
@@ -105,13 +106,14 @@ export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [rightNow, setRightNow] = useState<RightNow | null>(null)
   const [dayScores, setDayScores] = useState<DayScores | null>(null)
-  const [nutrition, setNutrition] = useState<{ cal: number; protein: number } | null>(null)
-  const [trainingWeek, setTrainingWeek] = useState<number | null>(null)
+  const [agenda, setAgenda] = useState<ScheduleBlockRow[] | null>(null)
+  const [accounts, setAccounts] = useState<AccountRow[] | null>(null)
   const [justDone, setJustDone] = useState<Set<string>>(new Set())
   const [removed, setRemoved] = useState<Set<string>>(new Set())
   const [name, setName] = useState('')
   const [displayNow] = useState(() => new Date())
   const hour = displayNow.getHours()
+  const nowMin = hour * 60 + displayNow.getMinutes()
   const dateStr = displayNow.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
   const loadRightNow = useCallback(() => {
@@ -131,23 +133,14 @@ export default function HomePage() {
     loadRightNow()
     setName(localStorage.getItem('userName') ?? '')
 
-    // Real today's nutrition, from the actual meal plan
-    const todayDow = n.getDay() || 7
-    fetch('/api/fitness/meal-plan').then(r => r.json()).then((slots: MealSlot[]) => {
-      const today = slots.filter(s => s.dayOfWeek === todayDow)
-      setNutrition({ cal: today.reduce((a, s) => a + s.calories, 0), protein: today.reduce((a, s) => a + s.protein, 0) })
-    }).catch(() => {})
+    // Real today's agenda — your actual recurring schedule blocks
+    fetch('/api/life/schedule').then(r => r.json()).then(({ blocks }) => {
+      const todayKey = DAY_KEYS[n.getDay()]
+      setAgenda((blocks[todayKey] ?? []).slice().sort((a: ScheduleBlockRow, b: ScheduleBlockRow) => toMinutes(a.startTime) - toMinutes(b.startTime)))
+    }).catch(() => setAgenda([]))
 
-    // Real training count this week, from actual logs (manual + habit-driven)
-    Promise.all([
-      fetch('/api/fitness/workouts?limit=30').then(r => r.json()),
-      fetch('/api/fitness/habit-workouts?days=7').then(r => r.json()),
-    ]).then(([manual, habitDriven]: [WorkoutEntry[], WorkoutEntry[]]) => {
-      const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
-      const all = [...manual, ...habitDriven].filter(w => new Date(w.date) >= weekAgo && (w.type === 'pt' || w.type === 'cardio_bike'))
-      const unique = new Set(all.map(w => w.date.slice(0, 10) + w.type))
-      setTrainingWeek(unique.size)
-    }).catch(() => {})
+    // Real pinned account balances
+    fetch('/api/finance/accounts').then(r => r.json()).then((accs: AccountRow[]) => setAccounts(accs)).catch(() => {})
 
     const interval = setInterval(loadRightNow, 5 * 60 * 1000)
     return () => clearInterval(interval)
@@ -170,14 +163,17 @@ export default function HomePage() {
   }
 
   const glow = timeOfDayGlow(hour)
-  const kind = rightNow?.top?.kind ?? 'habit'
-  const KindIcon = rightNow?.top ? KIND_ICON[kind] : null
-  const tint = KIND_TINT[kind] ?? 'bg-surface/90 border-black/5 dark:border-white/5'
+  // Defensive: a top item with no real title isn't a top item — fall back cleanly
+  const hasTop = !!(rightNow?.top && rightNow.top.title && rightNow.top.title.trim())
+  const kind = hasTop ? rightNow!.top!.kind : 'default'
+  const KindIcon = hasTop ? KIND_ICON[kind] : null
+  const tint = KIND_TINT[kind] ?? KIND_TINT.default
   const accent = KIND_ACCENT[kind] ?? 'var(--coral)'
   const habitList = rightNow?.top?.habits?.filter(h => !removed.has(h.id)) ?? []
   const allJustFinished = rightNow?.top?.kind === 'habit' && habitList.every(h => justDone.has(h.id)) && habitList.length > 0
   const streak = dayScores?.bestStreak
   const billsToday = data?.finance.upcomingBills ?? []
+  const pinnedAccounts = accounts?.filter(a => a.pinned) ?? []
 
   return (
     <div className="relative flex min-h-screen bg-canvas dark:bg-canvas">
@@ -200,7 +196,7 @@ export default function HomePage() {
 
         <main className="page-in max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-5 pb-16">
 
-          {/* ── Streak strip: the last week, at a glance, real data ── */}
+          {/* ── Streak strip: the last week, real completion data ── */}
           {dayScores && dayScores.days.length > 0 && (
             <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm px-4 py-3.5 flex items-center justify-between overflow-x-auto"
               style={{ scrollbarWidth: 'none' }}>
@@ -213,22 +209,22 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* ── Right Now: tinted by what it actually is, not flat white ── */}
+          {/* ── Right Now ── */}
           <div className={cn('rounded-3xl border shadow-sm p-5 transition-colors duration-500', tint)}>
             <div className="flex items-start gap-4">
               <Mascot mood={habitList.length === 0 && rightNow?.top?.kind === 'habit' ? 'pleased' : (rightNow?.mood ?? 'content')} size={56} className="mascot-pop shrink-0" />
               <div className="flex-1 min-w-0">
                 {!rightNow ? (
                   <div className="h-12 bg-canvas-alt rounded-xl animate-pulse" />
-                ) : rightNow.top && habitList.length > 0 ? (
+                ) : hasTop && (rightNow!.top!.kind !== 'habit' || habitList.length > 0) ? (
                   <>
                     <p className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: accent }}>
                       {KindIcon && <KindIcon size={11} />} Right now
                     </p>
-                    <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">{rightNow.top.title}</p>
-                    <p className="text-sm text-ink/50 mt-0.5">{rightNow.top.detail}</p>
+                    <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">{rightNow!.top!.title}</p>
+                    <p className="text-sm text-ink/50 mt-0.5">{rightNow!.top!.detail}</p>
 
-                    {rightNow.top.kind === 'habit' ? (
+                    {rightNow!.top!.kind === 'habit' ? (
                       <div className="mt-3 space-y-1.5">
                         {habitList.map(h => {
                           const done = justDone.has(h.id)
@@ -246,7 +242,7 @@ export default function HomePage() {
                         })}
                       </div>
                     ) : (
-                      <Link href={rightNow.top.href}
+                      <Link href={rightNow!.top!.href}
                         className="inline-flex items-center gap-1 text-xs font-bold hover:underline mt-2" style={{ color: accent }}>
                         Take a look <ChevronRight size={12} />
                       </Link>
@@ -288,29 +284,54 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* ── Real stat tiles: today's food, this week's training ── */}
-          <div className="grid grid-cols-2 gap-3">
-            <Link href="/fitness"
-              className="rounded-3xl border p-4 shadow-sm hover:shadow-md active:scale-[0.98] transition-all bg-[rgb(220,161,84)]/[0.08] border-[rgb(220,161,84)]/20">
-              <div className="flex items-center gap-1.5 text-[rgb(220,161,84)]"><Beef size={13} /><span className="text-[10px] font-bold uppercase tracking-widest">Today's food</span></div>
-              {nutrition ? (
-                <>
-                  <p className="text-2xl font-black text-ink tracking-tight mt-1">{nutrition.cal.toLocaleString()}<span className="text-sm font-medium text-ink/40"> kcal</span></p>
-                  <p className="text-xs text-ink/40 mt-0.5">{nutrition.protein}g protein planned</p>
-                </>
-              ) : <div className="h-10 bg-canvas-alt rounded mt-2 animate-pulse" />}
+          {/* ── Today's agenda: your actual schedule, not just a reactive alert ── */}
+          {agenda === null ? (
+            <div className="h-20 bg-canvas-alt rounded-3xl animate-pulse" />
+          ) : agenda.length > 0 && (
+            <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
+              <div className="px-5 py-3 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+                <h2 className="text-[10px] font-bold uppercase tracking-widest text-ink/40 flex items-center gap-1.5">
+                  <CalendarDays size={12} /> Today
+                </h2>
+                <Link href="/schedule" className="text-xs text-[rgb(var(--coral))] hover:underline">Full schedule →</Link>
+              </div>
+              <div className="divide-y divide-black/5 dark:divide-white/5">
+                {agenda.map(block => {
+                  const start = toMinutes(block.startTime)
+                  const end = block.endTime ? toMinutes(block.endTime) : start + 30
+                  const isNow = nowMin >= start && nowMin <= end
+                  const isPast = nowMin > end
+                  return (
+                    <div key={block.id} className={cn('flex items-center gap-3 px-5 py-2.5', isPast && 'opacity-40')}>
+                      <span className={cn('text-xs font-mono w-12 shrink-0', isNow ? 'font-bold text-[rgb(var(--coral))]' : 'text-ink/35')}>{block.startTime}</span>
+                      <span className={cn('text-sm flex-1', isNow ? 'font-bold text-ink' : 'text-ink/70')}>{block.name}</span>
+                      {isNow && <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--coral))] shrink-0" />}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Money: the accounts you actually pinned, real balances ── */}
+          {pinnedAccounts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {pinnedAccounts.map(acc => (
+                <Link key={acc.id} href="/finance"
+                  className="bg-surface/90 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm p-4 hover:shadow-md active:scale-[0.98] transition-all">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35 truncate">{acc.name}</p>
+                  <p className="text-xl font-black text-ink tracking-tight mt-1">
+                    {acc.currency === 'EUR' ? formatEUR(acc.currentBalance) : formatRSD(acc.currentBalance)}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          ) : accounts && accounts.length > 0 && (
+            <Link href="/finance/accounts"
+              className="block bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm p-4 text-sm text-ink/50 hover:text-ink transition-colors">
+              Pin the accounts you check daily to see them here →
             </Link>
-            <Link href="/fitness/workouts"
-              className="rounded-3xl border p-4 shadow-sm hover:shadow-md active:scale-[0.98] transition-all bg-[rgb(167,120,160)]/[0.08] border-[rgb(167,120,160)]/20">
-              <div className="flex items-center gap-1.5 text-[rgb(167,120,160)]"><WorkoutIcon size={13} /><span className="text-[10px] font-bold uppercase tracking-widest">This week</span></div>
-              {trainingWeek !== null ? (
-                <>
-                  <p className="text-2xl font-black text-ink tracking-tight mt-1">{trainingWeek}<span className="text-sm font-medium text-ink/40"> sessions</span></p>
-                  <p className="text-xs text-ink/40 mt-0.5">logged in the last 7 days</p>
-                </>
-              ) : <div className="h-10 bg-canvas-alt rounded mt-2 animate-pulse" />}
-            </Link>
-          </div>
+          )}
 
           {/* ── Quick actions ── */}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>
