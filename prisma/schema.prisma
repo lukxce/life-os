@@ -284,6 +284,16 @@ model BodyMetric {
   @@index([metric, date])
 }
 
+model MealLog {
+  id          String   @id @default(cuid())
+  userId      String   @default("default")
+  date        DateTime // UTC midnight of the day the meal was eaten
+  mealType    String   // "breakfast" | "snack" | "dinner"
+  description String?  // what was actually eaten — null/empty means skipped, not unanswered
+  createdAt   DateTime @default(now())
+  @@unique([userId, date, mealType])
+}
+
 model MealPlanSlot {
   id        String   @id @default(cuid())
   userId    String   @default("default")

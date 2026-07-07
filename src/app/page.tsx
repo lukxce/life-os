@@ -12,7 +12,7 @@ import { Mascot, MascotMood } from '@/components/ui/Mascot'
 import {
   FileText, ChevronRight, Wallet, Sparkles, Flame,
   Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
-  Users, Utensils, Dumbbell as WorkoutIcon, Check,
+  Users, Utensils, Dumbbell as WorkoutIcon, Check, X,
 } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
@@ -27,12 +27,14 @@ interface DashboardData {
 interface RightNowItem {
   id: string; kind: 'meeting' | 'meal' | 'habit' | 'training'; title: string; detail: string; href: string
   habits?: { id: string; name: string }[]
+  mealAsk?: { mealType: string; date: string }
 }
 interface RightNow { top: RightNowItem | null; upcoming: RightNowItem[]; timeOfDay: string; mood: MascotMood }
 interface DayScore { date: string; score: number; completed: number; total: number }
 interface DayScores { days: DayScore[]; bestStreak: { name: string; icon: string | null; count: number } }
 interface ScheduleBlockRow { id: string; startTime: string; endTime: string | null; name: string; category: string }
 interface AccountRow { id: string; name: string; currency: string; currentBalance: number; pinned: boolean }
+interface AgendaItem { id: string; time: string; minutes: number; title: string; source: 'routine' | 'calendar'; color?: string }
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 const KIND_ICON: Record<string, any> = { meeting: Users, meal: Utensils, habit: Sparkles, training: WorkoutIcon }
@@ -76,28 +78,49 @@ function toLocalDateStr(d: Date) {
 }
 function toMinutes(hhmm: string) { const [h, m] = hhmm.split(':').map(Number); return h * 60 + (m ?? 0) }
 
-/** Real per-day completion states — flame calendar, not decoration */
+/** Real per-day completion states, with an honest partial state — not just done/missed */
 function StreakStrip({ days }: { days: DayScore[] }) {
   const today = toLocalDateStr(new Date())
   return (
-    <div className="flex items-center gap-1.5">
-      {days.map(d => {
-        const isToday = d.date === today
-        const label = new Date(d.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })
-        const full = d.total > 0 && d.completed === d.total
-        return (
-          <div key={d.date} className="flex flex-col items-center gap-1">
-            <span className="text-[9px] font-bold text-ink/30 uppercase">{label}</span>
-            <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-all',
-              isToday ? 'border-[rgb(var(--coral))] bg-[rgb(var(--coral))]/10'
-                : full ? 'border-transparent bg-[rgb(220,161,84)]/15'
-                : d.total > 0 ? 'border-transparent bg-canvas-alt'
-                : 'border-transparent bg-transparent')}>
-              {isToday ? (full ? '🔥' : <span className="w-2 h-2 rounded-full bg-[rgb(var(--coral))]" />) : full ? '🔥' : d.total > 0 ? '✕' : ''}
+    <div>
+      <div className="flex items-center gap-1.5">
+        {days.map(d => {
+          const isToday = d.date === today
+          const label = new Date(d.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })
+          const nothingScheduled = d.total === 0
+          const full = d.total > 0 && d.completed === d.total
+          const pct = d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0
+          // Today isn't "missed" just because it's not done yet — the day isn't over
+          const showPartial = d.total > 0 && !full && (isToday || d.completed > 0)
+
+          let inner: React.ReactNode = null
+          if (nothingScheduled) inner = isToday ? <span className="w-2 h-2 rounded-full bg-[rgb(var(--coral))]" /> : null
+          else if (full) inner = '🔥'
+          else if (showPartial) inner = <span className="text-[9px] font-bold text-ink/55">{d.completed}/{d.total}</span>
+          else inner = <X size={13} strokeWidth={2.5} className="text-ink/25" />
+
+          return (
+            <div key={d.date} className="flex flex-col items-center gap-1">
+              <span className="text-[9px] font-bold text-ink/30 uppercase">{label}</span>
+              <div
+                className={cn('w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all',
+                  isToday ? 'border-[rgb(var(--coral))]' : 'border-transparent',
+                  !showPartial && (full ? 'bg-[rgb(220,161,84)]/15' : nothingScheduled ? 'bg-transparent' : 'bg-canvas-alt'))}
+                style={showPartial ? { background: `conic-gradient(rgb(220,161,84) ${pct}%, rgb(var(--canvas-alt)) ${pct}% 100%)` } : undefined}
+              >
+                <span className={cn('flex items-center justify-center text-sm', showPartial && 'w-[26px] h-[26px] rounded-full bg-surface')}>
+                  {inner}
+                </span>
+              </div>
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
+      <div className="flex items-center gap-3 mt-2 px-0.5 text-[9px] font-medium text-ink/35">
+        <span>🔥 all done</span>
+        <span>3/5 partial</span>
+        <span className="flex items-center gap-0.5"><X size={9} strokeWidth={2.5} /> none done</span>
+      </div>
     </div>
   )
 }
@@ -106,10 +129,12 @@ export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [rightNow, setRightNow] = useState<RightNow | null>(null)
   const [dayScores, setDayScores] = useState<DayScores | null>(null)
-  const [agenda, setAgenda] = useState<ScheduleBlockRow[] | null>(null)
+  const [agenda, setAgenda] = useState<AgendaItem[] | null>(null)
   const [accounts, setAccounts] = useState<AccountRow[] | null>(null)
   const [justDone, setJustDone] = useState<Set<string>>(new Set())
   const [removed, setRemoved] = useState<Set<string>>(new Set())
+  const [mealAnswer, setMealAnswer] = useState('')
+  const [mealAnswered, setMealAnswered] = useState<Set<string>>(new Set())
   const [name, setName] = useState('')
   const [displayNow] = useState(() => new Date())
   const hour = displayNow.getHours()
@@ -133,10 +158,41 @@ export default function HomePage() {
     loadRightNow()
     setName(localStorage.getItem('userName') ?? '')
 
-    // Real today's agenda — your actual recurring schedule blocks
-    fetch('/api/life/schedule').then(r => r.json()).then(({ blocks }) => {
+    // Real today's agenda — recurring routine blocks merged with actual live calendar events
+    Promise.all([
+      fetch('/api/life/schedule').then(r => r.json()),
+      fetch('/api/life/ics-calendars').then(r => r.json()).catch(() => []),
+    ]).then(async ([{ blocks }, calendars]) => {
       const todayKey = DAY_KEYS[n.getDay()]
-      setAgenda((blocks[todayKey] ?? []).slice().sort((a: ScheduleBlockRow, b: ScheduleBlockRow) => toMinutes(a.startTime) - toMinutes(b.startTime)))
+      const todayStr = toLocalDateStr(n)
+      const routine: AgendaItem[] = (blocks[todayKey] ?? []).map((b: ScheduleBlockRow) => ({
+        id: `routine-${b.id}`, time: b.startTime, minutes: toMinutes(b.startTime), title: b.name, source: 'routine',
+      }))
+
+      const calendarItems: AgendaItem[] = []
+      if (Array.isArray(calendars) && calendars.length > 0) {
+        const results = await Promise.allSettled(
+          calendars.map((cal: { url: string; color: string }) =>
+            fetch(`/api/life/ics?url=${encodeURIComponent(cal.url)}`).then(r => r.json()).then(events => ({ cal, events }))
+          )
+        )
+        for (const r of results) {
+          if (r.status !== 'fulfilled' || !Array.isArray(r.value.events)) continue
+          const { cal, events } = r.value
+          for (const ev of events) {
+            const evDate = new Date(ev.start)
+            if (toLocalDateStr(evDate) !== todayStr) continue
+            calendarItems.push({
+              id: `ics-${ev.uid}`,
+              time: ev.allDay ? 'All day' : evDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+              minutes: ev.allDay ? -1 : evDate.getHours() * 60 + evDate.getMinutes(),
+              title: ev.summary, source: 'calendar', color: cal.color,
+            })
+          }
+        }
+      }
+
+      setAgenda([...calendarItems, ...routine].sort((a, b) => a.minutes - b.minutes))
     }).catch(() => setAgenda([]))
 
     // Real pinned account balances
@@ -159,6 +215,22 @@ export default function HomePage() {
     } catch {
       toast.error("Couldn't save that — try again")
       setJustDone(prev => { const n = new Set(prev); n.delete(habitId); return n })
+    }
+  }
+
+  async function submitMeal(itemId: string, ask: { mealType: string; date: string }, description: string | null) {
+    setMealAnswered(prev => new Set(prev).add(itemId))
+    setMealAnswer('')
+    try {
+      const res = await fetch('/api/life/meal-log', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: ask.date, mealType: ask.mealType, description }),
+      })
+      if (!res.ok) throw new Error()
+      setTimeout(loadRightNow, 400)
+    } catch {
+      toast.error("Couldn't save that — try again")
+      setMealAnswered(prev => { const n = new Set(prev); n.delete(itemId); return n })
     }
   }
 
@@ -241,6 +313,30 @@ export default function HomePage() {
                           )
                         })}
                       </div>
+                    ) : rightNow!.top!.mealAsk && !mealAnswered.has(rightNow!.top!.id) ? (
+                      <div className="mt-3 space-y-2">
+                        <input
+                          value={mealAnswer}
+                          onChange={e => setMealAnswer(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && mealAnswer.trim()) submitMeal(rightNow!.top!.id, rightNow!.top!.mealAsk!, mealAnswer.trim())
+                          }}
+                          placeholder="What did you actually eat?"
+                          className="w-full bg-surface/70 rounded-xl px-3 py-2 text-sm text-ink placeholder:text-ink/30 border border-black/5 dark:border-white/5 focus:outline-none focus:border-[rgb(var(--coral))]"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => mealAnswer.trim() && submitMeal(rightNow!.top!.id, rightNow!.top!.mealAsk!, mealAnswer.trim())}
+                            className="flex-1 text-xs font-bold rounded-lg py-2 text-white" style={{ background: accent }}>
+                            Log it
+                          </button>
+                          <button
+                            onClick={() => submitMeal(rightNow!.top!.id, rightNow!.top!.mealAsk!, null)}
+                            className="text-xs font-medium text-ink/40 hover:text-ink/70 px-3">
+                            Didn't eat / skip
+                          </button>
+                        </div>
+                      </div>
                     ) : (
                       <Link href={rightNow!.top!.href}
                         className="inline-flex items-center gap-1 text-xs font-bold hover:underline mt-2" style={{ color: accent }}>
@@ -284,7 +380,7 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* ── Today's agenda: your actual schedule, not just a reactive alert ── */}
+          {/* ── Today's agenda: real calendar events merged with your recurring routine ── */}
           {agenda === null ? (
             <div className="h-20 bg-canvas-alt rounded-3xl animate-pulse" />
           ) : agenda.length > 0 && (
@@ -296,16 +392,17 @@ export default function HomePage() {
                 <Link href="/schedule" className="text-xs text-[rgb(var(--coral))] hover:underline">Full schedule →</Link>
               </div>
               <div className="divide-y divide-black/5 dark:divide-white/5">
-                {agenda.map(block => {
-                  const start = toMinutes(block.startTime)
-                  const end = block.endTime ? toMinutes(block.endTime) : start + 30
-                  const isNow = nowMin >= start && nowMin <= end
-                  const isPast = nowMin > end
+                {agenda.map(item => {
+                  const end = item.minutes + 30
+                  const isNow = item.minutes >= 0 && nowMin >= item.minutes && nowMin <= end
+                  const isPast = item.minutes >= 0 && nowMin > end
                   return (
-                    <div key={block.id} className={cn('flex items-center gap-3 px-5 py-2.5', isPast && 'opacity-40')}>
-                      <span className={cn('text-xs font-mono w-12 shrink-0', isNow ? 'font-bold text-[rgb(var(--coral))]' : 'text-ink/35')}>{block.startTime}</span>
-                      <span className={cn('text-sm flex-1', isNow ? 'font-bold text-ink' : 'text-ink/70')}>{block.name}</span>
-                      {isNow && <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--coral))] shrink-0" />}
+                    <div key={item.id} className={cn('flex items-center gap-3 px-5 py-2.5', isPast && 'opacity-40')}>
+                      <span className={cn('text-xs font-mono w-14 shrink-0', isNow ? 'font-bold text-[rgb(var(--coral))]' : 'text-ink/35')}>{item.time}</span>
+                      <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', item.source === 'routine' && 'opacity-40')}
+                        style={{ background: item.color ?? 'rgb(var(--coral))' }} />
+                      <span className={cn('text-sm flex-1', isNow ? 'font-bold text-ink' : 'text-ink/70')}>{item.title}</span>
+                      {item.source === 'routine' && <span className="text-[9px] font-bold uppercase tracking-wide text-ink/25 shrink-0">Routine</span>}
                     </div>
                   )
                 })}

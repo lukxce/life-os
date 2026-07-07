@@ -80,6 +80,7 @@ interface RightNowItem {
   detail: string
   href: string
   habits?: { id: string; name: string }[] // present only for kind === 'habit' — real records to check off inline
+  mealAsk?: { mealType: string; date: string } // present only when asking "did you eat X" — real records to log inline
 }
 
 export async function GET(req: NextRequest) {
@@ -121,36 +122,61 @@ export async function GET(req: NextRequest) {
 
   // ── Fitness: always know what's next to eat, not just in a narrow window ─
   const meals = await prisma.mealPlanSlot.findMany({ where: { dayOfWeek: dow } })
-  let bestMeal: { meal: (typeof meals)[number]; start: number; diff: number; upcoming: boolean } | null = null
+  const mealLogsToday = await prisma.mealLog.findMany({ where: { date: today } })
+  const loggedMealTypes = new Set(mealLogsToday.map(l => l.mealType))
+
+  // A meal whose window closed 60+ min ago and hasn't been logged (or
+  // skipped) yet is worth actually asking about — the closest one wins.
+  let askMeal: (typeof meals)[number] | null = null
   for (const meal of meals) {
     const mealTime = MEAL_TIMES[meal.mealType]
-    if (!mealTime) continue
+    if (!mealTime || loggedMealTypes.has(meal.mealType)) continue
     const start = toMinutes(mealTime)
-    const diff = start - nowMin // positive = upcoming, negative = already open
-    // Prefer the meal whose window we're closest to being inside of:
-    // "just opened" (0 to +150 min ago) beats "still to come"
-    const withinOpen = diff <= 0 && diff >= -150
-    if (!bestMeal || withinOpen) {
-      if (!bestMeal || (withinOpen && !bestMeal.upcoming) || Math.abs(diff) < Math.abs(bestMeal.diff)) {
-        bestMeal = { meal, start, diff, upcoming: diff > 0 }
+    if (nowMin - start >= 60 && (!askMeal || start > toMinutes(MEAL_TIMES[askMeal.mealType]))) askMeal = meal
+  }
+
+  if (askMeal) {
+    items.push({
+      id: `meal-ask-${askMeal.id}`,
+      kind: 'meal',
+      urgency: 20,
+      title: `Did you have ${askMeal.mealType}?`,
+      detail: `${askMeal.name} was the plan — tell me what you actually ate`,
+      href: '/fitness',
+      mealAsk: { mealType: askMeal.mealType, date: localDate },
+    })
+  } else {
+    let bestMeal: { meal: (typeof meals)[number]; start: number; diff: number; upcoming: boolean } | null = null
+    for (const meal of meals) {
+      const mealTime = MEAL_TIMES[meal.mealType]
+      if (!mealTime) continue
+      const start = toMinutes(mealTime)
+      const diff = start - nowMin // positive = upcoming, negative = already open
+      // Prefer the meal whose window we're closest to being inside of:
+      // "just opened" (0 to +150 min ago) beats "still to come"
+      const withinOpen = diff <= 0 && diff >= -150
+      if (!bestMeal || withinOpen) {
+        if (!bestMeal || (withinOpen && !bestMeal.upcoming) || Math.abs(diff) < Math.abs(bestMeal.diff)) {
+          bestMeal = { meal, start, diff, upcoming: diff > 0 }
+        }
       }
     }
-  }
-  if (bestMeal) {
-    const { meal, diff, upcoming } = bestMeal
-    const isOpen = diff <= 0 && diff >= -150
-    items.push({
-      id: `meal-${meal.id}`,
-      kind: 'meal',
-      urgency: isOpen ? 15 : upcoming ? 25 + diff : 200,
-      title: meal.name,
-      detail: isOpen
-        ? `${meal.mealType} · ${meal.calories} kcal · window's open`
-        : upcoming
-          ? `${meal.mealType} in ${diff > 60 ? `${Math.round(diff / 60)}h` : `${diff} min`} · ${meal.calories} kcal`
-          : `${meal.mealType} · ${meal.calories} kcal`,
-      href: '/fitness',
-    })
+    if (bestMeal) {
+      const { meal, diff, upcoming } = bestMeal
+      const isOpen = diff <= 0 && diff >= -150
+      items.push({
+        id: `meal-${meal.id}`,
+        kind: 'meal',
+        urgency: isOpen ? 15 : upcoming ? 25 + diff : 200,
+        title: meal.name,
+        detail: isOpen
+          ? `${meal.mealType} · ${meal.calories} kcal · window's open`
+          : upcoming
+            ? `${meal.mealType} in ${diff > 60 ? `${Math.round(diff / 60)}h` : `${diff} min`} · ${meal.calories} kcal`
+            : `${meal.mealType} · ${meal.calories} kcal`,
+        href: '/fitness',
+      })
+    }
   }
 
   // ── Habits: due in the current time-of-day bucket, not yet done ──────────
