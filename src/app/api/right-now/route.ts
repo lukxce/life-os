@@ -40,7 +40,7 @@ function timeOfDayBucket(nowMin: number): string {
 // Live external calendars (Google/Hypefy/etc, whatever's configured under
 // ICSCalendar). Real events, real times — fetched with a short timeout each
 // so one dead calendar can't hang the whole Right Now response.
-async function liveCalendarEvents(nowMs: number) {
+async function fetchAllIcsEvents() {
   const calendars = await prisma.iCSCalendar.findMany()
   const results = await Promise.allSettled(
     calendars.map(async cal => {
@@ -53,23 +53,57 @@ async function liveCalendarEvents(nowMs: number) {
       return parseICS(await res.text())
     })
   )
+  const events: ReturnType<typeof parseICS> = []
+  for (const r of results) if (r.status === 'fulfilled') events.push(...r.value)
+  return events
+}
 
+// Near-term (±60 min) — feeds the general urgency pool that decides the
+// hero item. Deliberately narrow: this isn't "today's agenda", just "soon".
+function nearTermIcsItems(events: ReturnType<typeof parseICS>, nowMs: number) {
   const items: { id: string; kind: 'meeting'; urgency: number; title: string; detail: string; href: string }[] = []
-  for (const r of results) {
-    if (r.status !== 'fulfilled') continue
-    for (const ev of r.value) {
-      if (ev.allDay) continue
-      const startMs = new Date(ev.start).getTime()
-      const endMs = new Date(ev.end).getTime()
-      const diffMin = Math.round((startMs - nowMs) / 60000)
-      if (nowMs >= startMs && nowMs <= endMs) {
-        items.push({ id: `ics-${ev.uid}`, kind: 'meeting', urgency: 0, title: ev.summary, detail: 'happening now', href: '/schedule' })
-      } else if (diffMin > 0 && diffMin <= 60) {
-        items.push({ id: `ics-${ev.uid}`, kind: 'meeting', urgency: diffMin, title: ev.summary, detail: `in ${diffMin} min`, href: '/schedule' })
-      }
+  for (const ev of events) {
+    if (ev.allDay) continue
+    const startMs = new Date(ev.start).getTime()
+    const endMs = new Date(ev.end).getTime()
+    const diffMin = Math.round((startMs - nowMs) / 60000)
+    if (nowMs >= startMs && nowMs <= endMs) {
+      items.push({ id: `ics-${ev.uid}`, kind: 'meeting', urgency: 0, title: ev.summary, detail: 'happening now', href: '/schedule' })
+    } else if (diffMin > 0 && diffMin <= 60) {
+      items.push({ id: `ics-${ev.uid}`, kind: 'meeting', urgency: diffMin, title: ev.summary, detail: `in ${diffMin} min`, href: '/schedule' })
     }
   }
   return items
+}
+
+// The rest of today's real calendar — ICS only, nothing fabricated, nothing
+// already past. This is what the Right Now card's "upcoming" strip shows.
+function todaysRemainingIcsEvents(
+  events: ReturnType<typeof parseICS>,
+  nowMs: number,
+  offsetMs: number,
+  localDate: string,
+): { id: string; kind: 'meeting'; urgency: number; title: string; detail: string; href: string }[] {
+  const items: { id: string; kind: 'meeting'; urgency: number; title: string; detail: string; href: string }[] = []
+  for (const ev of events) {
+    if (ev.allDay) continue
+    const startMs = new Date(ev.start).getTime()
+    const endMs = new Date(ev.end).getTime()
+    if (endMs <= nowMs) continue // already over
+    const localDayKey = new Date(startMs + offsetMs).toISOString().slice(0, 10)
+    if (localDayKey !== localDate) continue // only today, in the CLIENT's local day
+    const diffMin = Math.round((startMs - nowMs) / 60000)
+    const localTime = new Date(startMs + offsetMs).toISOString().slice(11, 16)
+    items.push({
+      id: `ics-${ev.uid}`,
+      kind: 'meeting',
+      urgency: diffMin,
+      title: ev.summary,
+      detail: nowMs >= startMs ? 'happening now' : diffMin <= 60 ? `in ${diffMin} min` : localTime,
+      href: '/schedule',
+    })
+  }
+  return items.sort((a, b) => a.urgency - b.urgency)
 }
 
 interface RightNowItem {
@@ -99,13 +133,19 @@ export async function GET(req: NextRequest) {
   const dow = localDow || 7
   const dayKey = DAY_KEYS[localDow]
   const today = utcMidnight(localDate)
+  // Client's UTC offset, derived from the wall-clock params it already sends
+  // — never assumed, never read from the server's own timezone
+  const [ly, lmo, ld] = localDate.split('-').map(Number)
+  const offsetMs = Date.UTC(ly, lmo - 1, ld, localHour, localMinute, 0) - nowMs
 
   const items: RightNowItem[] = []
+  let upcomingCalendar: RightNowItem[] = []
 
   // ── Live calendars: your actual Google/Hypefy/etc events ──────────────────
   try {
-    const liveEvents = await liveCalendarEvents(nowMs)
-    items.push(...liveEvents)
+    const icsEvents = await fetchAllIcsEvents()
+    items.push(...nearTermIcsItems(icsEvents, nowMs))
+    upcomingCalendar = todaysRemainingIcsEvents(icsEvents, nowMs, offsetMs, localDate)
   } catch { /* one bad calendar feed shouldn't break Right Now */ }
 
   // ── Schedule: your recurring weekly blocks — only fills gaps live events don't ──
@@ -227,9 +267,12 @@ export async function GET(req: NextRequest) {
       ? 'pleased'
       : 'content'
 
+  const top = items[0] ?? null
+
   return NextResponse.json({
-    top: items[0] ?? null,
-    upcoming: items.slice(1, 4),
+    top,
+    // ICS-only, future-only — never the fabricated meal-plan/training items
+    upcomingCalendar: upcomingCalendar.filter(i => i.id !== top?.id).slice(0, 5),
     timeOfDay: bucket,
     mood,
   })

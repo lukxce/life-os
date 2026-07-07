@@ -29,7 +29,7 @@ interface RightNowItem {
   habits?: { id: string; name: string }[]
   mealAsk?: { mealType: string; date: string }
 }
-interface RightNow { top: RightNowItem | null; upcoming: RightNowItem[]; timeOfDay: string; mood: MascotMood }
+interface RightNow { top: RightNowItem | null; upcomingCalendar: RightNowItem[]; timeOfDay: string; mood: MascotMood }
 interface DayScore { date: string; score: number; completed: number; total: number }
 interface DayScores { days: DayScore[]; bestStreak: { name: string; icon: string | null; count: number } }
 interface ScheduleBlockRow { id: string; startTime: string; endTime: string | null; name: string; category: string }
@@ -360,22 +360,27 @@ export default function HomePage() {
               </div>
             </div>
 
-            {rightNow && rightNow.upcoming.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-black/10 dark:border-white/10 flex gap-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                {rightNow.upcoming.map(item => {
-                  const Icon = KIND_ICON[item.kind]
-                  return (
-                    <Link key={item.id} href={item.href} className="flex items-center gap-2 shrink-0 group">
-                      <span className="w-7 h-7 rounded-full bg-surface/70 flex items-center justify-center shrink-0">
-                        <Icon size={13} className="text-ink/50" />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-ink/80 truncate max-w-[140px] group-hover:text-ink">{item.title}</p>
-                        <p className="text-[10px] text-ink/35">{item.detail}</p>
-                      </div>
-                    </Link>
-                  )
-                })}
+            {rightNow && (
+              <div className="mt-4 pt-4 border-t border-black/10 dark:border-white/10">
+                {rightNow.upcomingCalendar.length > 0 ? (
+                  <div className="flex gap-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                    {rightNow.upcomingCalendar.map(item => (
+                      <Link key={item.id} href={item.href} className="flex items-center gap-2 shrink-0 group">
+                        <span className="w-7 h-7 rounded-full bg-surface/70 flex items-center justify-center shrink-0">
+                          <Users size={13} className="text-ink/50" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-ink/80 truncate max-w-[140px] group-hover:text-ink">{item.title}</p>
+                          <p className="text-[10px] text-ink/35">{item.detail}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-ink/40 flex items-center gap-1.5">
+                    <CalendarDays size={12} /> Nothing else on your calendar today — enjoy the rest of it.
+                  </p>
+                )}
               </div>
             )}
           </div>
