@@ -12,7 +12,7 @@ import { Mascot, MascotMood } from '@/components/ui/Mascot'
 import {
   FileText, ChevronRight, Wallet, Sparkles, Flame,
   Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
-  Users, Utensils, Dumbbell as WorkoutIcon, Check,
+  Users, Utensils, Dumbbell as WorkoutIcon, Check, Beef,
 } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
@@ -21,28 +21,29 @@ const FoodMapPreview = dynamic(
 )
 
 interface DashboardData {
-  finance: {
-    totalBalanceEUR: number
-    incomeThisMonthRSD: number
-    expensesThisMonthRSD: number
-    upcomingBills: { id: string; name: string; amount: number; currency: string; dayOfMonth: number }[]
-    manualRate: number
-    liveRate: number
-  }
-  life: {
-    habitsScheduledToday: number
-    habitsCompletedToday: number
-  }
+  finance: { upcomingBills: { id: string; name: string; amount: number; currency: string; dayOfMonth: number }[] }
+  life: { habitsScheduledToday: number; habitsCompletedToday: number }
 }
-
 interface RightNowItem {
   id: string; kind: 'meeting' | 'meal' | 'habit' | 'training'; title: string; detail: string; href: string
   habits?: { id: string; name: string }[]
 }
 interface RightNow { top: RightNowItem | null; upcoming: RightNowItem[]; timeOfDay: string; mood: MascotMood }
-interface DayScores { bestStreak: { name: string; icon: string | null; count: number } }
+interface DayScore { date: string; score: number; completed: number; total: number }
+interface DayScores { days: DayScore[]; bestStreak: { name: string; icon: string | null; count: number } }
+interface MealSlot { dayOfWeek: number; calories: number; protein: number }
+interface WorkoutEntry { date: string; type: string }
 
 const KIND_ICON: Record<string, any> = { meeting: Users, meal: Utensils, habit: Sparkles, training: WorkoutIcon }
+const KIND_TINT: Record<string, string> = {
+  habit:    'bg-[rgb(167,120,160)]/[0.08] border-[rgb(167,120,160)]/20',
+  meal:     'bg-[rgb(220,161,84)]/[0.08] border-[rgb(220,161,84)]/20',
+  training: 'bg-[rgb(220,161,84)]/[0.08] border-[rgb(220,161,84)]/20',
+  meeting:  'bg-[rgb(217,138,148)]/[0.08] border-[rgb(217,138,148)]/20',
+}
+const KIND_ACCENT: Record<string, string> = {
+  habit: 'rgb(167,120,160)', meal: 'rgb(220,161,84)', training: 'rgb(220,161,84)', meeting: 'rgb(217,138,148)',
+}
 
 const MODULES = [
   { href: '/finance',   icon: Wallet,       title: 'Finance',   gradient: 'from-[rgb(232,120,90)] to-[rgb(220,161,84)]' },
@@ -63,31 +64,52 @@ function greeting(h: number) {
   return 'Late one'
 }
 
-// Canvas tint drifts gently with the clock — warmer near dawn/dusk, quieter at midday
 function timeOfDayGlow(h: number): string {
-  if (h < 6 || h >= 21) return '120 100 140'   // night — quiet plum
-  if (h < 10) return '232 150 100'              // dawn — warm coral/gold
-  if (h < 17) return '220 161 84'               // day — steady amber
-  return '217 120 130'                          // dusk — deeper rose
+  if (h < 6 || h >= 21) return '120 100 140'
+  if (h < 10) return '232 150 100'
+  if (h < 17) return '220 161 84'
+  return '217 120 130'
 }
 
 function toLocalDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+/** Loops-style flame calendar strip — real per-day scores, not decoration */
+function StreakStrip({ days }: { days: DayScore[] }) {
+  const today = toLocalDateStr(new Date())
+  return (
+    <div className="flex items-center gap-1.5">
+      {days.map(d => {
+        const isToday = d.date === today
+        const label = new Date(d.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })
+        const full = d.total > 0 && d.completed === d.total
+        return (
+          <div key={d.date} className="flex flex-col items-center gap-1">
+            <span className="text-[9px] font-bold text-ink/30 uppercase">{label}</span>
+            <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-all',
+              isToday ? 'border-[rgb(var(--coral))] bg-[rgb(var(--coral))]/10'
+                : full ? 'border-transparent bg-[rgb(220,161,84)]/15'
+                : d.total > 0 ? 'border-transparent bg-canvas-alt'
+                : 'border-transparent bg-transparent')}>
+              {isToday ? (full ? '🔥' : <span className="w-2 h-2 rounded-full bg-[rgb(var(--coral))]" />) : full ? '🔥' : d.total > 0 ? '✕' : ''}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [rightNow, setRightNow] = useState<RightNow | null>(null)
   const [dayScores, setDayScores] = useState<DayScores | null>(null)
+  const [nutrition, setNutrition] = useState<{ cal: number; protein: number } | null>(null)
+  const [trainingWeek, setTrainingWeek] = useState<number | null>(null)
   const [justDone, setJustDone] = useState<Set<string>>(new Set())
   const [removed, setRemoved] = useState<Set<string>>(new Set())
   const [name, setName] = useState('')
-  // Only for the header display at mount — NOT reused for any API call.
-  // Every fetch below computes its own fresh `new Date()` at call time;
-  // closing over a single outer `now` was the actual bug — a memoized
-  // callback with an empty dep array kept sending the time from whenever
-  // the page first loaded, forever, so a tab left open since morning
-  // kept reporting morning hours all afternoon.
   const [displayNow] = useState(() => new Date())
   const hour = displayNow.getHours()
   const dateStr = displayNow.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -105,10 +127,28 @@ export default function HomePage() {
     const n = new Date()
     const p = new URLSearchParams({ day: String(n.getDate()) })
     fetch(`/api/dashboard?${p}`).then(r => r.json()).then(setData).catch(() => {})
-    fetch('/api/life/day-scores?days=1').then(r => r.json()).then(setDayScores).catch(() => {})
+    fetch('/api/life/day-scores?days=7').then(r => r.json()).then(setDayScores).catch(() => {})
     loadRightNow()
     setName(localStorage.getItem('userName') ?? '')
-    // Keep Right Now honest if the tab stays open across a time-of-day boundary
+
+    // Real today's nutrition, from the actual meal plan
+    const todayDow = n.getDay() || 7
+    fetch('/api/fitness/meal-plan').then(r => r.json()).then((slots: MealSlot[]) => {
+      const today = slots.filter(s => s.dayOfWeek === todayDow)
+      setNutrition({ cal: today.reduce((a, s) => a + s.calories, 0), protein: today.reduce((a, s) => a + s.protein, 0) })
+    }).catch(() => {})
+
+    // Real training count this week, from actual logs (manual + habit-driven)
+    Promise.all([
+      fetch('/api/fitness/workouts?limit=30').then(r => r.json()),
+      fetch('/api/fitness/habit-workouts?days=7').then(r => r.json()),
+    ]).then(([manual, habitDriven]: [WorkoutEntry[], WorkoutEntry[]]) => {
+      const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
+      const all = [...manual, ...habitDriven].filter(w => new Date(w.date) >= weekAgo && (w.type === 'pt' || w.type === 'cardio_bike'))
+      const unique = new Set(all.map(w => w.date.slice(0, 10) + w.type))
+      setTrainingWeek(unique.size)
+    }).catch(() => {})
+
     const interval = setInterval(loadRightNow, 5 * 60 * 1000)
     return () => clearInterval(interval)
   }, [loadRightNow])
@@ -130,7 +170,10 @@ export default function HomePage() {
   }
 
   const glow = timeOfDayGlow(hour)
-  const KindIcon = rightNow?.top ? KIND_ICON[rightNow.top.kind] : null
+  const kind = rightNow?.top?.kind ?? 'habit'
+  const KindIcon = rightNow?.top ? KIND_ICON[kind] : null
+  const tint = KIND_TINT[kind] ?? 'bg-surface/90 border-black/5 dark:border-white/5'
+  const accent = KIND_ACCENT[kind] ?? 'var(--coral)'
   const habitList = rightNow?.top?.habits?.filter(h => !removed.has(h.id)) ?? []
   const allJustFinished = rightNow?.top?.kind === 'habit' && habitList.every(h => justDone.has(h.id)) && habitList.length > 0
   const streak = dayScores?.bestStreak
@@ -155,10 +198,23 @@ export default function HomePage() {
           </div>
         </header>
 
-        <main className="page-in max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-7 pb-16">
+        <main className="page-in max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-5 pb-16">
 
-          {/* ── Right Now: the one thing that matters, right now ── */}
-          <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm p-5">
+          {/* ── Streak strip: the last week, at a glance, real data ── */}
+          {dayScores && dayScores.days.length > 0 && (
+            <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm px-4 py-3.5 flex items-center justify-between overflow-x-auto"
+              style={{ scrollbarWidth: 'none' }}>
+              <StreakStrip days={dayScores.days} />
+              {streak && streak.count >= 2 && (
+                <span className="flex items-center gap-1 text-xs font-bold text-[rgb(220,161,84)] shrink-0 ml-3">
+                  <Flame size={13} /> {streak.count}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* ── Right Now: tinted by what it actually is, not flat white ── */}
+          <div className={cn('rounded-3xl border shadow-sm p-5 transition-colors duration-500', tint)}>
             <div className="flex items-start gap-4">
               <Mascot mood={habitList.length === 0 && rightNow?.top?.kind === 'habit' ? 'pleased' : (rightNow?.mood ?? 'content')} size={56} className="mascot-pop shrink-0" />
               <div className="flex-1 min-w-0">
@@ -166,16 +222,9 @@ export default function HomePage() {
                   <div className="h-12 bg-canvas-alt rounded-xl animate-pulse" />
                 ) : rightNow.top && habitList.length > 0 ? (
                   <>
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35 flex items-center gap-1.5">
-                        {KindIcon && <KindIcon size={11} />} Right now
-                      </p>
-                      {streak && streak.count >= 3 && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-[rgb(220,161,84)] bg-[rgb(220,161,84)]/10 px-2 py-0.5 rounded-full shrink-0">
-                          <Flame size={10} /> {streak.count}-day streak
-                        </span>
-                      )}
-                    </div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: accent }}>
+                      {KindIcon && <KindIcon size={11} />} Right now
+                    </p>
                     <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">{rightNow.top.title}</p>
                     <p className="text-sm text-ink/50 mt-0.5">{rightNow.top.detail}</p>
 
@@ -186,7 +235,7 @@ export default function HomePage() {
                           return (
                             <button key={h.id} onClick={() => !done && toggleHabit(h.id)}
                               className={cn('flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-xl transition-all duration-500',
-                                done ? 'bg-emerald-500/10' : 'bg-canvas-alt hover:bg-black/[0.04] dark:hover:bg-white/[0.04] group')}>
+                                done ? 'bg-emerald-500/10' : 'bg-surface/70 hover:bg-surface group')}>
                               <span className={cn('w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
                                 done ? 'bg-emerald-500 border-emerald-500 scale-110' : 'border-ink/20 group-hover:border-[rgb(var(--coral))]')}>
                                 {done && <Check size={12} className="text-white" strokeWidth={3} />}
@@ -198,7 +247,7 @@ export default function HomePage() {
                       </div>
                     ) : (
                       <Link href={rightNow.top.href}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-[rgb(var(--coral))] hover:underline mt-2">
+                        className="inline-flex items-center gap-1 text-xs font-bold hover:underline mt-2" style={{ color: accent }}>
                         Take a look <ChevronRight size={12} />
                       </Link>
                     )}
@@ -220,12 +269,12 @@ export default function HomePage() {
             </div>
 
             {rightNow && rightNow.upcoming.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5 flex gap-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              <div className="mt-4 pt-4 border-t border-black/10 dark:border-white/10 flex gap-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                 {rightNow.upcoming.map(item => {
                   const Icon = KIND_ICON[item.kind]
                   return (
                     <Link key={item.id} href={item.href} className="flex items-center gap-2 shrink-0 group">
-                      <span className="w-7 h-7 rounded-full bg-canvas-alt flex items-center justify-center shrink-0">
+                      <span className="w-7 h-7 rounded-full bg-surface/70 flex items-center justify-center shrink-0">
                         <Icon size={13} className="text-ink/50" />
                       </span>
                       <div className="min-w-0">
@@ -239,7 +288,31 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* ── Quick actions — just the ones you actually reach for ── */}
+          {/* ── Real stat tiles: today's food, this week's training ── */}
+          <div className="grid grid-cols-2 gap-3">
+            <Link href="/fitness"
+              className="rounded-3xl border p-4 shadow-sm hover:shadow-md active:scale-[0.98] transition-all bg-[rgb(220,161,84)]/[0.08] border-[rgb(220,161,84)]/20">
+              <div className="flex items-center gap-1.5 text-[rgb(220,161,84)]"><Beef size={13} /><span className="text-[10px] font-bold uppercase tracking-widest">Today's food</span></div>
+              {nutrition ? (
+                <>
+                  <p className="text-2xl font-black text-ink tracking-tight mt-1">{nutrition.cal.toLocaleString()}<span className="text-sm font-medium text-ink/40"> kcal</span></p>
+                  <p className="text-xs text-ink/40 mt-0.5">{nutrition.protein}g protein planned</p>
+                </>
+              ) : <div className="h-10 bg-canvas-alt rounded mt-2 animate-pulse" />}
+            </Link>
+            <Link href="/fitness/workouts"
+              className="rounded-3xl border p-4 shadow-sm hover:shadow-md active:scale-[0.98] transition-all bg-[rgb(167,120,160)]/[0.08] border-[rgb(167,120,160)]/20">
+              <div className="flex items-center gap-1.5 text-[rgb(167,120,160)]"><WorkoutIcon size={13} /><span className="text-[10px] font-bold uppercase tracking-widest">This week</span></div>
+              {trainingWeek !== null ? (
+                <>
+                  <p className="text-2xl font-black text-ink tracking-tight mt-1">{trainingWeek}<span className="text-sm font-medium text-ink/40"> sessions</span></p>
+                  <p className="text-xs text-ink/40 mt-0.5">logged in the last 7 days</p>
+                </>
+              ) : <div className="h-10 bg-canvas-alt rounded mt-2 animate-pulse" />}
+            </Link>
+          </div>
+
+          {/* ── Quick actions ── */}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>
             {[
               { href: '/finance/scan', label: '📷 Scan receipt' },
@@ -253,7 +326,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* ── Bills — only ever what's due today, nothing else ── */}
+          {/* ── Bills — only ever what's due today ── */}
           {billsToday.length > 0 && (
             <div className="bg-[rgb(var(--coral))]/10 rounded-3xl border border-[rgb(var(--coral))]/20 shadow-sm p-5">
               <h2 className="text-[10px] font-bold uppercase tracking-widest text-[rgb(var(--coral))] mb-2 flex items-center gap-1.5">
