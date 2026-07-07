@@ -29,14 +29,17 @@ interface RightNowItem {
   habits?: { id: string; name: string }[]
   mealAsk?: { mealType: string; date: string }
 }
-interface RightNow { top: RightNowItem | null; upcomingCalendar: RightNowItem[]; timeOfDay: string; mood: MascotMood }
+interface RightNow {
+  top: RightNowItem | null; upcomingCalendar: RightNowItem[]; timeOfDay: string; mood: MascotMood
+  todayRoutine: TodayRoutineRow[]; todayCalendarEvents: TodayCalendarRow[]
+}
 interface DayScore { date: string; score: number; completed: number; total: number }
 interface DayScores { days: DayScore[]; bestStreak: { name: string; icon: string | null; count: number } }
-interface ScheduleBlockRow { id: string; startTime: string; endTime: string | null; name: string; category: string }
 interface AccountRow { id: string; name: string; currency: string; currentBalance: number; pinned: boolean }
 interface AgendaItem { id: string; time: string; minutes: number; title: string; source: 'routine' | 'calendar'; color?: string }
+interface TodayRoutineRow { id: string; startTime: string; endTime: string | null; name: string }
+interface TodayCalendarRow { id: string; time: string; minutes: number; title: string; color: string }
 
-const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 const KIND_ICON: Record<string, any> = { meeting: Users, meal: Utensils, habit: Sparkles, training: WorkoutIcon }
 const KIND_TINT: Record<string, string> = {
   habit:    'bg-[rgb(167,120,160)]/[0.08] border-[rgb(167,120,160)]/20',
@@ -147,7 +150,19 @@ export default function HomePage() {
       h: String(n.getHours()), m: String(n.getMinutes()),
       dow: String(n.getDay()), date: toLocalDateStr(n), ts: String(n.getTime()),
     })
-    fetch(`/api/right-now?${p}`).then(r => r.json()).then(setRightNow).catch(() => {})
+    fetch(`/api/right-now?${p}`).then(r => r.json()).then((rn: RightNow) => {
+      setRightNow(rn)
+      // Today's agenda comes straight off this response — right-now already
+      // fetched every calendar once; Home doesn't need a second round of
+      // external ICS requests just to build the same day's list again
+      const routine: AgendaItem[] = (rn.todayRoutine ?? []).map(b => ({
+        id: `routine-${b.id}`, time: b.startTime, minutes: toMinutes(b.startTime), title: b.name, source: 'routine',
+      }))
+      const calendarItems: AgendaItem[] = (rn.todayCalendarEvents ?? []).map(e => ({
+        id: e.id, time: e.time, minutes: e.minutes, title: e.title, source: 'calendar', color: e.color,
+      }))
+      setAgenda([...calendarItems, ...routine].sort((a, b) => a.minutes - b.minutes))
+    }).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -157,43 +172,6 @@ export default function HomePage() {
     fetch('/api/life/day-scores?days=7').then(r => r.json()).then(setDayScores).catch(() => {})
     loadRightNow()
     setName(localStorage.getItem('userName') ?? '')
-
-    // Real today's agenda — recurring routine blocks merged with actual live calendar events
-    Promise.all([
-      fetch('/api/life/schedule').then(r => r.json()),
-      fetch('/api/life/ics-calendars').then(r => r.json()).catch(() => []),
-    ]).then(async ([{ blocks }, calendars]) => {
-      const todayKey = DAY_KEYS[n.getDay()]
-      const todayStr = toLocalDateStr(n)
-      const routine: AgendaItem[] = (blocks[todayKey] ?? []).map((b: ScheduleBlockRow) => ({
-        id: `routine-${b.id}`, time: b.startTime, minutes: toMinutes(b.startTime), title: b.name, source: 'routine',
-      }))
-
-      const calendarItems: AgendaItem[] = []
-      if (Array.isArray(calendars) && calendars.length > 0) {
-        const results = await Promise.allSettled(
-          calendars.map((cal: { url: string; color: string }) =>
-            fetch(`/api/life/ics?url=${encodeURIComponent(cal.url)}`).then(r => r.json()).then(events => ({ cal, events }))
-          )
-        )
-        for (const r of results) {
-          if (r.status !== 'fulfilled' || !Array.isArray(r.value.events)) continue
-          const { cal, events } = r.value
-          for (const ev of events) {
-            const evDate = new Date(ev.start)
-            if (toLocalDateStr(evDate) !== todayStr) continue
-            calendarItems.push({
-              id: `ics-${ev.uid}`,
-              time: ev.allDay ? 'All day' : evDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-              minutes: ev.allDay ? -1 : evDate.getHours() * 60 + evDate.getMinutes(),
-              title: ev.summary, source: 'calendar', color: cal.color,
-            })
-          }
-        }
-      }
-
-      setAgenda([...calendarItems, ...routine].sort((a, b) => a.minutes - b.minutes))
-    }).catch(() => setAgenda([]))
 
     // Real pinned account balances
     fetch('/api/finance/accounts').then(r => r.json()).then((accs: AccountRow[]) => setAccounts(accs)).catch(() => {})

@@ -39,7 +39,10 @@ function timeOfDayBucket(nowMin: number): string {
 
 // Live external calendars (Google/Hypefy/etc, whatever's configured under
 // ICSCalendar). Real events, real times — fetched with a short timeout each
-// so one dead calendar can't hang the whole Right Now response.
+// so one dead calendar can't hang the whole Right Now response. Fetched
+// exactly once per request; both the near-term hero pool and the full-day
+// agenda derive from this same call so Home never has to hit external
+// calendar URLs a second time itself.
 async function fetchAllIcsEvents() {
   const calendars = await prisma.iCSCalendar.findMany()
   const results = await Promise.allSettled(
@@ -50,17 +53,18 @@ async function fetchAllIcsEvents() {
         cache: 'no-store',
       })
       if (!res.ok) return []
-      return parseICS(await res.text())
+      return parseICS(await res.text()).map(ev => ({ ...ev, color: cal.color }))
     })
   )
-  const events: ReturnType<typeof parseICS> = []
+  const events: (ReturnType<typeof parseICS>[number] & { color: string })[] = []
   for (const r of results) if (r.status === 'fulfilled') events.push(...r.value)
   return events
 }
+type IcsEventWithColor = Awaited<ReturnType<typeof fetchAllIcsEvents>>[number]
 
 // Near-term (±60 min) — feeds the general urgency pool that decides the
 // hero item. Deliberately narrow: this isn't "today's agenda", just "soon".
-function nearTermIcsItems(events: ReturnType<typeof parseICS>, nowMs: number) {
+function nearTermIcsItems(events: IcsEventWithColor[], nowMs: number) {
   const items: { id: string; kind: 'meeting'; urgency: number; title: string; detail: string; href: string }[] = []
   for (const ev of events) {
     if (ev.allDay) continue
@@ -79,7 +83,7 @@ function nearTermIcsItems(events: ReturnType<typeof parseICS>, nowMs: number) {
 // The rest of today's real calendar — ICS only, nothing fabricated, nothing
 // already past. This is what the Right Now card's "upcoming" strip shows.
 function todaysRemainingIcsEvents(
-  events: ReturnType<typeof parseICS>,
+  events: IcsEventWithColor[],
   nowMs: number,
   offsetMs: number,
   localDate: string,
@@ -104,6 +108,27 @@ function todaysRemainingIcsEvents(
     })
   }
   return items.sort((a, b) => a.urgency - b.urgency)
+}
+
+// Every one of today's events (past, future, all-day) — feeds Home's
+// Today's Agenda card, which merges this with the recurring routine blocks.
+// Kept separate from the "remaining" list above so Home doesn't need its
+// own second round of external calendar fetches to show the full day.
+function allTodaysIcsEvents(events: IcsEventWithColor[], offsetMs: number, localDate: string) {
+  const items: { id: string; time: string; minutes: number; title: string; color: string }[] = []
+  for (const ev of events) {
+    const startMs = new Date(ev.start).getTime()
+    const localDayKey = new Date(startMs + offsetMs).toISOString().slice(0, 10)
+    if (localDayKey !== localDate) continue
+    if (ev.allDay) {
+      items.push({ id: `ics-${ev.uid}`, time: 'All day', minutes: -1, title: ev.summary, color: ev.color })
+    } else {
+      const localTime = new Date(startMs + offsetMs).toISOString().slice(11, 16)
+      const minutes = parseInt(localTime.slice(0, 2)) * 60 + parseInt(localTime.slice(3, 5))
+      items.push({ id: `ics-${ev.uid}`, time: localTime, minutes, title: ev.summary, color: ev.color })
+    }
+  }
+  return items.sort((a, b) => a.minutes - b.minutes)
 }
 
 interface RightNowItem {
@@ -139,17 +164,34 @@ export async function GET(req: NextRequest) {
   const offsetMs = Date.UTC(ly, lmo - 1, ld, localHour, localMinute, 0) - nowMs
 
   const items: RightNowItem[] = []
-  let upcomingCalendar: RightNowItem[] = []
+  const plan = TRAINING_PLAN[dow]
+  const wantTrainingCheck = plan.type !== 'rest' && nowMin >= 9 * 60 && nowMin <= 20 * 60
+
+  // Everything below is independent — one round trip instead of six serial
+  // ones (this alone was adding real, visible seconds to every page load)
+  const [icsEvents, blocks, meals, mealLogsToday, habits, habitLogged] = await Promise.all([
+    fetchAllIcsEvents().catch(() => [] as IcsEventWithColor[]),
+    prisma.scheduleBlock.findMany({ where: { day: dayKey }, orderBy: { startTime: 'asc' } }),
+    prisma.mealPlanSlot.findMany({ where: { dayOfWeek: dow } }),
+    prisma.mealLog.findMany({ where: { date: today } }),
+    prisma.habit.findMany({
+      where: { active: true, paused: false, category: { not: 'Weekly Check-in' } },
+      include: { logs: { where: { date: { gte: today } }, select: { completed: true } } },
+    }),
+    wantTrainingCheck
+      ? prisma.habitLog.findFirst({
+          where: { date: { gte: today }, completed: true, habit: { name: { contains: plan.activity.split(' ')[0], mode: 'insensitive' } } },
+        })
+      : Promise.resolve(null),
+  ])
 
   // ── Live calendars: your actual Google/Hypefy/etc events ──────────────────
-  try {
-    const icsEvents = await fetchAllIcsEvents()
-    items.push(...nearTermIcsItems(icsEvents, nowMs))
-    upcomingCalendar = todaysRemainingIcsEvents(icsEvents, nowMs, offsetMs, localDate)
-  } catch { /* one bad calendar feed shouldn't break Right Now */ }
+  items.push(...nearTermIcsItems(icsEvents, nowMs))
+  const upcomingCalendar = todaysRemainingIcsEvents(icsEvents, nowMs, offsetMs, localDate)
+  const todayCalendarEvents = allTodaysIcsEvents(icsEvents, offsetMs, localDate)
+  const todayRoutine = blocks.map(b => ({ id: b.id, startTime: b.startTime, endTime: b.endTime, name: b.name }))
 
   // ── Schedule: your recurring weekly blocks — only fills gaps live events don't ──
-  const blocks = await prisma.scheduleBlock.findMany({ where: { day: dayKey }, orderBy: { startTime: 'asc' } })
   for (const b of blocks) {
     const start = toMinutes(b.startTime)
     const end = b.endTime ? toMinutes(b.endTime) : start + 30
@@ -161,8 +203,6 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Fitness: always know what's next to eat, not just in a narrow window ─
-  const meals = await prisma.mealPlanSlot.findMany({ where: { dayOfWeek: dow } })
-  const mealLogsToday = await prisma.mealLog.findMany({ where: { date: today } })
   const loggedMealTypes = new Set(mealLogsToday.map(l => l.mealType))
 
   // A meal whose window closed 60+ min ago and hasn't been logged (or
@@ -221,10 +261,6 @@ export async function GET(req: NextRequest) {
 
   // ── Habits: due in the current time-of-day bucket, not yet done ──────────
   const bucket = timeOfDayBucket(nowMin)
-  const habits = await prisma.habit.findMany({
-    where: { active: true, paused: false, category: { not: 'Weekly Check-in' } },
-    include: { logs: { where: { date: { gte: today } }, select: { completed: true } } },
-  })
   // Only habits genuinely scoped to THIS time block — an 'all_day' habit
   // isn't time-bound, so it shouldn't masquerade as a "morning" or "night"
   // item here (it still shows normally on the full Habits page)
@@ -244,14 +280,8 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Training: session day, roughly workout hours, nothing logged ─────────
-  const plan = TRAINING_PLAN[dow]
-  if (plan.type !== 'rest' && nowMin >= 9 * 60 && nowMin <= 20 * 60) {
-    const habitLogged = await prisma.habitLog.findFirst({
-      where: { date: { gte: today }, completed: true, habit: { name: { contains: plan.activity.split(' ')[0], mode: 'insensitive' } } },
-    })
-    if (!habitLogged) {
-      items.push({ id: 'training-today', kind: 'training', urgency: 60, title: plan.activity, detail: 'not logged yet', href: '/fitness/workouts' })
-    }
+  if (wantTrainingCheck && !habitLogged) {
+    items.push({ id: 'training-today', kind: 'training', urgency: 60, title: plan.activity, detail: 'not logged yet', href: '/fitness/workouts' })
   }
 
   items.sort((a, b) => a.urgency - b.urgency)
@@ -273,6 +303,10 @@ export async function GET(req: NextRequest) {
     top,
     // ICS-only, future-only — never the fabricated meal-plan/training items
     upcomingCalendar: upcomingCalendar.filter(i => i.id !== top?.id).slice(0, 5),
+    // Today's full agenda (routine blocks + every ICS event today, past or
+    // future) — Home merges these client-side instead of re-fetching calendars
+    todayRoutine,
+    todayCalendarEvents,
     timeOfDay: bucket,
     mood,
   })
