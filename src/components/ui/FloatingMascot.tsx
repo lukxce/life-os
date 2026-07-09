@@ -33,7 +33,11 @@ export function FloatingMascot() {
   if (nudges === null) return null
 
   const currentModule = moduleForPath(pathname)
-  const top = nudges.find(n => n.module === currentModule) ?? nudges[0]
+  // Home is the overview — showing whatever's most pressing anywhere makes
+  // sense there. Any other specific module page only shows ITS OWN nudge;
+  // otherwise the habits nudge (almost always true by evening) bled onto
+  // every single screen regardless of what you were actually looking at.
+  const top = currentModule === 'home' ? nudges[0] : nudges.find(n => n.module === currentModule)
   const mood: MascotMood = top ? 'curious' : 'pleased'
 
   return (

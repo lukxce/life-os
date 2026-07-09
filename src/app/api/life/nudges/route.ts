@@ -73,6 +73,20 @@ export async function GET(req: NextRequest) {
     })
   }
 
+  // ── Finance: nothing logged today, and the day's mostly over ──────────────
+  if (hour >= 12) {
+    const todayExpenseCount = await prisma.expenseEntry.count({ where: { date: { gte: today } } })
+    if (todayExpenseCount === 0) {
+      nudges.push({
+        id: 'expenses-today',
+        module: 'finance',
+        mood: 'curious',
+        message: "No expenses logged today yet — add what you've spent so far?",
+        href: '/finance/expenses/personal',
+      })
+    }
+  }
+
   // ── Fitness: no weight logged in over a week ──────────────────────────────
   const lastWeight = await prisma.bodyMetric.findFirst({ where: { metric: 'weight' }, orderBy: { date: 'desc' } })
   const daysSinceWeight = lastWeight ? Math.floor((now.getTime() - new Date(lastWeight.date).getTime()) / 86400000) : null
