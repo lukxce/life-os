@@ -44,7 +44,30 @@ export async function GET(req: NextRequest) {
     const netTrf   = (trfIn._sum.amountReceived ?? 0) - (trfOut._sum.amountSent ?? 0)
     const currentBalance = base + income - expenses + netConv + netTrf
 
-    return { ...acc, currentBalance }
+    return {
+      ...acc,
+      currentBalance,
+      // Raw components behind currentBalance, for auditing a number that
+      // looks wrong instead of guessing — nothing here is used by the UI
+      // math itself, it's just the same numbers already computed above
+      breakdown: {
+        base, baseSource: acc.manualOverride != null ? 'manualOverride' : 'startingBalance',
+        overrideDate: acc.overrideDate,
+        rate,
+        incomeEUR: incomeEUR._sum.netAmount ?? 0,
+        incomeRSD: incomeRSD._sum.netAmount ?? 0,
+        incomeConverted: income,
+        expenseRSD: expenseSum._sum.amountRSD ?? 0,
+        expensesConverted: expenses,
+        convInReceived: convIn._sum.amountReceived ?? 0,
+        convOutSent: convOut._sum.amountSent ?? 0,
+        netConv,
+        trfInReceived: trfIn._sum.amountReceived ?? 0,
+        trfOutSent: trfOut._sum.amountSent ?? 0,
+        netTrf,
+        currentBalance,
+      },
+    }
   }))
 
   return NextResponse.json(withBalances, {

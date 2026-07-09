@@ -12,6 +12,7 @@ export default function AccountsPage() {
   const [form, setForm] = useState({ name: '', type: 'personal', currency: 'RSD', startingBalance: '0' })
   const [overrideForm, setOverrideForm] = useState<{ [id: string]: string }>({})
   const [startingForm, setStartingForm] = useState<{ [id: string]: string }>({})
+  const [showMathId, setShowMathId] = useState<string | null>(null)
 
   const load = async () => {
     const acc = await fetch('/api/finance/accounts').then(r => r.json())
@@ -187,10 +188,69 @@ export default function AccountsPage() {
                 </span>
               </div>
             )}
-            <div className="flex justify-between pt-2 border-t border-black/5 dark:border-white/5 mt-2">
+            <div className="flex justify-between items-center pt-2 border-t border-black/5 dark:border-white/5 mt-2">
               <span className="text-ink/70 font-medium">Current</span>
-              <span className="font-black text-ink tabular-nums">{fmt(a.currentBalance ?? a.startingBalance, a.currency)}</span>
+              <span className="flex items-center gap-2">
+                <span className="font-black text-ink tabular-nums">{fmt(a.currentBalance ?? a.startingBalance, a.currency)}</span>
+                {a.breakdown && (
+                  <button onClick={() => setShowMathId(showMathId === a.id ? null : a.id)}
+                    className="text-[10px] font-semibold text-ink/30 hover:text-ink underline underline-offset-2">
+                    {showMathId === a.id ? 'hide math' : 'show math'}
+                  </button>
+                )}
+              </span>
             </div>
+
+            {showMathId === a.id && a.breakdown && (
+              <div className="mt-2 pt-2 border-t border-dashed border-black/10 dark:border-white/10 space-y-1 text-xs font-mono">
+                <div className="flex justify-between">
+                  <span className="text-ink/40">{a.breakdown.baseSource === 'manualOverride' ? 'Override base' : 'Starting balance'}</span>
+                  <span className="text-ink/70 tabular-nums">{fmt(a.breakdown.base, a.currency)}</span>
+                </div>
+                {a.breakdown.overrideDate && (
+                  <div className="flex justify-between">
+                    <span className="text-ink/40">— tracked since</span>
+                    <span className="text-ink/60">{new Date(a.breakdown.overrideDate).toLocaleDateString('en-GB')}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-ink/40">+ Income (EUR entries)</span>
+                  <span className="text-ink/70 tabular-nums">{a.breakdown.incomeEUR.toFixed(2)} EUR</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink/40">+ Income (RSD entries)</span>
+                  <span className="text-ink/70 tabular-nums">{a.breakdown.incomeRSD.toFixed(2)} RSD</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink/40">= Income converted @ {a.breakdown.rate}</span>
+                  <span className="text-ink/70 tabular-nums">{fmt(a.breakdown.incomeConverted, a.currency)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink/40">− Expenses (raw, RSD)</span>
+                  <span className="text-ink/70 tabular-nums">{a.breakdown.expenseRSD.toFixed(2)} RSD</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink/40">= Expenses converted</span>
+                  <span className="text-ink/70 tabular-nums">{fmt(a.breakdown.expensesConverted, a.currency)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink/40">+ Conversions in / − out</span>
+                  <span className="text-ink/70 tabular-nums">
+                    {a.breakdown.convInReceived.toFixed(2)} / {a.breakdown.convOutSent.toFixed(2)} → net {fmt(a.breakdown.netConv, a.currency)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink/40">+ Transfers in / − out</span>
+                  <span className="text-ink/70 tabular-nums">
+                    {a.breakdown.trfInReceived.toFixed(2)} / {a.breakdown.trfOutSent.toFixed(2)} → net {fmt(a.breakdown.netTrf, a.currency)}
+                  </span>
+                </div>
+                <div className="flex justify-between pt-1 border-t border-black/5 dark:border-white/5">
+                  <span className="text-ink/60 font-semibold">= Current balance</span>
+                  <span className="text-ink font-bold tabular-nums">{fmt(a.breakdown.currentBalance, a.currency)}</span>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
