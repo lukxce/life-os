@@ -5,9 +5,21 @@ import { utcMidnight } from '@/lib/utils'
 
 export async function GET(req: NextRequest) {
   const date = req.nextUrl.searchParams.get('date')
-  if (!date) return NextResponse.json({ error: 'Missing date' }, { status: 400 })
-  const logs = await prisma.mealLog.findMany({ where: { date: utcMidnight(date) }, orderBy: { createdAt: 'asc' } })
-  return NextResponse.json(logs)
+  const from = req.nextUrl.searchParams.get('from')
+  const to = req.nextUrl.searchParams.get('to')
+
+  if (date) {
+    const logs = await prisma.mealLog.findMany({ where: { date: utcMidnight(date) }, orderBy: { createdAt: 'asc' } })
+    return NextResponse.json(logs)
+  }
+  if (from && to) {
+    const logs = await prisma.mealLog.findMany({
+      where: { date: { gte: utcMidnight(from), lte: utcMidnight(to) } },
+      orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
+    })
+    return NextResponse.json(logs)
+  }
+  return NextResponse.json({ error: 'Missing date, or from+to' }, { status: 400 })
 }
 
 // Always creates a new row — logging the same mealType again records another

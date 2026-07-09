@@ -12,7 +12,7 @@ import { Mascot, MascotMood } from '@/components/ui/Mascot'
 import {
   FileText, ChevronRight, Wallet, Sparkles, Flame,
   Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
-  Users, Utensils, Dumbbell as WorkoutIcon, Check, X,
+  Users, Utensils, Dumbbell as WorkoutIcon, Check, X, Camera, Receipt, Plus,
 } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
@@ -31,13 +31,12 @@ interface RightNowItem {
 }
 interface RightNow {
   top: RightNowItem | null; upcomingCalendar: RightNowItem[]; timeOfDay: string; mood: MascotMood
-  todayRoutine: TodayRoutineRow[]; todayCalendarEvents: TodayCalendarRow[]
+  todayCalendarEvents: TodayCalendarRow[]
 }
 interface DayScore { date: string; score: number; completed: number; total: number }
 interface DayScores { days: DayScore[]; bestStreak: { name: string; icon: string | null; count: number } }
 interface AccountRow { id: string; name: string; currency: string; currentBalance: number; pinned: boolean }
-interface AgendaItem { id: string; time: string; minutes: number; title: string; source: 'routine' | 'calendar'; color?: string }
-interface TodayRoutineRow { id: string; startTime: string; endTime: string | null; name: string }
+interface AgendaItem { id: string; time: string; minutes: number; title: string; color: string }
 interface TodayCalendarRow { id: string; time: string; minutes: number; title: string; color: string }
 
 const KIND_ICON: Record<string, any> = { meeting: Users, meal: Utensils, habit: Sparkles, training: WorkoutIcon }
@@ -51,6 +50,12 @@ const KIND_TINT: Record<string, string> = {
 const KIND_ACCENT: Record<string, string> = {
   habit: 'rgb(167,120,160)', meal: 'rgb(220,161,84)', training: 'rgb(220,161,84)', meeting: 'rgb(217,138,148)',
 }
+
+const QUICK_ACTIONS = [
+  { href: '/finance/scan', icon: Camera, label: 'Scan receipt', tint: 'bg-[rgb(232,120,90)]/10 text-[rgb(232,120,90)]' },
+  { href: '/finance/expenses/personal', icon: Receipt, label: 'Add expense', tint: 'bg-[rgb(220,161,84)]/10 text-[rgb(220,161,84)]' },
+  { href: '/schedule', icon: CalendarDays, label: 'My schedule', tint: 'bg-[rgb(167,120,160)]/10 text-[rgb(167,120,160)]' },
+]
 
 const MODULES = [
   { href: '/finance',   icon: Wallet,       title: 'Finance',   gradient: 'from-[rgb(232,120,90)] to-[rgb(220,161,84)]' },
@@ -79,7 +84,6 @@ function timeOfDayGlow(h: number): string {
 function toLocalDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
-function toMinutes(hhmm: string) { const [h, m] = hhmm.split(':').map(Number); return h * 60 + (m ?? 0) }
 
 /** Real per-day completion states, with an honest partial state — not just done/missed */
 function StreakStrip({ days }: { days: DayScore[] }) {
@@ -102,14 +106,19 @@ function StreakStrip({ days }: { days: DayScore[] }) {
           else if (showPartial) inner = <span className="text-[9px] font-bold text-ink/55">{d.completed}/{d.total}</span>
           else inner = <X size={13} strokeWidth={2.5} className="text-ink/25" />
 
+          // One ring, never two: the conic-gradient progress ring and the
+          // "today" border ring were stacking on today's partial cell — pick
+          // whichever single ring applies, and color the progress ring
+          // coral (not amber) when it's today so "today" is still obvious
+          const progressColor = isToday ? 'rgb(var(--coral))' : 'rgb(220,161,84)'
           return (
             <div key={d.date} className="flex flex-col items-center gap-1">
-              <span className="text-[9px] font-bold text-ink/30 uppercase">{label}</span>
+              <span className={cn('text-[9px] font-bold uppercase', isToday ? 'text-[rgb(var(--coral))]' : 'text-ink/30')}>{label}</span>
               <div
                 className={cn('w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all',
-                  isToday ? 'border-[rgb(var(--coral))]' : 'border-transparent',
+                  isToday && !showPartial ? 'border-[rgb(var(--coral))]' : 'border-transparent',
                   !showPartial && (full ? 'bg-[rgb(220,161,84)]/15' : nothingScheduled ? 'bg-transparent' : 'bg-canvas-alt'))}
-                style={showPartial ? { background: `conic-gradient(rgb(220,161,84) ${pct}%, rgb(var(--canvas-alt)) ${pct}% 100%)` } : undefined}
+                style={showPartial ? { background: `conic-gradient(${progressColor} ${pct}%, rgb(var(--canvas-alt)) ${pct}% 100%)` } : undefined}
               >
                 <span className={cn('flex items-center justify-center text-sm', showPartial && 'w-[26px] h-[26px] rounded-full bg-surface')}>
                   {inner}
@@ -138,6 +147,7 @@ export default function HomePage() {
   const [removed, setRemoved] = useState<Set<string>>(new Set())
   const [mealAnswer, setMealAnswer] = useState('')
   const [mealAnswered, setMealAnswered] = useState<Set<string>>(new Set())
+  const [quickOpen, setQuickOpen] = useState(false)
   const [name, setName] = useState('')
   const [displayNow] = useState(() => new Date())
   const hour = displayNow.getHours()
@@ -152,16 +162,9 @@ export default function HomePage() {
     })
     fetch(`/api/right-now?${p}`, { cache: 'no-store' }).then(r => r.json()).then((rn: RightNow) => {
       setRightNow(rn)
-      // Today's agenda comes straight off this response — right-now already
-      // fetched every calendar once; Home doesn't need a second round of
-      // external ICS requests just to build the same day's list again
-      const routine: AgendaItem[] = (rn.todayRoutine ?? []).map(b => ({
-        id: `routine-${b.id}`, time: b.startTime, minutes: toMinutes(b.startTime), title: b.name, source: 'routine',
-      }))
-      const calendarItems: AgendaItem[] = (rn.todayCalendarEvents ?? []).map(e => ({
-        id: e.id, time: e.time, minutes: e.minutes, title: e.title, source: 'calendar', color: e.color,
-      }))
-      setAgenda([...calendarItems, ...routine].sort((a, b) => a.minutes - b.minutes))
+      // Today's agenda comes straight off this response — ICS calendars
+      // only, nothing hardcoded/recurring, nothing already passed
+      setAgenda(rn.todayCalendarEvents ?? [])
     }).catch(() => {})
   }, [])
 
@@ -363,7 +366,7 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* ── Today's agenda: real calendar events merged with your recurring routine ── */}
+          {/* ── Today's agenda: live ICS calendar events only, nothing hardcoded ── */}
           {agenda === null ? (
             <div className="h-20 bg-canvas-alt rounded-3xl animate-pulse" />
           ) : agenda.length > 0 && (
@@ -376,16 +379,12 @@ export default function HomePage() {
               </div>
               <div className="divide-y divide-black/5 dark:divide-white/5">
                 {agenda.map(item => {
-                  const end = item.minutes + 30
-                  const isNow = item.minutes >= 0 && nowMin >= item.minutes && nowMin <= end
-                  const isPast = item.minutes >= 0 && nowMin > end
+                  const isNow = item.minutes >= 0 && nowMin >= item.minutes && nowMin <= item.minutes + 30
                   return (
-                    <div key={item.id} className={cn('flex items-center gap-3 px-5 py-2.5', isPast && 'opacity-40')}>
+                    <div key={item.id} className="flex items-center gap-3 px-5 py-2.5">
                       <span className={cn('text-xs font-mono w-14 shrink-0', isNow ? 'font-bold text-[rgb(var(--coral))]' : 'text-ink/35')}>{item.time}</span>
-                      <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', item.source === 'routine' && 'opacity-40')}
-                        style={{ background: item.color ?? 'rgb(var(--coral))' }} />
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: item.color }} />
                       <span className={cn('text-sm flex-1', isNow ? 'font-bold text-ink' : 'text-ink/70')}>{item.title}</span>
-                      {item.source === 'routine' && <span className="text-[9px] font-bold uppercase tracking-wide text-ink/25 shrink-0">Routine</span>}
                     </div>
                   )
                 })}
@@ -413,16 +412,16 @@ export default function HomePage() {
             </Link>
           )}
 
-          {/* ── Quick actions ── */}
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>
-            {[
-              { href: '/finance/scan', label: '📷 Scan receipt' },
-              { href: '/finance/expenses/personal', label: '💸 Add expense' },
-              { href: '/schedule', label: '📅 My schedule' },
-            ].map(q => (
+          {/* ── Quick actions: prominent inline cards on desktop, a reachable
+               floating (+) on mobile instead of a row you have to scroll up to ── */}
+          <div className="hidden lg:grid grid-cols-3 gap-3">
+            {QUICK_ACTIONS.map(q => (
               <Link key={q.href} href={q.href}
-                className="shrink-0 bg-surface/90 dark:bg-surface/70 border border-black/5 dark:border-white/5 shadow-sm rounded-full px-4 py-2 text-sm font-medium text-ink/80 hover:shadow-md active:scale-95 transition-all duration-300 ease-apple whitespace-nowrap">
-                {q.label}
+                className="flex items-center gap-3 bg-surface/90 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm p-4 hover:shadow-md active:scale-[0.98] transition-all">
+                <span className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', q.tint)}>
+                  <q.icon size={18} />
+                </span>
+                <span className="text-sm font-semibold text-ink">{q.label}</span>
               </Link>
             ))}
           </div>
@@ -467,6 +466,34 @@ export default function HomePage() {
 
         </main>
       </div>
+
+      {/* ── Mobile-only floating quick actions — always reachable, no scrolling up ── */}
+      <div className="lg:hidden">
+        {quickOpen && (
+          <>
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40" onClick={() => setQuickOpen(false)} />
+            <div className="fixed bottom-24 right-4 z-50 flex flex-col items-end gap-3">
+              {QUICK_ACTIONS.map((q, i) => (
+                <Link key={q.href} href={q.href} onClick={() => setQuickOpen(false)}
+                  className="flex items-center gap-3" style={{ animation: 'pageIn 0.18s ease both', animationDelay: `${i * 40}ms` }}>
+                  <span className="bg-surface text-ink text-xs font-semibold px-3 py-1.5 rounded-full shadow-md border border-black/5 dark:border-white/10 whitespace-nowrap">
+                    {q.label}
+                  </span>
+                  <span className={cn('w-12 h-12 rounded-full flex items-center justify-center shadow-lg', q.tint)}>
+                    <q.icon size={20} />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
+        <button onClick={() => setQuickOpen(o => !o)} aria-label="Quick actions"
+          className={cn('fixed bottom-6 right-4 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-black/20 text-white transition-transform duration-200',
+            quickOpen ? 'bg-gray-800 dark:bg-white dark:text-gray-900 rotate-45' : 'bg-[rgb(var(--coral))]')}>
+          <Plus size={24} strokeWidth={2.5} />
+        </button>
+      </div>
+
       <GlobalSearch keyboardOnly />
     </div>
   )

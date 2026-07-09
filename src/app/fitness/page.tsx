@@ -163,9 +163,14 @@ export default function FitnessTodayPage() {
         <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
           <div className="px-4 py-3 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Today's meals</h2>
-            <Link href="/fitness/meal-plan" className="text-xs text-[rgb(220,161,84)] dark:text-[rgb(220,161,84)] hover:underline flex items-center gap-1">
-              Full plan <ChevronRight size={12} />
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link href="/fitness/meal-history" className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                History
+              </Link>
+              <Link href="/fitness/meal-plan" className="text-xs text-[rgb(220,161,84)] dark:text-[rgb(220,161,84)] hover:underline flex items-center gap-1">
+                Full plan <ChevronRight size={12} />
+              </Link>
+            </div>
           </div>
           {todayMeals.length === 0 ? (
             <div className="px-4 py-6 text-center text-sm text-gray-400">No meal plan found.</div>
@@ -192,14 +197,17 @@ export default function FitnessTodayPage() {
                         </div>
 
                         {logsForMeal.map(log => (
-                          <div key={log.id} className="flex items-center gap-2 mt-2 group">
-                            <Check size={12} className="text-emerald-500 shrink-0" />
-                            <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
-                              {log.description ? log.description : <em className="not-italic opacity-60">skipped</em>}
-                            </span>
+                          <div key={log.id} className="flex items-start gap-2.5 mt-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 rounded-xl px-3 py-2 group">
+                            <Check size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">You ate</p>
+                              <p className="text-sm text-gray-700 dark:text-gray-200 leading-snug">
+                                {log.description ? log.description : <em className="not-italic opacity-60">Skipped</em>}
+                              </p>
+                            </div>
                             <button onClick={() => deleteMealLog(log.id)}
-                              className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-gray-500 transition-opacity">
-                              <X size={11} />
+                              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 transition-opacity shrink-0">
+                              <X size={13} />
                             </button>
                           </div>
                         ))}

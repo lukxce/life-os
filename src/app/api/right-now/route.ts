@@ -110,11 +110,10 @@ function todaysRemainingIcsEvents(
   return items.sort((a, b) => a.urgency - b.urgency)
 }
 
-// Every one of today's events (past, future, all-day) — feeds Home's
-// Today's Agenda card, which merges this with the recurring routine blocks.
-// Kept separate from the "remaining" list above so Home doesn't need its
-// own second round of external calendar fetches to show the full day.
-function allTodaysIcsEvents(events: IcsEventWithColor[], offsetMs: number, localDate: string) {
+// Today's ICS-only agenda — nothing hardcoded/recurring, nothing already
+// over. All-day events stay visible all day (they're not "passed" partway
+// through); timed events drop off once they've ended.
+function todayAgendaEvents(events: IcsEventWithColor[], nowMs: number, offsetMs: number, localDate: string) {
   const items: { id: string; time: string; minutes: number; title: string; color: string }[] = []
   for (const ev of events) {
     const startMs = new Date(ev.start).getTime()
@@ -123,6 +122,8 @@ function allTodaysIcsEvents(events: IcsEventWithColor[], offsetMs: number, local
     if (ev.allDay) {
       items.push({ id: `ics-${ev.uid}`, time: 'All day', minutes: -1, title: ev.summary, color: ev.color })
     } else {
+      const endMs = new Date(ev.end).getTime()
+      if (endMs <= nowMs) continue // already over
       const localTime = new Date(startMs + offsetMs).toISOString().slice(11, 16)
       const minutes = parseInt(localTime.slice(0, 2)) * 60 + parseInt(localTime.slice(3, 5))
       items.push({ id: `ics-${ev.uid}`, time: localTime, minutes, title: ev.summary, color: ev.color })
@@ -188,8 +189,7 @@ export async function GET(req: NextRequest) {
   // ── Live calendars: your actual Google/Hypefy/etc events ──────────────────
   items.push(...nearTermIcsItems(icsEvents, nowMs))
   const upcomingCalendar = todaysRemainingIcsEvents(icsEvents, nowMs, offsetMs, localDate)
-  const todayCalendarEvents = allTodaysIcsEvents(icsEvents, offsetMs, localDate)
-  const todayRoutine = blocks.map(b => ({ id: b.id, startTime: b.startTime, endTime: b.endTime, name: b.name }))
+  const todayCalendarEvents = todayAgendaEvents(icsEvents, nowMs, offsetMs, localDate)
 
   // ── Schedule: your recurring weekly blocks — only fills gaps live events don't ──
   for (const b of blocks) {
@@ -303,9 +303,8 @@ export async function GET(req: NextRequest) {
     top,
     // ICS-only, future-only — never the fabricated meal-plan/training items
     upcomingCalendar: upcomingCalendar.filter(i => i.id !== top?.id).slice(0, 5),
-    // Today's full agenda (routine blocks + every ICS event today, past or
-    // future) — Home merges these client-side instead of re-fetching calendars
-    todayRoutine,
+    // Today's full agenda — ICS calendars only, nothing hardcoded/recurring,
+    // nothing already passed
     todayCalendarEvents,
     timeOfDay: bucket,
     mood,
