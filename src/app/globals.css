@@ -22,7 +22,7 @@
   --amber:  220 161 84;
   --rose:   217 138 148;
   --plum:   167 120 160;
-  --sage:   126 158 110;  /* mascot body + glow */
+  --sage:   58 132 92;    /* mascot body + glow — celadon spirit green, more green than teal */
 }
 .dark {
   --canvas: 26 22 19;          /* warm charcoal, brown undertone — not navy */
@@ -79,11 +79,13 @@ body {
 
 /* Ambient sage glow behind the blob, via box-shadow (not a blurred
    background layer — that version blended invisibly into the warm ivory
-   canvas). Kept deliberately subtle — pulses independently of the body's
-   own breathing animation. */
+   canvas). A small blur radius here reads as a hard-edged ring rather than
+   a soft halo, so this needs real diffusion (large blur, small spread), not
+   just a scaled-down version of a tight ring. Pulses independently of the
+   body's own breathing animation. */
 @keyframes mascotGlow {
-  0%, 100% { box-shadow: 0 0 8px 1px rgb(var(--sage) / 0.3); }
-  50%      { box-shadow: 0 0 14px 3px rgb(var(--sage) / 0.45); }
+  0%, 100% { box-shadow: 0 0 22px 2px rgb(var(--sage) / 0.3); }
+  50%      { box-shadow: 0 0 36px 6px rgb(var(--sage) / 0.45); }
 }
 .mascot-glow { animation: mascotGlow 3s ease-in-out infinite; }
 
