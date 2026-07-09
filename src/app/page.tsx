@@ -12,7 +12,7 @@ import { Mascot, MascotMood } from '@/components/ui/Mascot'
 import {
   FileText, ChevronRight, Wallet, Sparkles, Flame,
   Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
-  Users, Utensils, Dumbbell as WorkoutIcon, Check, X, Camera, Receipt, Plus,
+  Users, Utensils, Dumbbell as WorkoutIcon, Check, X, Camera, Receipt, Plus, Droplets,
 } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
@@ -38,6 +38,8 @@ interface DayScores { days: DayScore[]; bestStreak: { name: string; icon: string
 interface AccountRow { id: string; name: string; currency: string; currentBalance: number; pinned: boolean }
 interface AgendaItem { id: string; time: string; minutes: number; title: string; color: string }
 interface TodayCalendarRow { id: string; time: string; minutes: number; title: string; color: string }
+interface DailyTaskRow { id: string; text: string; completed: boolean }
+interface WaterLogRow { id: string; drink: string; volumeMl: number }
 
 const KIND_ICON: Record<string, any> = { meeting: Users, meal: Utensils, habit: Sparkles, training: WorkoutIcon }
 const KIND_TINT: Record<string, string> = {
@@ -148,11 +150,24 @@ export default function HomePage() {
   const [mealAnswer, setMealAnswer] = useState('')
   const [mealAnswered, setMealAnswered] = useState<Set<string>>(new Set())
   const [quickOpen, setQuickOpen] = useState(false)
+  const [todayTasks, setTodayTasks] = useState<DailyTaskRow[] | null>(null)
+  const [tomorrowTasks, setTomorrowTasks] = useState<DailyTaskRow[] | null>(null)
+  const [taskStreak, setTaskStreak] = useState(0)
+  const [newTodayTask, setNewTodayTask] = useState('')
+  const [newTomorrowTask, setNewTomorrowTask] = useState('')
+  const [taskJustDone, setTaskJustDone] = useState<Set<string>>(new Set())
+  const [taskRemoved, setTaskRemoved] = useState<Set<string>>(new Set())
+  const [waterLogs, setWaterLogs] = useState<WaterLogRow[] | null>(null)
+  const [loggingOtherDrink, setLoggingOtherDrink] = useState(false)
+  const [otherDrinkName, setOtherDrinkName] = useState('')
+  const [otherDrinkMl, setOtherDrinkMl] = useState('')
   const [name, setName] = useState('')
   const [displayNow] = useState(() => new Date())
   const hour = displayNow.getHours()
   const nowMin = hour * 60 + displayNow.getMinutes()
   const dateStr = displayNow.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+  const todayStr = toLocalDateStr(displayNow)
+  const tomorrowStr = toLocalDateStr(new Date(displayNow.getFullYear(), displayNow.getMonth(), displayNow.getDate() + 1))
 
   const loadRightNow = useCallback(() => {
     const n = new Date()
@@ -179,9 +194,15 @@ export default function HomePage() {
     // Real pinned account balances
     fetch('/api/finance/accounts', { cache: 'no-store' }).then(r => r.json()).then((accs: AccountRow[]) => setAccounts(accs)).catch(() => {})
 
+    // Today/tomorrow tasks, completion streak, and today's water
+    fetch(`/api/life/tasks?date=${todayStr}`, { cache: 'no-store' }).then(r => r.json()).then(setTodayTasks).catch(() => {})
+    fetch(`/api/life/tasks?date=${tomorrowStr}`, { cache: 'no-store' }).then(r => r.json()).then(setTomorrowTasks).catch(() => {})
+    fetch(`/api/life/tasks/streak?date=${todayStr}`, { cache: 'no-store' }).then(r => r.json()).then(d => setTaskStreak(d.streak ?? 0)).catch(() => {})
+    fetch(`/api/life/water?date=${todayStr}`, { cache: 'no-store' }).then(r => r.json()).then(setWaterLogs).catch(() => {})
+
     const interval = setInterval(loadRightNow, 5 * 60 * 1000)
     return () => clearInterval(interval)
-  }, [loadRightNow])
+  }, [loadRightNow, todayStr, tomorrowStr])
 
   async function toggleHabit(habitId: string) {
     setJustDone(prev => new Set(prev).add(habitId))
@@ -215,6 +236,79 @@ export default function HomePage() {
     }
   }
 
+  async function createTask(date: string, text: string): Promise<DailyTaskRow | null> {
+    try {
+      const res = await fetch('/api/life/tasks', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, text }),
+      })
+      if (!res.ok) throw new Error()
+      return await res.json()
+    } catch {
+      toast.error("Couldn't save that — try again")
+      return null
+    }
+  }
+
+  async function addTodayTask() {
+    const text = newTodayTask.trim()
+    if (!text) return
+    setNewTodayTask('')
+    const created = await createTask(todayStr, text)
+    if (created) setTodayTasks(prev => [...(prev ?? []), created])
+  }
+
+  async function addTomorrowTask() {
+    const text = newTomorrowTask.trim()
+    if (!text) return
+    setNewTomorrowTask('')
+    const created = await createTask(tomorrowStr, text)
+    if (created) setTomorrowTasks(prev => [...(prev ?? []), created])
+  }
+
+  // Completing a task doesn't cross it out and leave it there — it strikes
+  // through briefly then vanishes, same feel as the habit checklist. It
+  // just needs to have happened, not be re-seen every time you open Home.
+  async function toggleTask(id: string) {
+    setTaskJustDone(prev => new Set(prev).add(id))
+    setTimeout(() => setTaskRemoved(prev => new Set(prev).add(id)), 650)
+    try {
+      const res = await fetch('/api/life/tasks', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, completed: true }),
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      toast.error("Couldn't save that — try again")
+      setTaskJustDone(prev => { const n = new Set(prev); n.delete(id); return n })
+    }
+  }
+
+  async function deleteTask(id: string) {
+    setTaskRemoved(prev => new Set(prev).add(id))
+    try {
+      const res = await fetch(`/api/life/tasks?id=${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
+    } catch {
+      toast.error("Couldn't remove that — refresh and try again")
+      setTaskRemoved(prev => { const n = new Set(prev); n.delete(id); return n })
+    }
+  }
+
+  async function logWater(drink: string, volumeMl: number) {
+    try {
+      const res = await fetch('/api/life/water', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: todayStr, drink, volumeMl }),
+      })
+      if (!res.ok) throw new Error()
+      const created = await res.json()
+      setWaterLogs(prev => [...(prev ?? []), created])
+    } catch {
+      toast.error("Couldn't save that — try again")
+    }
+  }
+
   const glow = timeOfDayGlow(hour)
   // Defensive: a top item with no real title isn't a top item — fall back cleanly
   const hasTop = !!(rightNow?.top && rightNow.top.title && rightNow.top.title.trim())
@@ -227,6 +321,13 @@ export default function HomePage() {
   const streak = dayScores?.bestStreak
   const billsToday = data?.finance.upcomingBills ?? []
   const pinnedAccounts = accounts?.filter(a => a.pinned) ?? []
+  const pendingTodayTasks = (todayTasks ?? []).filter(t => !t.completed && !taskRemoved.has(t.id))
+  const visibleTomorrowTasks = (tomorrowTasks ?? []).filter(t => !taskRemoved.has(t.id))
+  // Only real water counts toward the hydration goal — a Pepsi Max is a
+  // real drink worth logging, but it isn't what "3L water" is tracking
+  const waterMl = (waterLogs ?? []).filter(w => w.drink === 'Water').reduce((a, w) => a + w.volumeMl, 0)
+  const waterGoalMl = 3000
+  const waterPct = Math.min(100, Math.round((waterMl / waterGoalMl) * 100))
 
   return (
     <div className="relative flex min-h-screen bg-canvas dark:bg-canvas">
@@ -391,6 +492,124 @@ export default function HomePage() {
               </div>
             </div>
           )}
+
+          {/* ── To Do: today's tasks + planning tomorrow — quick add, no archive to manage ── */}
+          <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Today's tasks</h2>
+                <p className="text-2xl font-black text-ink tracking-tight mt-0.5">
+                  {todayTasks ? pendingTodayTasks.length : '—'}<span className="text-sm font-medium text-ink/30"> left</span>
+                </p>
+              </div>
+              {taskStreak > 0 && (
+                <span className="flex items-center gap-1 text-xs font-bold text-[rgb(220,161,84)] bg-[rgb(220,161,84)]/10 px-2.5 py-1 rounded-full shrink-0">
+                  <Flame size={12} /> {taskStreak} day{taskStreak === 1 ? '' : 's'}
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-1.5 mb-3">
+              {pendingTodayTasks.map(t => {
+                const done = taskJustDone.has(t.id)
+                return (
+                  <button key={t.id} onClick={() => !done && toggleTask(t.id)}
+                    className={cn('flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-xl transition-all duration-500',
+                      done ? 'bg-emerald-500/10' : 'bg-canvas-alt hover:bg-canvas-alt/70 group')}>
+                    <span className={cn('w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
+                      done ? 'bg-emerald-500 border-emerald-500 scale-110' : 'border-ink/20 group-hover:border-[rgb(var(--coral))]')}>
+                      {done && <Check size={12} className="text-white" strokeWidth={3} />}
+                    </span>
+                    <span className={cn('text-sm flex-1 transition-all', done ? 'text-ink/40 line-through' : 'text-ink/80 group-hover:text-ink')}>{t.text}</span>
+                  </button>
+                )
+              })}
+              {todayTasks && pendingTodayTasks.length === 0 && (
+                <p className="text-sm text-ink/30 italic px-1 py-1">Nothing left for today.</p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <input value={newTodayTask} onChange={e => setNewTodayTask(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') addTodayTask() }}
+                placeholder="Add a task for today..."
+                className="flex-1 bg-canvas-alt rounded-xl px-3 py-2 text-sm text-ink placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--coral))]/30" />
+              <button onClick={addTodayTask} className="px-4 rounded-xl bg-[rgb(var(--coral))] text-white text-sm font-bold shrink-0">Add</button>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Plan tomorrow</h2>
+                <span className="text-xs text-ink/30">{visibleTomorrowTasks.length} planned</span>
+              </div>
+
+              <div className="space-y-1.5 mb-3">
+                {visibleTomorrowTasks.map(t => (
+                  <div key={t.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-canvas-alt group">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[rgb(167,120,160)] shrink-0" />
+                    <span className="text-sm text-ink/80 flex-1">{t.text}</span>
+                    <button onClick={() => deleteTask(t.id)} className="opacity-0 group-hover:opacity-100 text-ink/30 hover:text-ink/60 shrink-0">
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
+                {tomorrowTasks && visibleTomorrowTasks.length === 0 && (
+                  <p className="text-sm text-ink/30 italic px-1 py-1">Nothing planned for tomorrow yet.</p>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <input value={newTomorrowTask} onChange={e => setNewTomorrowTask(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') addTomorrowTask() }}
+                  placeholder="Add a task for tomorrow..."
+                  className="flex-1 bg-canvas-alt rounded-xl px-3 py-2 text-sm text-ink placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-[rgb(167,120,160)]/30" />
+                <button onClick={addTomorrowTask} className="px-4 rounded-xl bg-[rgb(167,120,160)] text-white text-sm font-bold shrink-0">Add</button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Water: quick log, only real water counts toward the 3L goal ── */}
+          <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-[10px] font-bold uppercase tracking-widest text-ink/40 flex items-center gap-1.5">
+                <Droplets size={12} /> Water
+              </h2>
+              <span className="text-xs text-ink/40">{(waterMl / 1000).toFixed(1)}L / {(waterGoalMl / 1000).toFixed(0)}L</span>
+            </div>
+            <div className="h-2 rounded-full bg-canvas-alt overflow-hidden mb-3">
+              <div className="h-full rounded-full bg-[rgb(167,120,160)] transition-all duration-500" style={{ width: `${waterPct}%` }} />
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <button onClick={() => logWater('Water', 250)}
+                className="px-3 py-1.5 rounded-full bg-[rgb(167,120,160)]/10 text-[rgb(167,120,160)] text-xs font-bold">
+                + 250ml Water
+              </button>
+              <button onClick={() => logWater('Water', 500)}
+                className="px-3 py-1.5 rounded-full bg-[rgb(167,120,160)]/10 text-[rgb(167,120,160)] text-xs font-bold">
+                + 500ml Water
+              </button>
+              <button onClick={() => setLoggingOtherDrink(o => !o)}
+                className="px-3 py-1.5 rounded-full bg-canvas-alt text-ink/60 text-xs font-bold">
+                + Other drink
+              </button>
+            </div>
+            {loggingOtherDrink && (
+              <div className="mt-3 flex gap-2">
+                <input value={otherDrinkName} onChange={e => setOtherDrinkName(e.target.value)}
+                  placeholder="Drink (e.g. Pepsi Max)"
+                  className="flex-1 bg-canvas-alt rounded-xl px-3 py-2 text-sm text-ink placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-[rgb(167,120,160)]/30" />
+                <input value={otherDrinkMl} onChange={e => setOtherDrinkMl(e.target.value)} type="number" placeholder="ml"
+                  className="w-20 bg-canvas-alt rounded-xl px-3 py-2 text-sm text-ink placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-[rgb(167,120,160)]/30" />
+                <button onClick={() => {
+                  const ml = parseInt(otherDrinkMl)
+                  if (!otherDrinkName.trim() || !ml) return
+                  logWater(otherDrinkName.trim(), ml)
+                  setLoggingOtherDrink(false); setOtherDrinkName(''); setOtherDrinkMl('')
+                }} className="px-4 rounded-xl bg-ink text-canvas text-xs font-bold shrink-0">Add</button>
+              </div>
+            )}
+            <p className="text-[10px] text-ink/30 mt-2">Only water counts toward the 3L goal — other drinks are logged but don't add to the bar.</p>
+          </div>
 
           {/* ── Money: the accounts you actually pinned, real balances ── */}
           {pinnedAccounts.length > 0 ? (

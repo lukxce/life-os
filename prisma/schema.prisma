@@ -284,6 +284,28 @@ model BodyMetric {
   @@index([metric, date])
 }
 
+model DailyTask {
+  id          String    @id @default(cuid())
+  userId      String    @default("default")
+  date        DateTime  // UTC midnight — the day this task belongs to (today's list, or tomorrow's plan while it's being written)
+  text        String
+  completed   Boolean   @default(false)
+  order       Int       @default(0)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  @@index([userId, date])
+}
+
+model WaterLog {
+  id        String   @id @default(cuid())
+  userId    String   @default("default")
+  date      DateTime // UTC midnight, day the drink was logged
+  drink     String   @default("Water") // "Water" counts toward the hydration goal; anything else is logged but doesn't count
+  volumeMl  Int
+  createdAt DateTime @default(now())
+  @@index([userId, date])
+}
+
 model MealLog {
   id          String   @id @default(cuid())
   userId      String   @default("default")
