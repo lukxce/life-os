@@ -105,7 +105,7 @@ function StreakStrip({ days }: { days: DayScore[] }) {
           let inner: React.ReactNode = null
           if (nothingScheduled) inner = isToday ? <span className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-[rgb(var(--coral))]" /> : null
           else if (full) inner = '🔥'
-          else if (showPartial) inner = <span className="text-[9px] md:text-xs font-bold text-ink/55">{d.completed}/{d.total}</span>
+          else if (showPartial) inner = <span className="text-[9px] md:text-xs font-bold text-ink">{d.completed}/{d.total}</span>
           else inner = (
             <>
               <X size={13} strokeWidth={2.5} className="text-ink/25 md:hidden" />

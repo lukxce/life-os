@@ -247,7 +247,10 @@ export async function GET(req: NextRequest) {
       items.push({
         id: `meal-${meal.id}`,
         kind: 'meal',
-        urgency: isOpen ? 15 : upcoming ? 25 + diff : 200,
+        // Purely informational ("your window is open") — never worth more
+        // than an actual actionable item like a pending habit or an unlogged
+        // training session, so this stays below both (50 / 60) on purpose
+        urgency: isOpen ? 70 : upcoming ? 80 + diff : 200,
         title: meal.name,
         detail: isOpen
           ? `${meal.mealType} · ${meal.calories} kcal · window's open`

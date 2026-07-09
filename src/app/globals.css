@@ -22,6 +22,7 @@
   --amber:  220 161 84;
   --rose:   217 138 148;
   --plum:   167 120 160;
+  --jade:   58 168 133;   /* mascot body + glow */
 }
 .dark {
   --canvas: 26 22 19;          /* warm charcoal, brown undertone — not navy */
@@ -76,10 +77,12 @@ body {
 }
 .mascot-idle { animation: mascotBreathe 4s ease-in-out infinite; }
 
-/* Soft ambient glow behind the blob — pulses independently of the body */
+/* Ambient jade glow behind the blob, via box-shadow (not a blurred
+   background layer — that version blended invisibly into the warm ivory
+   canvas). Pulses independently of the body's own breathing animation. */
 @keyframes mascotGlow {
-  0%, 100% { opacity: 0.45; transform: scale(1); }
-  50%      { opacity: 0.8;  transform: scale(1.2); }
+  0%, 100% { box-shadow: 0 0 16px 3px rgb(var(--jade) / 0.45); }
+  50%      { box-shadow: 0 0 32px 10px rgb(var(--jade) / 0.7); }
 }
 .mascot-glow { animation: mascotGlow 3s ease-in-out infinite; }
 
