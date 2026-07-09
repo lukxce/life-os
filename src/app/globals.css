@@ -22,7 +22,7 @@
   --amber:  220 161 84;
   --rose:   217 138 148;
   --plum:   167 120 160;
-  --sage:   58 132 92;    /* mascot body + glow — celadon spirit green, more green than teal */
+  --sage:   38 189 116;   /* mascot body + glow — vivid spring green, not muted */
 }
 .dark {
   --canvas: 26 22 19;          /* warm charcoal, brown undertone — not navy */
@@ -70,22 +70,25 @@ body {
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.25), 0 12px 32px -16px rgb(0 0 0 / 0.55);
 }
 
-/* Mascot blob — gentle idle breath + hover float, quick reaction to state changes */
+/* Mascot blob — a smooth continuous float, not a pulse/scale "jump".
+   Pure translateY, long ease-in-out duration, no scale change at all —
+   scaling in the same animation is what read as a jump instead of a drift. */
 @keyframes mascotBreathe {
-  0%, 100% { transform: scale(1) translateY(0); }
-  50%      { transform: scale(1.035) translateY(-3px); }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-7px); }
 }
-.mascot-idle { animation: mascotBreathe 4s ease-in-out infinite; }
+.mascot-idle { animation: mascotBreathe 3.6s ease-in-out infinite; }
 
-/* Ambient sage glow behind the blob, via box-shadow (not a blurred
-   background layer — that version blended invisibly into the warm ivory
-   canvas). A small blur radius here reads as a hard-edged ring rather than
-   a soft halo, so this needs real diffusion (large blur, small spread), not
-   just a scaled-down version of a tight ring. Pulses independently of the
-   body's own breathing animation. */
+/* Ambient glow behind the blob, via box-shadow (not a blurred background
+   layer — that blended invisibly into the warm ivory canvas). This card
+   sits on a light surface, so low opacity here doesn't read as "a faint
+   green glow" — it washes out toward the surface's own near-white color
+   and looks like a plain pale circle. Needs real color strength (high
+   alpha) to actually read as green against a light background, not just a
+   big blur radius. Pulses independently of the float above.*/
 @keyframes mascotGlow {
-  0%, 100% { box-shadow: 0 0 22px 2px rgb(var(--sage) / 0.3); }
-  50%      { box-shadow: 0 0 36px 6px rgb(var(--sage) / 0.45); }
+  0%, 100% { box-shadow: 0 0 24px 4px rgb(var(--sage) / 0.55); }
+  50%      { box-shadow: 0 0 40px 10px rgb(var(--sage) / 0.8); }
 }
 .mascot-glow { animation: mascotGlow 3s ease-in-out infinite; }
 
