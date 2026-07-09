@@ -290,6 +290,7 @@ model DailyTask {
   date        DateTime  // UTC midnight — the day this task belongs to (today's list, or tomorrow's plan while it's being written)
   text        String
   completed   Boolean   @default(false)
+  priority    Boolean   @default(false)
   order       Int       @default(0)
   completedAt DateTime?
   createdAt   DateTime  @default(now())

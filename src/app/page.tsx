@@ -12,7 +12,7 @@ import { Mascot, MascotMood } from '@/components/ui/Mascot'
 import {
   FileText, ChevronRight, Wallet, Sparkles, Flame,
   Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
-  Users, Utensils, Dumbbell as WorkoutIcon, Check, X, Camera, Receipt, Plus, Droplets,
+  Users, Utensils, Dumbbell as WorkoutIcon, Check, X, Camera, Receipt, Plus, Droplets, Zap,
 } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
@@ -38,7 +38,7 @@ interface DayScores { days: DayScore[]; bestStreak: { name: string; icon: string
 interface AccountRow { id: string; name: string; currency: string; currentBalance: number; pinned: boolean }
 interface AgendaItem { id: string; time: string; minutes: number; title: string; color: string }
 interface TodayCalendarRow { id: string; time: string; minutes: number; title: string; color: string }
-interface DailyTaskRow { id: string; text: string; completed: boolean }
+interface DailyTaskRow { id: string; text: string; completed: boolean; priority: boolean }
 interface WaterLogRow { id: string; drink: string; volumeMl: number }
 
 const KIND_ICON: Record<string, any> = { meeting: Users, meal: Utensils, habit: Sparkles, training: WorkoutIcon }
@@ -92,7 +92,7 @@ function StreakStrip({ days }: { days: DayScore[] }) {
   const today = toLocalDateStr(new Date())
   return (
     <div>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 md:gap-3">
         {days.map(d => {
           const isToday = d.date === today
           const label = new Date(d.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })
@@ -103,10 +103,15 @@ function StreakStrip({ days }: { days: DayScore[] }) {
           const showPartial = d.total > 0 && !full && (isToday || d.completed > 0)
 
           let inner: React.ReactNode = null
-          if (nothingScheduled) inner = isToday ? <span className="w-2 h-2 rounded-full bg-[rgb(var(--coral))]" /> : null
+          if (nothingScheduled) inner = isToday ? <span className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-[rgb(var(--coral))]" /> : null
           else if (full) inner = '🔥'
-          else if (showPartial) inner = <span className="text-[9px] font-bold text-ink/55">{d.completed}/{d.total}</span>
-          else inner = <X size={13} strokeWidth={2.5} className="text-ink/25" />
+          else if (showPartial) inner = <span className="text-[9px] md:text-xs font-bold text-ink/55">{d.completed}/{d.total}</span>
+          else inner = (
+            <>
+              <X size={13} strokeWidth={2.5} className="text-ink/25 md:hidden" />
+              <X size={17} strokeWidth={2.5} className="hidden md:block text-ink/25" />
+            </>
+          )
 
           // One ring, never two: the conic-gradient progress ring and the
           // "today" border ring were stacking on today's partial cell — pick
@@ -114,15 +119,15 @@ function StreakStrip({ days }: { days: DayScore[] }) {
           // coral (not amber) when it's today so "today" is still obvious
           const progressColor = isToday ? 'rgb(var(--coral))' : 'rgb(220,161,84)'
           return (
-            <div key={d.date} className="flex flex-col items-center gap-1">
-              <span className={cn('text-[9px] font-bold uppercase', isToday ? 'text-[rgb(var(--coral))]' : 'text-ink/30')}>{label}</span>
+            <div key={d.date} className="flex flex-col items-center gap-1 md:gap-1.5">
+              <span className={cn('text-[9px] md:text-xs font-bold uppercase', isToday ? 'text-[rgb(var(--coral))]' : 'text-ink/30')}>{label}</span>
               <div
-                className={cn('w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all',
+                className={cn('w-8 h-8 md:w-11 md:h-11 rounded-full flex items-center justify-center border-2 md:border-[3px] transition-all',
                   isToday && !showPartial ? 'border-[rgb(var(--coral))]' : 'border-transparent',
                   !showPartial && (full ? 'bg-[rgb(220,161,84)]/15' : nothingScheduled ? 'bg-transparent' : 'bg-canvas-alt'))}
                 style={showPartial ? { background: `conic-gradient(${progressColor} ${pct}%, rgb(var(--canvas-alt)) ${pct}% 100%)` } : undefined}
               >
-                <span className={cn('flex items-center justify-center text-sm', showPartial && 'w-[26px] h-[26px] rounded-full bg-surface')}>
+                <span className={cn('flex items-center justify-center text-sm md:text-base', showPartial && 'w-[26px] h-[26px] md:w-[36px] md:h-[36px] rounded-full bg-surface')}>
                   {inner}
                 </span>
               </div>
@@ -295,6 +300,26 @@ export default function HomePage() {
     }
   }
 
+  async function togglePriority(id: string, which: 'today' | 'tomorrow') {
+    const setter = which === 'today' ? setTodayTasks : setTomorrowTasks
+    let nextPriority = false
+    setter(prev => (prev ?? []).map(t => {
+      if (t.id !== id) return t
+      nextPriority = !t.priority
+      return { ...t, priority: nextPriority }
+    }))
+    try {
+      const res = await fetch('/api/life/tasks', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, priority: nextPriority }),
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      toast.error("Couldn't save that — try again")
+      setter(prev => (prev ?? []).map(t => t.id === id ? { ...t, priority: !nextPriority } : t))
+    }
+  }
+
   async function logWater(drink: string, volumeMl: number) {
     try {
       const res = await fetch('/api/life/water', {
@@ -321,8 +346,9 @@ export default function HomePage() {
   const streak = dayScores?.bestStreak
   const billsToday = data?.finance.upcomingBills ?? []
   const pinnedAccounts = accounts?.filter(a => a.pinned) ?? []
-  const pendingTodayTasks = (todayTasks ?? []).filter(t => !t.completed && !taskRemoved.has(t.id))
-  const visibleTomorrowTasks = (tomorrowTasks ?? []).filter(t => !taskRemoved.has(t.id))
+  const byPriorityFirst = (a: DailyTaskRow, b: DailyTaskRow) => Number(b.priority) - Number(a.priority)
+  const pendingTodayTasks = (todayTasks ?? []).filter(t => !t.completed && !taskRemoved.has(t.id)).sort(byPriorityFirst)
+  const visibleTomorrowTasks = (tomorrowTasks ?? []).filter(t => !taskRemoved.has(t.id)).sort(byPriorityFirst)
   // Only real water counts toward the hydration goal — a Pepsi Max is a
   // real drink worth logging, but it isn't what "3L water" is tracking
   const waterMl = (waterLogs ?? []).filter(w => w.drink === 'Water').reduce((a, w) => a + w.volumeMl, 0)
@@ -513,15 +539,24 @@ export default function HomePage() {
               {pendingTodayTasks.map(t => {
                 const done = taskJustDone.has(t.id)
                 return (
-                  <button key={t.id} onClick={() => !done && toggleTask(t.id)}
-                    className={cn('flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-xl transition-all duration-500',
-                      done ? 'bg-emerald-500/10' : 'bg-canvas-alt hover:bg-canvas-alt/70 group')}>
-                    <span className={cn('w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
-                      done ? 'bg-emerald-500 border-emerald-500 scale-110' : 'border-ink/20 group-hover:border-[rgb(var(--coral))]')}>
-                      {done && <Check size={12} className="text-white" strokeWidth={3} />}
-                    </span>
-                    <span className={cn('text-sm flex-1 transition-all', done ? 'text-ink/40 line-through' : 'text-ink/80 group-hover:text-ink')}>{t.text}</span>
-                  </button>
+                  <div key={t.id}
+                    className={cn('flex items-center gap-1 w-full rounded-xl transition-all duration-500 group',
+                      done ? 'bg-emerald-500/10' : t.priority ? 'bg-[rgb(var(--coral))]/10 border border-[rgb(var(--coral))]/25' : 'bg-canvas-alt hover:bg-canvas-alt/70')}>
+                    <button onClick={() => !done && toggleTask(t.id)} className="flex items-center gap-2.5 flex-1 min-w-0 text-left px-3 py-2">
+                      <span className={cn('w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
+                        done ? 'bg-emerald-500 border-emerald-500 scale-110' : 'border-ink/20 group-hover:border-[rgb(var(--coral))]')}>
+                        {done && <Check size={12} className="text-white" strokeWidth={3} />}
+                      </span>
+                      <span className={cn('text-sm flex-1 truncate transition-all', done ? 'text-ink/40 line-through' : 'text-ink/80 group-hover:text-ink')}>{t.text}</span>
+                    </button>
+                    {!done && (
+                      <button onClick={() => togglePriority(t.id, 'today')}
+                        title={t.priority ? 'Remove priority' : 'Mark as priority'}
+                        className={cn('shrink-0 mr-2 p-1 rounded-full transition-colors', t.priority ? 'text-[rgb(var(--coral))]' : 'text-ink/15 hover:text-ink/40')}>
+                        <Zap size={15} fill={t.priority ? 'currentColor' : 'none'} />
+                      </button>
+                    )}
+                  </div>
                 )
               })}
               {todayTasks && pendingTodayTasks.length === 0 && (
@@ -545,9 +580,15 @@ export default function HomePage() {
 
               <div className="space-y-1.5 mb-3">
                 {visibleTomorrowTasks.map(t => (
-                  <div key={t.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-canvas-alt group">
+                  <div key={t.id} className={cn('flex items-center gap-2.5 px-3 py-2 rounded-xl group',
+                    t.priority ? 'bg-[rgb(var(--coral))]/10 border border-[rgb(var(--coral))]/25' : 'bg-canvas-alt')}>
                     <span className="w-1.5 h-1.5 rounded-full bg-[rgb(167,120,160)] shrink-0" />
-                    <span className="text-sm text-ink/80 flex-1">{t.text}</span>
+                    <span className="text-sm text-ink/80 flex-1 truncate">{t.text}</span>
+                    <button onClick={() => togglePriority(t.id, 'tomorrow')}
+                      title={t.priority ? 'Remove priority' : 'Mark as priority'}
+                      className={cn('shrink-0 p-1 rounded-full transition-colors', t.priority ? 'text-[rgb(var(--coral))]' : 'text-ink/15 hover:text-ink/40')}>
+                      <Zap size={14} fill={t.priority ? 'currentColor' : 'none'} />
+                    </button>
                     <button onClick={() => deleteTask(t.id)} className="opacity-0 group-hover:opacity-100 text-ink/30 hover:text-ink/60 shrink-0">
                       <X size={13} />
                     </button>

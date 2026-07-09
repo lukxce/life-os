@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   if (!date) return NextResponse.json({ error: 'Missing date' }, { status: 400 })
   const tasks = await prisma.dailyTask.findMany({
     where: { date: utcMidnight(date) },
-    orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+    orderBy: [{ priority: 'desc' }, { order: 'asc' }, { createdAt: 'asc' }],
   })
   return NextResponse.json(tasks, { headers: { 'Cache-Control': 'no-store, max-age=0, must-revalidate' } })
 }
@@ -28,12 +28,13 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const body = await req.json()
-  const { id, completed, text } = body
+  const { id, completed, text, priority } = body
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
-  const data: { completed?: boolean; completedAt?: Date | null; text?: string } = {}
+  const data: { completed?: boolean; completedAt?: Date | null; text?: string; priority?: boolean } = {}
   if (completed !== undefined) { data.completed = completed; data.completedAt = completed ? new Date() : null }
   if (text !== undefined) data.text = text.trim()
+  if (priority !== undefined) data.priority = priority
 
   const task = await prisma.dailyTask.update({ where: { id }, data })
   return NextResponse.json(task)

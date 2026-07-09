@@ -1,39 +1,53 @@
 export const dynamic = 'force-dynamic'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { isScheduledDay, startOfDay } from '@/lib/utils'
+import { isScheduledDay, utcMidnight } from '@/lib/utils'
 
 export interface Nudge { id: string; mood: 'curious' | 'content'; message: string; href: string; module: string }
 
 const FREQ_DAYS: Record<string, number> = { weekly: 7, monthly: 30, quarterly: 90, yearly: 365 }
+// A habit only becomes nudge-worthy once its own window has actually
+// opened — a 'night' habit shouldn't nag at 8am just because something
+// somewhere is overdue. 'all_day' has no window, so it's always fair game.
+const TIME_THRESHOLD: Record<string, number> = { morning: 5, noon: 12, night: 18, all_day: 0 }
 
 // Real signals only — every nudge here is backed by an actual query result,
 // never a presumed/static number. Tagged by module so the companion can
 // prioritize whatever's relevant to the screen you're actually on.
-export async function GET() {
+//
+// Client-local time, passed in as query params — this used to read the
+// SERVER's UTC clock (now.getHours()), which on Vercel is never the user's
+// actual local hour. That's why the habit nudge silently never fired at
+// the right time: an evening-only gate compared against the wrong hour.
+export async function GET(req: NextRequest) {
+  const sp = req.nextUrl.searchParams
   const now = new Date()
-  const today = startOfDay(now)
-  const hour = now.getHours()
+  const hour = sp.has('h') ? parseInt(sp.get('h')!) : now.getUTCHours()
+  const localDate = sp.get('date') ?? now.toISOString().slice(0, 10)
+  const today = utcMidnight(localDate)
+  const [ly, lmo, ld] = localDate.split('-').map(Number)
   const nudges: Nudge[] = []
 
-  // ── Habits: scheduled today, not done, and it's evening ──────────────────
-  if (hour >= 18) {
-    const habits = await prisma.habit.findMany({
-      where: { active: true, paused: false, category: { not: 'Weekly Check-in' } },
-      include: { logs: { where: { date: { gte: today } }, select: { completed: true } } },
+  // ── Habits: scheduled today, not done, and their own window has opened ───
+  const habits = await prisma.habit.findMany({
+    where: { active: true, paused: false, category: { not: 'Weekly Check-in' } },
+    include: { logs: { where: { date: { gte: today } }, select: { completed: true } } },
+  })
+  const pending = habits.filter(h =>
+    isScheduledDay(h, today) &&
+    !h.logs.some(l => l.completed) &&
+    hour >= (TIME_THRESHOLD[h.timeOfDay] ?? 0)
+  )
+  if (pending.length > 0) {
+    nudges.push({
+      id: 'habits-pending',
+      module: 'life',
+      mood: 'curious',
+      message: pending.length === 1
+        ? `Haven't logged "${pending[0].name}" today — everything okay?`
+        : `${pending.length} habits still open today.`,
+      href: '/life',
     })
-    const pending = habits.filter(h => isScheduledDay(h, today) && !h.logs.some(l => l.completed))
-    if (pending.length > 0) {
-      nudges.push({
-        id: 'habits-pending',
-        module: 'life',
-        mood: 'curious',
-        message: pending.length === 1
-          ? `Haven't logged "${pending[0].name}" today — everything okay?`
-          : `${pending.length} habits still open today.`,
-        href: '/life',
-      })
-    }
   }
 
   // ── Bills: due day passed, no payment recorded this month ─────────────────
@@ -41,9 +55,9 @@ export async function GET() {
     where: { active: true, isLoan: false },
     include: { payments: { orderBy: { paidDate: 'desc' }, take: 1 } },
   })
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const monthStart = new Date(Date.UTC(ly, lmo - 1, 1))
   const overdueBills = bills.filter(b => {
-    if (b.dayOfMonth > now.getDate()) return false
+    if (b.dayOfMonth > ld) return false
     const lastPaid = b.payments[0]?.paidDate
     return !lastPaid || new Date(lastPaid) < monthStart
   })

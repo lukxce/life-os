@@ -45,12 +45,23 @@ function Face({ mood }: { mood: MascotMood }) {
   }
 }
 
+// Glow shifts warm→soft-green only for "pleased" (genuinely all caught up) —
+// the body itself stays coral always; this is a mood signal, not a recolor
+const GLOW_CHANNELS: Record<MascotMood, string> = {
+  content: '232 120 90', curious: '232 120 90', sleepy: '232 120 90',
+  pleased: '110 190 150',
+}
+
 export function Mascot({
   mood = 'content', size = 56, idle = true, className,
 }: { mood?: MascotMood; size?: number; idle?: boolean; className?: string }) {
   return (
-    <div className={cn(idle && 'mascot-idle', className)} style={{ width: size, height: size }}>
-      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-sm">
+    <div className={cn('relative', idle && 'mascot-idle', className)} style={{ width: size, height: size }}>
+      <div aria-hidden
+        className={cn('absolute inset-0 rounded-full', idle && 'mascot-glow')}
+        style={{ background: `radial-gradient(circle, rgb(${GLOW_CHANNELS[mood]} / 0.6), transparent 70%)`, filter: 'blur(10px)' }}
+      />
+      <svg viewBox="0 0 100 100" className="relative w-full h-full drop-shadow-sm">
         <path d={BLOB_PATH} fill="rgb(var(--coral))" />
         <Face mood={mood} />
       </svg>

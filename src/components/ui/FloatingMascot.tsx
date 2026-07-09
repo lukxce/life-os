@@ -20,7 +20,14 @@ export function FloatingMascot() {
   const pathname = usePathname()
 
   useEffect(() => {
-    fetch('/api/life/nudges').then(r => r.json()).then(d => setNudges(d.nudges ?? [])).catch(() => setNudges([]))
+    // Client-local time — the nudges route used to read the server's own
+    // clock, which on Vercel is UTC and never matched the user's real hour
+    const n = new Date()
+    const p = new URLSearchParams({
+      h: String(n.getHours()),
+      date: `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`,
+    })
+    fetch(`/api/life/nudges?${p}`, { cache: 'no-store' }).then(r => r.json()).then(d => setNudges(d.nudges ?? [])).catch(() => setNudges([]))
   }, [])
 
   if (nudges === null) return null
