@@ -57,10 +57,10 @@ export function FloatingMascot() {
         </div>
       )}
       <button onClick={() => setOpen(o => !o)} aria-label="Companion"
-        className="relative flex items-center justify-center w-14 h-14 rounded-full bg-surface shadow-lg border border-black/5 dark:border-white/5 active:scale-95 transition-transform">
+        className="relative flex items-center justify-center w-14 h-14 rounded-full active:scale-95 transition-transform">
         <Mascot mood={mood} size={40} idle={!open} />
         {top && !open && (
-          <span className="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-[rgb(var(--coral))] border-2 border-surface" />
+          <span className="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-[rgb(var(--coral))] border-2 border-canvas" />
         )}
       </button>
     </div>

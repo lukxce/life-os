@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 
 export type MascotMood = 'content' | 'curious' | 'pleased' | 'sleepy'
 
-// A single, consistent character — same jade body color always, only the
+// A single, consistent character — same sage body color always, only the
 // face changes. Recognizability comes from repetition, not variation.
 const BLOB_PATH = 'M50 6C74 6 92 24 92 48C92 70 76 92 50 92C24 92 8 70 8 48C8 24 26 6 50 6Z'
 
@@ -51,11 +51,11 @@ export function Mascot({
   return (
     <div className={cn('relative', idle && 'mascot-idle', className)} style={{ width: size, height: size }}>
       {/* Box-shadow glow, not a blurred radial-gradient layer — the gradient
-          version blended invisibly into the warm ivory canvas since jade at
+          version blended invisibly into the warm ivory canvas since sage at
           low opacity read almost the same as the background behind it */}
       <div aria-hidden className={cn('absolute inset-0 rounded-full', idle && 'mascot-glow')} />
       <svg viewBox="0 0 100 100" className="relative w-full h-full drop-shadow-sm">
-        <path d={BLOB_PATH} fill="rgb(var(--jade))" />
+        <path d={BLOB_PATH} fill="rgb(var(--sage))" />
         <Face mood={mood} />
       </svg>
     </div>
