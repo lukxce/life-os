@@ -9,6 +9,7 @@ import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { ModuleDock } from '@/components/layout/ModuleDock'
 import { Ambient } from '@/components/layout/AppShell'
 import { Mascot, MascotMood } from '@/components/ui/Mascot'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import {
   FileText, ChevronRight, Wallet, Sparkles, Flame,
   Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
@@ -731,7 +732,13 @@ export default function HomePage() {
           <div>
             <h2 className="text-xs font-bold uppercase tracking-widest text-ink/40 mb-3 px-1">Food map</h2>
             <div className="rounded-3xl overflow-hidden border border-black/5 dark:border-white/5 shadow-sm">
-              <FoodMapPreview />
+              <ErrorBoundary fallback={
+                <div className="h-44 md:h-52 flex items-center justify-center text-sm text-ink/40 bg-surface/90">
+                  Food map couldn't load — check the Google Maps API key/restrictions.
+                </div>
+              }>
+                <FoodMapPreview />
+              </ErrorBoundary>
             </div>
           </div>
 
