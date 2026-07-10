@@ -73,6 +73,34 @@ export async function GET(req: NextRequest) {
     })
   }
 
+  // ── Fitness: meals whose window has well passed, nothing logged ───────────
+  // Windows open 12:00 / 15:30 / 19:00 — nudge roughly an hour after each,
+  // using the client's local hour (the only clock resolution we get here)
+  const jsDow = new Date(localDate + 'T12:00:00Z').getUTCDay()
+  const dow = jsDow === 0 ? 7 : jsDow // MealPlanSlot: 1=Mon … 7=Sun
+  const MEAL_NUDGE_HOUR: Record<string, number> = { breakfast: 13, snack: 17, dinner: 20 }
+  const [mealPlan, mealLogsToday] = await Promise.all([
+    prisma.mealPlanSlot.findMany({ where: { dayOfWeek: dow } }),
+    prisma.mealLog.findMany({ where: { date: today } }),
+  ])
+  const loggedTypes = new Set(mealLogsToday.map(l => l.mealType))
+  const unloggedMeals = mealPlan.filter(mp =>
+    MEAL_NUDGE_HOUR[mp.mealType] != null &&
+    hour >= MEAL_NUDGE_HOUR[mp.mealType] &&
+    !loggedTypes.has(mp.mealType)
+  )
+  if (unloggedMeals.length > 0) {
+    nudges.push({
+      id: 'meals-unlogged',
+      module: 'fitness',
+      mood: 'curious',
+      message: unloggedMeals.length === 1
+        ? `Haven't logged ${unloggedMeals[0].mealType} yet — what did you eat?`
+        : `${unloggedMeals.length} meals not logged yet today.`,
+      href: '/fitness',
+    })
+  }
+
   // ── Finance: nothing logged today, and the day's mostly over ──────────────
   if (hour >= 12) {
     const todayExpenseCount = await prisma.expenseEntry.count({ where: { date: { gte: today } } })

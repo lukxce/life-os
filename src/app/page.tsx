@@ -14,6 +14,7 @@ import {
   FileText, ChevronRight, Wallet, Sparkles, Flame,
   Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
   Users, Utensils, Dumbbell as WorkoutIcon, Check, X, Camera, Receipt, Plus, Droplets, Zap,
+  ListChecks, ChevronDown,
 } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
@@ -41,6 +42,12 @@ interface AgendaItem { id: string; time: string; minutes: number; title: string;
 interface TodayCalendarRow { id: string; time: string; minutes: number; title: string; color: string }
 interface DailyTaskRow { id: string; text: string; completed: boolean; priority: boolean }
 interface WaterLogRow { id: string; drink: string; volumeMl: number }
+interface CatchUp {
+  pendingHabits: { id: string; name: string }[]
+  unloggedMeals: { mealType: string; plannedName: string }[]
+  expensesToday: number
+  noExpenses: boolean
+}
 
 const KIND_ICON: Record<string, any> = { meeting: Users, meal: Utensils, habit: Sparkles, training: WorkoutIcon }
 const KIND_TINT: Record<string, string> = {
@@ -99,7 +106,7 @@ async function safeJson<T>(res: Response): Promise<T> {
   return res.json()
 }
 
-/** Real per-day completion states, with an honest partial state — not just done/missed */
+/** Real per-day completion states — the border ring fills 0→100% with the day's progress */
 function StreakStrip({ days }: { days: DayScore[] }) {
   const today = toLocalDateStr(new Date())
   return (
@@ -110,13 +117,14 @@ function StreakStrip({ days }: { days: DayScore[] }) {
           const label = new Date(d.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })
           const nothingScheduled = d.total === 0
           const full = d.total > 0 && d.completed === d.total
+          const pct = d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0
           // Today isn't "missed" just because it's not done yet — the day isn't over
-          const showPartial = d.total > 0 && !full && (isToday || d.completed > 0)
+          const showFraction = d.total > 0 && !full && (isToday || d.completed > 0)
 
           let inner: React.ReactNode = null
           if (nothingScheduled) inner = isToday ? <span className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-[rgb(var(--coral))]" /> : null
           else if (full) inner = '🔥'
-          else if (showPartial) inner = <span className="text-[9px] md:text-xs font-bold text-ink">{d.completed}/{d.total}</span>
+          else if (showFraction) inner = <span className="text-[9px] md:text-xs font-bold text-ink">{d.completed}/{d.total}</span>
           else inner = (
             <>
               <X size={13} strokeWidth={2.5} className="text-ink/25 md:hidden" />
@@ -124,19 +132,23 @@ function StreakStrip({ days }: { days: DayScore[] }) {
             </>
           )
 
-          // Flat circle, always — the conic-gradient pie-slice for partial
-          // days read as an ugly half-filled ring. One consistent style
-          // (solid fill + a single coral "today" border) for every state;
-          // only the content inside changes.
+          // The border IS the progress: a conic ring that fills 0→100% with
+          // completion, drawn around a flat surface-colored center. Today's
+          // ring is coral on a faint coral track (so "today" stays obvious
+          // even at 0%); past days are amber on the neutral track.
+          const ringFill = isToday ? 'rgb(var(--coral))' : 'rgb(220,161,84)'
+          const ringTrack = isToday ? 'rgb(var(--coral) / 0.18)' : 'rgb(var(--canvas-alt))'
           return (
             <div key={d.date} className="flex flex-col items-center gap-1 md:gap-1.5">
               <span className={cn('text-[9px] md:text-xs font-bold uppercase', isToday ? 'text-[rgb(var(--coral))]' : 'text-ink/30')}>{label}</span>
               <div
-                className={cn('w-8 h-8 md:w-11 md:h-11 rounded-full flex items-center justify-center border-2 md:border-[3px] text-sm md:text-base transition-all',
-                  isToday ? 'border-[rgb(var(--coral))]' : 'border-transparent',
-                  full ? 'bg-[rgb(220,161,84)]/15' : nothingScheduled ? 'bg-transparent' : 'bg-canvas-alt')}
+                className="w-8 h-8 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all"
+                style={!nothingScheduled ? { background: `conic-gradient(${ringFill} ${pct}%, ${ringTrack} 0)` } : undefined}
               >
-                {inner}
+                <span className={cn('flex items-center justify-center text-sm md:text-base',
+                  !nothingScheduled && 'w-[26px] h-[26px] md:w-[36px] md:h-[36px] rounded-full bg-surface')}>
+                  {inner}
+                </span>
               </div>
             </div>
           )
@@ -144,7 +156,7 @@ function StreakStrip({ days }: { days: DayScore[] }) {
       </div>
       <div className="flex items-center gap-3 mt-2 px-0.5 text-[9px] font-medium text-ink/35">
         <span>🔥 all done</span>
-        <span>3/5 partial</span>
+        <span>ring fills as you complete</span>
         <span className="flex items-center gap-0.5"><X size={9} strokeWidth={2.5} /> none done</span>
       </div>
     </div>
@@ -170,6 +182,11 @@ export default function HomePage() {
   const [taskJustDone, setTaskJustDone] = useState<Set<string>>(new Set())
   const [taskRemoved, setTaskRemoved] = useState<Set<string>>(new Set())
   const [waterLogs, setWaterLogs] = useState<WaterLogRow[] | null>(null)
+  const [catchUp, setCatchUp] = useState<CatchUp | null>(null)
+  const [catchHabitsOpen, setCatchHabitsOpen] = useState(false)
+  const [catchDone, setCatchDone] = useState<Set<string>>(new Set())
+  const [catchMealType, setCatchMealType] = useState<string | null>(null)
+  const [catchMealText, setCatchMealText] = useState('')
   const [loggingOtherDrink, setLoggingOtherDrink] = useState(false)
   const [otherDrinkName, setOtherDrinkName] = useState('')
   const [otherDrinkMl, setOtherDrinkMl] = useState('')
@@ -195,12 +212,21 @@ export default function HomePage() {
     }).catch(() => {})
   }, [])
 
+  const loadCatchUp = useCallback(() => {
+    const n = new Date()
+    const p = new URLSearchParams({
+      h: String(n.getHours()), m: String(n.getMinutes()), date: toLocalDateStr(n),
+    })
+    fetch(`/api/life/catch-up?${p}`, { cache: 'no-store' }).then(safeJson<CatchUp>).then(setCatchUp).catch(() => {})
+  }, [])
+
   useEffect(() => {
     const n = new Date()
     const p = new URLSearchParams({ day: String(n.getDate()) })
     fetch(`/api/dashboard?${p}`, { cache: 'no-store' }).then(safeJson<DashboardData>).then(setData).catch(() => {})
     fetch('/api/life/day-scores?days=7', { cache: 'no-store' }).then(safeJson<DayScores>).then(setDayScores).catch(() => {})
     loadRightNow()
+    loadCatchUp()
     setName(localStorage.getItem('userName') ?? '')
 
     // Real pinned account balances
@@ -214,7 +240,7 @@ export default function HomePage() {
 
     const interval = setInterval(loadRightNow, 5 * 60 * 1000)
     return () => clearInterval(interval)
-  }, [loadRightNow, todayStr, tomorrowStr])
+  }, [loadRightNow, loadCatchUp, todayStr, tomorrowStr])
 
   async function toggleHabit(habitId: string) {
     setJustDone(prev => new Set(prev).add(habitId))
@@ -341,6 +367,52 @@ export default function HomePage() {
     }
   }
 
+  async function markNoExpenses() {
+    setCatchUp(prev => prev ? { ...prev, noExpenses: true } : prev)
+    try {
+      const res = await fetch('/api/life/catch-up', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: todayStr, action: 'no-expenses' }),
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      toast.error("Couldn't save that — try again")
+      loadCatchUp()
+    }
+  }
+
+  async function catchUpHabit(habitId: string) {
+    setCatchDone(prev => new Set(prev).add(habitId))
+    try {
+      const res = await fetch('/api/life/logs', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ habitId, date: todayStr + 'T12:00:00.000Z', completed: true }),
+      })
+      if (!res.ok) throw new Error()
+      setTimeout(() => { loadCatchUp(); loadRightNow() }, 800)
+    } catch {
+      toast.error("Couldn't save that — try again")
+      setCatchDone(prev => { const n = new Set(prev); n.delete(habitId); return n })
+    }
+  }
+
+  async function catchUpMeal(mealType: string, description: string | null) {
+    setCatchUp(prev => prev ? { ...prev, unloggedMeals: prev.unloggedMeals.filter(m => m.mealType !== mealType) } : prev)
+    setCatchMealType(null)
+    setCatchMealText('')
+    try {
+      const res = await fetch('/api/life/meal-log', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: todayStr, mealType, description }),
+      })
+      if (!res.ok) throw new Error()
+      setTimeout(loadRightNow, 400)
+    } catch {
+      toast.error("Couldn't save that — try again")
+      loadCatchUp()
+    }
+  }
+
   const glow = timeOfDayGlow(hour)
   // Defensive: a top item with no real title isn't a top item — fall back cleanly
   const hasTop = !!(rightNow?.top && rightNow.top.title && rightNow.top.title.trim())
@@ -356,6 +428,9 @@ export default function HomePage() {
   const byPriorityFirst = (a: DailyTaskRow, b: DailyTaskRow) => Number(b.priority) - Number(a.priority)
   const pendingTodayTasks = (todayTasks ?? []).filter(t => !t.completed && !taskRemoved.has(t.id)).sort(byPriorityFirst)
   const visibleTomorrowTasks = (tomorrowTasks ?? []).filter(t => !taskRemoved.has(t.id)).sort(byPriorityFirst)
+  const openCatchHabits = (catchUp?.pendingHabits ?? []).filter(h => !catchDone.has(h.id))
+  const showExpensesRow = !!catchUp && catchUp.expensesToday === 0 && !catchUp.noExpenses
+  const catchUpCount = openCatchHabits.length + (catchUp?.unloggedMeals.length ?? 0) + (showExpensesRow ? 1 : 0)
   // Only real water counts toward the hydration goal — a Pepsi Max is a
   // real drink worth logging, but it isn't what "3L water" is tracking
   const waterMl = (waterLogs ?? []).filter(w => w.drink === 'Water').reduce((a, w) => a + w.volumeMl, 0)
@@ -499,6 +574,105 @@ export default function HomePage() {
               </div>
             )}
           </div>
+
+          {/* ── Catch up: everything missed so far today, actionable in place ── */}
+          {catchUp && catchUpCount > 0 && (
+            <div className="bg-[rgb(220,161,84)]/[0.08] rounded-3xl border border-[rgb(220,161,84)]/20 shadow-sm p-5">
+              <h2 className="text-[10px] font-bold uppercase tracking-widest text-[rgb(220,161,84)] flex items-center gap-1.5 mb-3">
+                <ListChecks size={12} /> Catch up · {catchUpCount}
+              </h2>
+              <div className="space-y-3">
+
+                {showExpensesRow && (
+                  <div className="flex items-center gap-2.5">
+                    <Receipt size={15} className="text-ink/40 shrink-0" />
+                    <p className="text-sm text-ink/80 flex-1">No expenses logged today</p>
+                    <Link href="/finance/expenses/personal"
+                      className="text-xs font-bold text-white bg-[rgb(232,120,90)] px-3 py-1.5 rounded-full shrink-0">
+                      Add
+                    </Link>
+                    <button onClick={markNoExpenses} className="text-xs font-medium text-ink/40 hover:text-ink/70 shrink-0">
+                      No spending today
+                    </button>
+                  </div>
+                )}
+
+                {catchUp.unloggedMeals.map(m => (
+                  <div key={m.mealType}>
+                    {catchMealType === m.mealType ? (
+                      <div className="space-y-2">
+                        <input
+                          autoFocus
+                          value={catchMealText}
+                          onChange={e => setCatchMealText(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter' && catchMealText.trim()) catchUpMeal(m.mealType, catchMealText.trim()) }}
+                          placeholder={`What did you have for ${m.mealType}?`}
+                          className="w-full bg-surface/70 rounded-xl px-3 py-2 text-sm text-ink placeholder:text-ink/30 border border-black/5 dark:border-white/5 focus:outline-none focus:border-[rgb(220,161,84)]"
+                        />
+                        <div className="flex gap-2">
+                          <button onClick={() => catchMealText.trim() && catchUpMeal(m.mealType, catchMealText.trim())}
+                            className="text-xs font-bold text-white bg-[rgb(220,161,84)] px-3 py-1.5 rounded-full">
+                            Log it
+                          </button>
+                          <button onClick={() => { setCatchMealType(null); setCatchMealText('') }}
+                            className="text-xs font-medium text-ink/40 hover:text-ink/70 px-2">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2.5">
+                        <Utensils size={15} className="text-ink/40 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-ink/80 capitalize">{m.mealType} not logged</p>
+                          <p className="text-xs text-ink/40 truncate">{m.plannedName} was the plan</p>
+                        </div>
+                        <button onClick={() => { setCatchMealType(m.mealType); setCatchMealText('') }}
+                          className="text-xs font-bold text-white bg-[rgb(220,161,84)] px-3 py-1.5 rounded-full shrink-0">
+                          Log
+                        </button>
+                        <button onClick={() => catchUpMeal(m.mealType, null)}
+                          className="text-xs font-medium text-ink/40 hover:text-ink/70 shrink-0">
+                          Skipped it
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {openCatchHabits.length > 0 && (
+                  <div>
+                    <button onClick={() => setCatchHabitsOpen(o => !o)} className="flex items-center gap-2.5 w-full text-left">
+                      <Sparkles size={15} className="text-ink/40 shrink-0" />
+                      <p className="text-sm text-ink/80 flex-1">
+                        {openCatchHabits.length} habit{openCatchHabits.length === 1 ? '' : 's'} due by now, not done
+                      </p>
+                      <ChevronDown size={16} className={cn('text-ink/40 transition-transform shrink-0', catchHabitsOpen && 'rotate-180')} />
+                    </button>
+                    {catchHabitsOpen && (
+                      <div className="mt-2 space-y-1.5">
+                        {catchUp.pendingHabits.map(h => {
+                          const done = catchDone.has(h.id)
+                          return (
+                            <button key={h.id} onClick={() => !done && catchUpHabit(h.id)}
+                              className={cn('flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-xl transition-all duration-500',
+                                done ? 'bg-emerald-500/10' : 'bg-surface/70 hover:bg-surface group')}>
+                              <span className={cn('w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
+                                done ? 'bg-emerald-500 border-emerald-500 scale-110' : 'border-ink/20 group-hover:border-[rgb(220,161,84)]')}>
+                                {done && <Check size={12} className="text-white" strokeWidth={3} />}
+                              </span>
+                              <span className={cn('text-sm transition-all', done ? 'text-ink/40 line-through' : 'text-ink/80 group-hover:text-ink')}>{h.name}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+              </div>
+            </div>
+          )}
 
           {/* ── Today's agenda: live ICS calendar events only, nothing hardcoded ── */}
           {agenda === null ? (
