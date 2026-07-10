@@ -52,8 +52,12 @@ export function Mascot({
     <div className={cn('relative', idle && 'mascot-idle', className)} style={{ width: size, height: size }}>
       {/* Box-shadow glow, not a blurred radial-gradient layer — the gradient
           version blended invisibly into the warm ivory canvas since sage at
-          low opacity read almost the same as the background behind it */}
-      <div aria-hidden className={cn('absolute inset-0 rounded-full', idle && 'mascot-glow')} />
+          low opacity read almost the same as the background behind it.
+          Inset to ~8% because BLOB_PATH doesn't fill the full 100x100
+          viewBox — inset-0 left an untouched gap between the blob's real
+          edge and where the glow started, showing the card's own light
+          background through as what looked like a white ring. */}
+      <div aria-hidden className={cn('absolute rounded-full', idle && 'mascot-glow')} style={{ inset: '8%' }} />
       <svg viewBox="0 0 100 100" className="relative w-full h-full drop-shadow-sm">
         <path d={BLOB_PATH} fill="rgb(var(--sage))" />
         <Face mood={mood} />

@@ -110,7 +110,6 @@ function StreakStrip({ days }: { days: DayScore[] }) {
           const label = new Date(d.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })
           const nothingScheduled = d.total === 0
           const full = d.total > 0 && d.completed === d.total
-          const pct = d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0
           // Today isn't "missed" just because it's not done yet — the day isn't over
           const showPartial = d.total > 0 && !full && (isToday || d.completed > 0)
 
@@ -125,23 +124,19 @@ function StreakStrip({ days }: { days: DayScore[] }) {
             </>
           )
 
-          // One ring, never two: the conic-gradient progress ring and the
-          // "today" border ring were stacking on today's partial cell — pick
-          // whichever single ring applies, and color the progress ring
-          // coral (not amber) when it's today so "today" is still obvious
-          const progressColor = isToday ? 'rgb(var(--coral))' : 'rgb(220,161,84)'
+          // Flat circle, always — the conic-gradient pie-slice for partial
+          // days read as an ugly half-filled ring. One consistent style
+          // (solid fill + a single coral "today" border) for every state;
+          // only the content inside changes.
           return (
             <div key={d.date} className="flex flex-col items-center gap-1 md:gap-1.5">
               <span className={cn('text-[9px] md:text-xs font-bold uppercase', isToday ? 'text-[rgb(var(--coral))]' : 'text-ink/30')}>{label}</span>
               <div
-                className={cn('w-8 h-8 md:w-11 md:h-11 rounded-full flex items-center justify-center border-2 md:border-[3px] transition-all',
-                  isToday && !showPartial ? 'border-[rgb(var(--coral))]' : 'border-transparent',
-                  !showPartial && (full ? 'bg-[rgb(220,161,84)]/15' : nothingScheduled ? 'bg-transparent' : 'bg-canvas-alt'))}
-                style={showPartial ? { background: `conic-gradient(${progressColor} ${pct}%, rgb(var(--canvas-alt)) ${pct}% 100%)` } : undefined}
+                className={cn('w-8 h-8 md:w-11 md:h-11 rounded-full flex items-center justify-center border-2 md:border-[3px] text-sm md:text-base transition-all',
+                  isToday ? 'border-[rgb(var(--coral))]' : 'border-transparent',
+                  full ? 'bg-[rgb(220,161,84)]/15' : nothingScheduled ? 'bg-transparent' : 'bg-canvas-alt')}
               >
-                <span className={cn('flex items-center justify-center text-sm md:text-base', showPartial && 'w-[26px] h-[26px] md:w-[36px] md:h-[36px] rounded-full bg-surface')}>
-                  {inner}
-                </span>
+                {inner}
               </div>
             </div>
           )
