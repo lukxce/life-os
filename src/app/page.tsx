@@ -897,6 +897,13 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* ── Design lab (temporary): two candidate languages on live data ── */}
+          <p className="text-center text-[11px] text-ink/35">
+            Design lab: <Link href="/design/nova" className="font-bold text-ink/60 hover:underline">Nova</Link>
+            {' · '}
+            <Link href="/design/ledger" className="font-bold text-ink/60 hover:underline">Ledger</Link>
+          </p>
+
           {/* ── Food map ── */}
           <div>
             <h2 className="text-xs font-bold uppercase tracking-widest text-ink/40 mb-3 px-1">Food map</h2>

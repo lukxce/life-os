@@ -1,10 +1,18 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { Mascot, MascotMood } from './Mascot'
+import { Check, Clock, X } from 'lucide-react'
 
-interface Nudge { id: string; mood: 'curious' | 'content'; message: string; href: string; module: string }
+interface Nudge {
+  id: string; module: string; score: number; message: string; href: string
+  habits?: { id: string; name: string }[]
+  meals?: { mealType: string; plannedName: string }[]
+  action?: 'no-expenses'
+}
 
 function moduleForPath(path: string): string {
   if (path === '/') return 'home'
@@ -12,58 +20,204 @@ function moduleForPath(path: string): string {
   return seg === 'books' ? 'watchlist' : seg
 }
 
-/** Persistent companion — present on every screen, prioritizes whatever's
- *  relevant to the module you're actually looking at, not just one thing. */
+function todayStr() {
+  const n = new Date()
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`
+}
+
+// Snooze = quiet for 2h; dismiss = quiet for the rest of the day. Both are
+// how a companion earns trust: it takes "not now" for an answer instead of
+// re-asking on every page load forever.
+function isMuted(id: string): boolean {
+  try {
+    const snooze = localStorage.getItem(`nudge-snooze:${id}`)
+    if (snooze && parseInt(snooze) > Date.now()) return true
+    if (localStorage.getItem(`nudge-dismiss:${id}`) === todayStr()) return true
+  } catch { /* private mode etc. */ }
+  return false
+}
+
+/** Persistent companion — one per screen; can now DO things, not just point. */
 export function FloatingMascot() {
   const [nudges, setNudges] = useState<Nudge[] | null>(null)
+  const [celebration, setCelebration] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
+  const [justDone, setJustDone] = useState<Set<string>>(new Set())
+  const [mealOpen, setMealOpen] = useState<string | null>(null)
+  const [mealText, setMealText] = useState('')
+  const [, setTick] = useState(0) // re-render after snooze/dismiss (localStorage isn't reactive)
   const pathname = usePathname()
 
-  useEffect(() => {
-    // Client-local time — the nudges route used to read the server's own
-    // clock, which on Vercel is UTC and never matched the user's real hour
+  const loadNudges = useCallback(() => {
     const n = new Date()
-    const p = new URLSearchParams({
-      h: String(n.getHours()),
-      date: `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`,
-    })
+    const p = new URLSearchParams({ h: String(n.getHours()), date: todayStr() })
     fetch(`/api/life/nudges?${p}`, { cache: 'no-store' })
-      .then(r => r.ok ? r.json() : { nudges: [] })
-      .then(d => setNudges(d.nudges ?? []))
-      .catch(() => setNudges([]))
+      .then(r => r.ok ? r.json() : { nudges: [], celebration: null })
+      .then(d => { setNudges(d.nudges ?? []); setCelebration(d.celebration ?? null) })
+      .catch(() => { setNudges([]); setCelebration(null) })
   }, [])
+
+  useEffect(() => { loadNudges() }, [loadNudges])
 
   if (nudges === null) return null
 
   const currentModule = moduleForPath(pathname)
-  // Home is the overview — showing whatever's most pressing anywhere makes
-  // sense there. Any other specific module page only shows ITS OWN nudge;
-  // otherwise the habits nudge (almost always true by evening) bled onto
-  // every single screen regardless of what you were actually looking at.
-  const top = currentModule === 'home' ? nudges[0] : nudges.find(n => n.module === currentModule)
+  const visible = nudges.filter(n => !isMuted(n.id))
+  // Home (the overview) surfaces the highest-priority nudge from anywhere;
+  // a module page only speaks about its own module
+  const top = currentModule === 'home' ? visible[0] : visible.find(n => n.module === currentModule)
   const mood: MascotMood = top ? 'curious' : 'pleased'
+
+  async function checkHabit(habitId: string) {
+    setJustDone(prev => new Set(prev).add(habitId))
+    try {
+      const res = await fetch('/api/life/logs', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ habitId, date: todayStr() + 'T12:00:00.000Z', completed: true }),
+      })
+      if (!res.ok) throw new Error()
+      setTimeout(loadNudges, 800)
+    } catch {
+      toast.error("Couldn't save that — try again")
+      setJustDone(prev => { const n = new Set(prev); n.delete(habitId); return n })
+    }
+  }
+
+  async function logMeal(mealType: string, description: string | null) {
+    setMealOpen(null)
+    setMealText('')
+    try {
+      const res = await fetch('/api/life/meal-log', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: todayStr(), mealType, description }),
+      })
+      if (!res.ok) throw new Error()
+      loadNudges()
+    } catch {
+      toast.error("Couldn't save that — try again")
+    }
+  }
+
+  async function noExpenses() {
+    try {
+      const res = await fetch('/api/life/catch-up', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: todayStr(), action: 'no-expenses' }),
+      })
+      if (!res.ok) throw new Error()
+      loadNudges()
+    } catch {
+      toast.error("Couldn't save that — try again")
+    }
+  }
+
+  function snooze(id: string) {
+    try { localStorage.setItem(`nudge-snooze:${id}`, String(Date.now() + 2 * 60 * 60 * 1000)) } catch {}
+    setTick(t => t + 1)
+  }
+  function dismissToday(id: string) {
+    try { localStorage.setItem(`nudge-dismiss:${id}`, todayStr()) } catch {}
+    setTick(t => t + 1)
+  }
+
+  const pendingHabits = top?.habits?.filter(h => !justDone.has(h.id)) ?? []
 
   return (
     <div className="fixed z-40 bottom-24 right-4 md:bottom-6 md:right-6">
       {open && (
-        <div className="absolute bottom-full right-0 mb-3 w-64 bg-surface/95 backdrop-blur-xl rounded-2xl border border-black/5 dark:border-white/5 shadow-lg p-4 page-in">
+        <div className="absolute bottom-full right-0 mb-3 w-72 bg-surface/95 backdrop-blur-xl rounded-2xl border border-black/5 dark:border-white/5 shadow-lg p-4 page-in">
           {top ? (
             <>
               <p className="text-sm font-semibold text-ink leading-snug">{top.message}</p>
-              <Link href={top.href} onClick={() => setOpen(false)}
-                className="text-xs font-bold text-[rgb(var(--coral))] hover:underline mt-1.5 inline-block">
-                Take care of it →
-              </Link>
-              {nudges.length > 1 && (
-                <p className="text-[10px] text-ink/30 mt-2">+{nudges.length - 1} more waiting elsewhere</p>
+
+              {/* Inline habit checklist — act here, not on another page */}
+              {top.habits && pendingHabits.length > 0 && (
+                <div className="mt-2.5 space-y-1">
+                  {top.habits.map(h => {
+                    const done = justDone.has(h.id)
+                    return (
+                      <button key={h.id} onClick={() => !done && checkHabit(h.id)}
+                        className={cn('flex items-center gap-2 w-full text-left px-2.5 py-1.5 rounded-lg transition-all duration-500',
+                          done ? 'bg-emerald-500/10' : 'bg-canvas-alt hover:bg-canvas-alt/70 group')}>
+                        <span className={cn('w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
+                          done ? 'bg-emerald-500 border-emerald-500' : 'border-ink/20 group-hover:border-[rgb(var(--coral))]')}>
+                          {done && <Check size={10} className="text-white" strokeWidth={3.5} />}
+                        </span>
+                        <span className={cn('text-xs', done ? 'text-ink/35 line-through' : 'text-ink/80')}>{h.name}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               )}
+
+              {/* Inline meal logging */}
+              {top.meals && top.meals.length > 0 && (
+                <div className="mt-2.5 space-y-1.5">
+                  {top.meals.map(m => (
+                    <div key={m.mealType}>
+                      {mealOpen === m.mealType ? (
+                        <div className="flex gap-1.5">
+                          <input autoFocus value={mealText} onChange={e => setMealText(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter' && mealText.trim()) logMeal(m.mealType, mealText.trim()) }}
+                            placeholder={`What was ${m.mealType}?`}
+                            className="flex-1 min-w-0 bg-canvas-alt rounded-lg px-2.5 py-1.5 text-xs text-ink placeholder:text-ink/30 focus:outline-none" />
+                          <button onClick={() => mealText.trim() && logMeal(m.mealType, mealText.trim())}
+                            className="text-[10px] font-bold text-white bg-[rgb(220,161,84)] px-2.5 rounded-lg shrink-0">Log</button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-ink/70 capitalize flex-1 truncate">{m.mealType} — {m.plannedName}</span>
+                          <button onClick={() => { setMealOpen(m.mealType); setMealText('') }}
+                            className="text-[10px] font-bold text-[rgb(220,161,84)] shrink-0">Log</button>
+                          <button onClick={() => logMeal(m.mealType, null)}
+                            className="text-[10px] font-medium text-ink/35 shrink-0">Skipped</button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Inline no-expenses answer */}
+              {top.action === 'no-expenses' && (
+                <div className="flex gap-2 mt-2.5">
+                  <Link href="/finance/expenses/personal" onClick={() => setOpen(false)}
+                    className="text-[11px] font-bold text-white bg-[rgb(232,120,90)] px-3 py-1.5 rounded-full">Add expense</Link>
+                  <button onClick={noExpenses}
+                    className="text-[11px] font-medium text-ink/45 hover:text-ink/70 px-1.5">No spending today</button>
+                </div>
+              )}
+
+              {/* Link fallback for nudges without inline actions */}
+              {!top.habits && !top.meals && !top.action && (
+                <Link href={top.href} onClick={() => setOpen(false)}
+                  className="text-xs font-bold text-[rgb(var(--coral))] hover:underline mt-1.5 inline-block">
+                  Take care of it →
+                </Link>
+              )}
+
+              <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-black/5 dark:border-white/5">
+                <div className="flex gap-3">
+                  <button onClick={() => snooze(top.id)} className="flex items-center gap-1 text-[10px] font-medium text-ink/35 hover:text-ink/60">
+                    <Clock size={10} /> Later
+                  </button>
+                  <button onClick={() => dismissToday(top.id)} className="flex items-center gap-1 text-[10px] font-medium text-ink/35 hover:text-ink/60">
+                    <X size={10} /> Not today
+                  </button>
+                </div>
+                {visible.length > 1 && (
+                  <span className="text-[10px] text-ink/25">+{visible.length - 1} more</span>
+                )}
+              </div>
             </>
           ) : (
-            <p className="text-sm font-semibold text-ink leading-snug">All caught up — nothing needs you right now.</p>
+            <p className="text-sm font-semibold text-ink leading-snug">
+              {celebration ?? 'All caught up — nothing needs you right now.'}
+            </p>
           )}
         </div>
       )}
-      <button onClick={() => setOpen(o => !o)} aria-label="Companion"
+      <button onClick={() => setOpen(o => { if (!o) loadNudges(); return !o })} aria-label="Companion"
         className="relative flex items-center justify-center w-14 h-14 rounded-full active:scale-95 transition-transform">
         <Mascot mood={mood} size={40} idle={!open} />
         {top && !open && (
