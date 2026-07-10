@@ -87,6 +87,17 @@ function toLocalDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+// fetch() only rejects on a network failure — an HTTP error response still
+// resolves fine and r.json() will happily parse its error body. Without this
+// check, a failed request sets state to something like {error: "..."} as if
+// it were real data, and the next .filter()/.map() on it throws a real
+// TypeError — this is what an "Application error: client-side exception"
+// on this page has actually been.
+async function safeJson<T>(res: Response): Promise<T> {
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+  return res.json()
+}
+
 /** Real per-day completion states, with an honest partial state — not just done/missed */
 function StreakStrip({ days }: { days: DayScore[] }) {
   const today = toLocalDateStr(new Date())
@@ -180,7 +191,7 @@ export default function HomePage() {
       h: String(n.getHours()), m: String(n.getMinutes()),
       dow: String(n.getDay()), date: toLocalDateStr(n), ts: String(n.getTime()),
     })
-    fetch(`/api/right-now?${p}`, { cache: 'no-store' }).then(r => r.json()).then((rn: RightNow) => {
+    fetch(`/api/right-now?${p}`, { cache: 'no-store' }).then(safeJson<RightNow>).then((rn: RightNow) => {
       setRightNow(rn)
       // Today's agenda comes straight off this response — ICS calendars
       // only, nothing hardcoded/recurring, nothing already passed
@@ -191,19 +202,19 @@ export default function HomePage() {
   useEffect(() => {
     const n = new Date()
     const p = new URLSearchParams({ day: String(n.getDate()) })
-    fetch(`/api/dashboard?${p}`, { cache: 'no-store' }).then(r => r.json()).then(setData).catch(() => {})
-    fetch('/api/life/day-scores?days=7', { cache: 'no-store' }).then(r => r.json()).then(setDayScores).catch(() => {})
+    fetch(`/api/dashboard?${p}`, { cache: 'no-store' }).then(safeJson<DashboardData>).then(setData).catch(() => {})
+    fetch('/api/life/day-scores?days=7', { cache: 'no-store' }).then(safeJson<DayScores>).then(setDayScores).catch(() => {})
     loadRightNow()
     setName(localStorage.getItem('userName') ?? '')
 
     // Real pinned account balances
-    fetch('/api/finance/accounts', { cache: 'no-store' }).then(r => r.json()).then((accs: AccountRow[]) => setAccounts(accs)).catch(() => {})
+    fetch('/api/finance/accounts', { cache: 'no-store' }).then(safeJson<AccountRow[]>).then(setAccounts).catch(() => {})
 
     // Today/tomorrow tasks, completion streak, and today's water
-    fetch(`/api/life/tasks?date=${todayStr}`, { cache: 'no-store' }).then(r => r.json()).then(setTodayTasks).catch(() => {})
-    fetch(`/api/life/tasks?date=${tomorrowStr}`, { cache: 'no-store' }).then(r => r.json()).then(setTomorrowTasks).catch(() => {})
-    fetch(`/api/life/tasks/streak?date=${todayStr}`, { cache: 'no-store' }).then(r => r.json()).then(d => setTaskStreak(d.streak ?? 0)).catch(() => {})
-    fetch(`/api/life/water?date=${todayStr}`, { cache: 'no-store' }).then(r => r.json()).then(setWaterLogs).catch(() => {})
+    fetch(`/api/life/tasks?date=${todayStr}`, { cache: 'no-store' }).then(safeJson<DailyTaskRow[]>).then(setTodayTasks).catch(() => {})
+    fetch(`/api/life/tasks?date=${tomorrowStr}`, { cache: 'no-store' }).then(safeJson<DailyTaskRow[]>).then(setTomorrowTasks).catch(() => {})
+    fetch(`/api/life/tasks/streak?date=${todayStr}`, { cache: 'no-store' }).then(safeJson<{ streak: number }>).then(d => setTaskStreak(d.streak ?? 0)).catch(() => {})
+    fetch(`/api/life/water?date=${todayStr}`, { cache: 'no-store' }).then(safeJson<WaterLogRow[]>).then(setWaterLogs).catch(() => {})
 
     const interval = setInterval(loadRightNow, 5 * 60 * 1000)
     return () => clearInterval(interval)

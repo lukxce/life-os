@@ -27,7 +27,10 @@ export function FloatingMascot() {
       h: String(n.getHours()),
       date: `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`,
     })
-    fetch(`/api/life/nudges?${p}`, { cache: 'no-store' }).then(r => r.json()).then(d => setNudges(d.nudges ?? [])).catch(() => setNudges([]))
+    fetch(`/api/life/nudges?${p}`, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : { nudges: [] })
+      .then(d => setNudges(d.nudges ?? []))
+      .catch(() => setNudges([]))
   }, [])
 
   if (nudges === null) return null
