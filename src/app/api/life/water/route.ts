@@ -24,30 +24,26 @@ async function syncWaterHabit(date: Date) {
   })
   if (!habit) return
 
-  const existing = await prisma.habitLog.findUnique({ where: { habitId_date: { habitId: habit.id, date } } })
-  if (existing?.completed) return // already done — nothing to change
+  // Recompute from scratch every time — this is idempotent (always the real
+  // total for the day) rather than trying to add a delta on top of
+  // whatever's already stored, so it can't drift out of sync.
+  const totalMl = await prisma.waterLog.aggregate({
+    where: { date, drink: { equals: 'Water', mode: 'insensitive' } },
+    _sum: { volumeMl: true },
+  })
+  const value = totalMl._sum.volumeMl ?? 0
 
-  // Only write a quantity value when the habit's own unit is unambiguously
-  // "ml" — otherwise we'd risk stamping a wrong-unit number (e.g. "L" or
-  // "glasses") over whatever the habit actually expects
-  if (habit.target != null && habit.unit?.toLowerCase() === 'ml') {
-    const totalMl = await prisma.waterLog.aggregate({
-      where: { date, drink: { equals: 'Water', mode: 'insensitive' } },
-      _sum: { volumeMl: true },
-    })
-    const value = totalMl._sum.volumeMl ?? 0
-    await prisma.habitLog.upsert({
-      where: { habitId_date: { habitId: habit.id, date } },
-      update: { value, completed: value >= habit.target },
-      create: { habitId: habit.id, date, value, completed: value >= habit.target },
-    })
-  } else {
-    await prisma.habitLog.upsert({
-      where: { habitId_date: { habitId: habit.id, date } },
-      update: { completed: true },
-      create: { habitId: habit.id, date, completed: true },
-    })
-  }
+  // A quantity habit's target for "Water" is going to be a milliliter count
+  // in every realistic setup (3000, 2000, etc.) — gating this on the unit
+  // string matching "ml" exactly meant any other/blank unit value silently
+  // skipped writing the number at all, so the habit could show completed
+  // but the quantity itself never moved
+  const completed = habit.target != null ? value >= habit.target : true
+  await prisma.habitLog.upsert({
+    where: { habitId_date: { habitId: habit.id, date } },
+    update: { value, completed },
+    create: { habitId: habit.id, date, value, completed },
+  })
 }
 
 export async function POST(req: NextRequest) {
