@@ -4,21 +4,33 @@ import { useState } from 'react'
 import { cn, formatEUR, formatRSD } from '@/lib/utils'
 import { Mascot } from '@/components/ui/Mascot'
 import { useHomeData, toLocalDateStr } from '../useHomeData'
-import { Check, Camera, Receipt, CalendarDays, Droplets, Flame, FileText } from 'lucide-react'
+import { Check, Camera, Receipt, CalendarDays, Droplets, Flame, FileText, Plus, X } from 'lucide-react'
 
-// ── LEDGER v2 — editorial base, Proton-grade surfaces ────────────────────────
-// The Swiss/ledger skeleton (one ink, mono numerals, hairline rules inside
-// lists) kept, but with real cards and real buttons where they earn their
-// place — modern, neat, readable, not bare-bones. Green blob stays.
+// ── LEDGER v3 — cool Proton-grade neutrals, app chrome, quick actions up top ──
+// v2 feedback: still too close to the old warm-ivory design, actions buried
+// at the bottom, no way to reach the rest of the app. v3 breaks the palette
+// (cool paper, no coral), adds a sticky header with module navigation and a
+// "+ New" quick-action menu. Green stays the single saturated voice.
 
-const PAPER = '#f6f5f1'
+const PAPER = '#f4f4f6'
 const CARD = '#ffffff'
-const INK = '#201d19'
-const BORDER = 'rgba(32,29,25,0.10)'
-const RULE = 'rgba(32,29,25,0.08)'
-const FAINT = 'rgba(32,29,25,0.55)'
-const GREEN = '#2e7d4f'   // actions + positive data
-const URGENT = '#c2492f'  // overdue / attention only
+const INK = '#1b1b1e'
+const BORDER = 'rgba(27,27,30,0.10)'
+const RULE = 'rgba(27,27,30,0.07)'
+const FAINT = 'rgba(27,27,30,0.55)'
+const GREEN = '#2e7d4f'
+const URGENT = '#c0442c'
+
+const NAV = [
+  { href: '/finance', label: 'Finance' },
+  { href: '/life', label: 'Habits' },
+  { href: '/fitness', label: 'Fitness' },
+  { href: '/schedule', label: 'Schedule' },
+  { href: '/journal', label: 'Journal' },
+  { href: '/food', label: 'Food' },
+  { href: '/personal', label: 'Personal' },
+  { href: '/watchlist', label: 'Watchlist' },
+]
 
 function Label({ children }: { children: React.ReactNode }) {
   return <p className="text-[11px] font-semibold uppercase" style={{ letterSpacing: '0.14em', color: FAINT }}>{children}</p>
@@ -27,7 +39,7 @@ function Label({ children }: { children: React.ReactNode }) {
 function Card({ children, className, accent }: { children: React.ReactNode; className?: string; accent?: string }) {
   return (
     <section className={cn('rounded-2xl', className)}
-      style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: accent ? `3px solid ${accent}` : `1px solid ${BORDER}`, boxShadow: '0 1px 2px rgba(32,29,25,0.04)' }}>
+      style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: accent ? `3px solid ${accent}` : `1px solid ${BORDER}`, boxShadow: '0 1px 2px rgba(27,27,30,0.04)' }}>
       {children}
     </section>
   )
@@ -67,6 +79,7 @@ export default function LedgerPrototype() {
   const [newTomorrow, setNewTomorrow] = useState('')
   const [mealText, setMealText] = useState('')
   const [mealOpen, setMealOpen] = useState<string | null>(null)
+  const [newOpen, setNewOpen] = useState(false)
   const now = new Date()
   const today = toLocalDateStr(now)
 
@@ -84,18 +97,65 @@ export default function LedgerPrototype() {
 
   return (
     <div className="min-h-screen" style={{ background: PAPER, color: INK }}>
-      <div className="max-w-xl mx-auto px-5 py-10 pb-24 space-y-4">
 
-        {/* Masthead */}
-        <header className="px-1 pb-2">
-          <div className="flex items-baseline justify-between">
-            <h1 className="text-[1.9rem] font-bold tracking-tight">{greeting(now.getHours())}.</h1>
-            <Link href="/" className="text-[11px] font-semibold uppercase" style={{ letterSpacing: '0.14em', color: FAINT }}>← current</Link>
+      {/* ── App chrome: sticky header with nav + quick actions ── */}
+      <header className="sticky top-0 z-40" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', borderBottom: `1px solid ${BORDER}` }}>
+        <div className="max-w-xl mx-auto px-5">
+          <div className="flex items-center justify-between py-3">
+            <p className="font-mono text-[12px] font-bold uppercase" style={{ letterSpacing: '0.2em' }}>Life OS</p>
+            <div className="flex items-center gap-2">
+              <Link href="/" className="text-[11px] font-semibold uppercase px-2" style={{ letterSpacing: '0.12em', color: FAINT }}>← current</Link>
+              <div className="relative">
+                <button onClick={() => setNewOpen(o => !o)}
+                  className="flex items-center gap-1.5 text-[13px] font-semibold text-white pl-3 pr-3.5 py-1.5 rounded-lg active:scale-95 transition-transform"
+                  style={{ background: newOpen ? INK : GREEN }}>
+                  {newOpen ? <X size={14} /> : <Plus size={14} />} New
+                </button>
+                {newOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setNewOpen(false)} />
+                    <div className="absolute right-0 top-full mt-2 z-50 w-52 rounded-xl overflow-hidden"
+                      style={{ background: CARD, border: `1px solid ${BORDER}`, boxShadow: '0 8px 24px rgba(27,27,30,0.12)' }}>
+                      <Link href="/finance/scan" className="flex items-center gap-2.5 px-4 py-3 text-[14px] hover:bg-black/[0.03]" style={{ borderBottom: `1px solid ${RULE}` }}>
+                        <Camera size={15} style={{ color: GREEN }} /> Scan receipt
+                      </Link>
+                      <Link href="/finance/expenses/personal" className="flex items-center gap-2.5 px-4 py-3 text-[14px] hover:bg-black/[0.03]" style={{ borderBottom: `1px solid ${RULE}` }}>
+                        <Receipt size={15} style={{ color: GREEN }} /> Add expense
+                      </Link>
+                      <button onClick={() => { d.logWater('Water', 250); setNewOpen(false) }}
+                        className="flex items-center gap-2.5 px-4 py-3 text-[14px] hover:bg-black/[0.03] w-full text-left" style={{ borderBottom: `1px solid ${RULE}` }}>
+                        <Droplets size={15} style={{ color: GREEN }} /> Log 250ml water
+                      </button>
+                      <Link href="/schedule" className="flex items-center gap-2.5 px-4 py-3 text-[14px] hover:bg-black/[0.03]">
+                        <CalendarDays size={15} style={{ color: GREEN }} /> My schedule
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
+          <nav className="flex gap-5 overflow-x-auto pb-2.5 -mt-0.5" style={{ scrollbarWidth: 'none' }}>
+            {NAV.map(n => (
+              <Link key={n.href} href={n.href}
+                className="text-[13px] font-medium whitespace-nowrap hover:opacity-100 transition-opacity"
+                style={{ color: FAINT }}>
+                {n.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </header>
+
+      <div className="max-w-xl mx-auto px-5 py-6 pb-24 space-y-4">
+
+        {/* Greeting */}
+        <div className="px-1 pb-1">
+          <h1 className="text-[1.6rem] font-bold tracking-tight">{greeting(now.getHours())}.</h1>
           <p className="font-mono text-[12px] mt-0.5" style={{ color: FAINT }}>
             {now.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
           </p>
-        </header>
+        </div>
 
         {/* Now — hero card with the green blob */}
         <Card className="p-5">
@@ -111,9 +171,7 @@ export default function LedgerPrototype() {
                   <p className="font-mono text-[12px] mt-0.5" style={{ color: FAINT }}>{d.rightNow.top!.detail}</p>
                 </>
               ) : (
-                <>
-                  <p className="text-[17px] font-semibold leading-snug mt-1">Clear — nothing needs you this minute.</p>
-                </>
+                <p className="text-[17px] font-semibold leading-snug mt-1">Clear — nothing needs you this minute.</p>
               )}
             </div>
           </div>
@@ -126,8 +184,8 @@ export default function LedgerPrototype() {
                   <button key={h.id} onClick={() => !done && d.toggleHabit(h.id)}
                     className="flex items-center gap-3 w-full text-left py-2.5 group"
                     style={{ borderTop: `1px solid ${RULE}` }}>
-                    <span className={cn('w-[18px] h-[18px] rounded-full border-2 shrink-0 flex items-center justify-center transition-all')}
-                      style={{ borderColor: done ? GREEN : 'rgba(32,29,25,0.25)', background: done ? GREEN : 'transparent' }}>
+                    <span className="w-[18px] h-[18px] rounded-full border-2 shrink-0 flex items-center justify-center transition-all"
+                      style={{ borderColor: done ? GREEN : 'rgba(27,27,30,0.25)', background: done ? GREEN : 'transparent' }}>
                       {done && <Check size={11} className="text-white" strokeWidth={3.5} />}
                     </span>
                     <span className={cn('text-[14px]', done && 'line-through')} style={{ color: done ? FAINT : INK }}>{h.name}</span>
@@ -190,7 +248,7 @@ export default function LedgerPrototype() {
                 const pct = day.total > 0 ? Math.round((day.completed / day.total) * 100) : 0
                 const label = new Date(day.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })
                 return (
-                  <div key={day.date} className="pt-2.5 pb-1.5 text-center rounded-b-lg" style={isToday ? { background: 'rgba(46,125,79,0.06)' } : undefined}>
+                  <div key={day.date} className="pt-2.5 pb-1.5 text-center rounded-b-lg" style={isToday ? { background: 'rgba(46,125,79,0.07)' } : undefined}>
                     <p className="text-[11px] font-bold uppercase" style={{ color: isToday ? GREEN : FAINT }}>{label}</p>
                     <p className="font-mono text-[13px] tabular-nums mt-1 font-semibold" style={{ color: day.total === 0 ? BORDER : pct === 100 ? GREEN : INK }}>
                       {day.total === 0 ? '·' : pct === 100 ? '✓' : `${day.completed}/${day.total}`}
@@ -256,7 +314,7 @@ export default function LedgerPrototype() {
                   <button key={h.id} onClick={() => !done && d.catchUpHabit(h.id)}
                     className="flex items-center gap-3 w-full text-left py-3" style={{ borderTop: `1px solid ${RULE}` }}>
                     <span className="w-[18px] h-[18px] rounded-full border-2 shrink-0 flex items-center justify-center transition-all"
-                      style={{ borderColor: done ? GREEN : 'rgba(32,29,25,0.25)', background: done ? GREEN : 'transparent' }}>
+                      style={{ borderColor: done ? GREEN : 'rgba(27,27,30,0.25)', background: done ? GREEN : 'transparent' }}>
                       {done && <Check size={11} className="text-white" strokeWidth={3.5} />}
                     </span>
                     <span className={cn('text-[14px] flex-1', done && 'line-through')} style={{ color: done ? FAINT : INK }}>{h.name}</span>
@@ -299,12 +357,12 @@ export default function LedgerPrototype() {
                 <button key={t.id} onClick={() => !done && d.toggleTask(t.id)}
                   className="flex items-center gap-3 w-full text-left py-2.5" style={{ borderTop: `1px solid ${RULE}` }}>
                   <span className="w-[18px] h-[18px] rounded-full border-2 shrink-0 flex items-center justify-center transition-all"
-                    style={{ borderColor: done ? GREEN : t.priority ? URGENT : 'rgba(32,29,25,0.25)', background: done ? GREEN : 'transparent' }}>
+                    style={{ borderColor: done ? GREEN : t.priority ? URGENT : 'rgba(27,27,30,0.25)', background: done ? GREEN : 'transparent' }}>
                     {done && <Check size={11} className="text-white" strokeWidth={3.5} />}
                   </span>
                   <span className={cn('text-[14px] flex-1', done && 'line-through')} style={{ color: done ? FAINT : INK }}>{t.text}</span>
                   {t.priority && !done && (
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ color: URGENT, background: 'rgba(194,73,47,0.08)', letterSpacing: '0.08em' }}>priority</span>
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ color: URGENT, background: 'rgba(192,68,44,0.08)', letterSpacing: '0.08em' }}>priority</span>
                   )}
                 </button>
               )
@@ -403,28 +461,9 @@ export default function LedgerPrototype() {
           </Card>
         )}
 
-        {/* Quick actions */}
-        <div className="grid grid-cols-3 gap-2.5">
-          <Link href="/finance/scan"
-            className="flex items-center justify-center gap-2 py-3 rounded-2xl text-[13px] font-semibold hover:bg-black/[0.03] transition-colors"
-            style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-            <Camera size={15} style={{ color: GREEN }} /> Scan
-          </Link>
-          <Link href="/finance/expenses/personal"
-            className="flex items-center justify-center gap-2 py-3 rounded-2xl text-[13px] font-semibold hover:bg-black/[0.03] transition-colors"
-            style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-            <Receipt size={15} style={{ color: GREEN }} /> Expense
-          </Link>
-          <Link href="/schedule"
-            className="flex items-center justify-center gap-2 py-3 rounded-2xl text-[13px] font-semibold hover:bg-black/[0.03] transition-colors"
-            style={{ background: CARD, border: `1px solid ${BORDER}` }}>
-            <CalendarDays size={15} style={{ color: GREEN }} /> Schedule
-          </Link>
-        </div>
-
         <footer className="pt-4 text-center">
           <p className="font-mono text-[11px]" style={{ color: FAINT }}>
-            Ledger v2 · design lab · <Link href="/design/nova" className="underline underline-offset-2">compare Nova</Link>
+            Ledger v3 · design lab · <Link href="/design/nova" className="underline underline-offset-2">compare Nova</Link>
           </p>
         </footer>
       </div>
