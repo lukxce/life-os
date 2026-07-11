@@ -1,25 +1,47 @@
 'use client'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { cn, formatEUR, formatRSD } from '@/lib/utils'
 import { Mascot } from '@/components/ui/Mascot'
+import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { useHomeData, toLocalDateStr } from '../useHomeData'
-import { Check, Camera, Receipt, CalendarDays, Droplets, Flame, FileText, Plus, X } from 'lucide-react'
+import { Check, Camera, Receipt, CalendarDays, Droplets, Flame, FileText, Plus, X, Moon, Sun } from 'lucide-react'
 
-// ── LEDGER v3 — cool Proton-grade neutrals, app chrome, quick actions up top ──
-// v2 feedback: still too close to the old warm-ivory design, actions buried
-// at the bottom, no way to reach the rest of the app. v3 breaks the palette
-// (cool paper, no coral), adds a sticky header with module navigation and a
-// "+ New" quick-action menu. Green stays the single saturated voice.
+// ── LEDGER v4 — cool neutrals, dark mode, fixed chrome, reachable actions ─────
+// Tokens live in CSS variables so light/dark swap in one place. The header is
+// position:fixed (not sticky — the global overflow-x rule was silently killing
+// sticky on mobile). On mobile the "+ New" menu moves to a bottom-right FAB;
+// desktop keeps it in the header. Green stays the single saturated voice.
 
-const PAPER = '#f4f4f6'
-const CARD = '#ffffff'
-const INK = '#1b1b1e'
-const BORDER = 'rgba(27,27,30,0.10)'
-const RULE = 'rgba(27,27,30,0.07)'
-const FAINT = 'rgba(27,27,30,0.55)'
-const GREEN = '#2e7d4f'
-const URGENT = '#c0442c'
+const PAPER = 'var(--lp)'
+const CARD = 'var(--lc)'
+const INK = 'var(--li)'
+const BORDER = 'var(--lb)'
+const RULE = 'var(--lr)'
+const FAINT = 'var(--lf)'
+const GREEN = 'var(--lg)'
+const GREEN_TINT = 'var(--lgt)'
+const URGENT = 'var(--lu)'
+const URGENT_TINT = 'var(--lut)'
+const CHECKBOX = 'var(--lcb)'
+const HEADER_BG = 'var(--lh)'
+const SHADOW = 'var(--ls)'
+
+const LIGHT_VARS = {
+  '--lp': '#f4f4f6', '--lc': '#ffffff', '--li': '#1b1b1e',
+  '--lb': 'rgba(27,27,30,0.10)', '--lr': 'rgba(27,27,30,0.07)',
+  '--lf': 'rgba(27,27,30,0.55)', '--lg': '#2e7d4f', '--lgt': 'rgba(46,125,79,0.07)',
+  '--lu': '#c0442c', '--lut': 'rgba(192,68,44,0.08)', '--lcb': 'rgba(27,27,30,0.25)',
+  '--lh': 'rgba(255,255,255,0.92)', '--ls': '0 1px 2px rgba(27,27,30,0.04)',
+} as React.CSSProperties
+
+const DARK_VARS = {
+  '--lp': '#141416', '--lc': '#1f1f23', '--li': '#eaeaec',
+  '--lb': 'rgba(234,234,236,0.13)', '--lr': 'rgba(234,234,236,0.08)',
+  '--lf': 'rgba(234,234,236,0.55)', '--lg': '#43a36f', '--lgt': 'rgba(67,163,111,0.13)',
+  '--lu': '#d4694f', '--lut': 'rgba(212,105,79,0.12)', '--lcb': 'rgba(234,234,236,0.3)',
+  '--lh': 'rgba(26,26,29,0.92)', '--ls': '0 1px 2px rgba(0,0,0,0.35)',
+} as React.CSSProperties
 
 const NAV = [
   { href: '/finance', label: 'Finance' },
@@ -39,7 +61,7 @@ function Label({ children }: { children: React.ReactNode }) {
 function Card({ children, className, accent }: { children: React.ReactNode; className?: string; accent?: string }) {
   return (
     <section className={cn('rounded-2xl', className)}
-      style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: accent ? `3px solid ${accent}` : `1px solid ${BORDER}`, boxShadow: '0 1px 2px rgba(27,27,30,0.04)' }}>
+      style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: accent ? `3px solid ${accent}` : `1px solid ${BORDER}`, boxShadow: SHADOW }}>
       {children}
     </section>
   )
@@ -73,6 +95,28 @@ function greeting(h: number) {
   return 'Late one'
 }
 
+/** One quick-action menu, two mounts: header dropdown (desktop) and FAB (mobile) */
+function QuickMenu({ onClose, onWater }: { onClose: () => void; onWater: () => void }) {
+  const item = 'flex items-center gap-2.5 px-4 py-3 text-[14px] hover:bg-black/[0.03] w-full text-left'
+  return (
+    <div className="w-52 rounded-xl overflow-hidden"
+      style={{ background: CARD, border: `1px solid ${BORDER}`, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
+      <Link href="/finance/scan" className={item} style={{ borderBottom: `1px solid ${RULE}` }}>
+        <Camera size={15} style={{ color: GREEN }} /> Scan receipt
+      </Link>
+      <Link href="/finance/expenses/personal" className={item} style={{ borderBottom: `1px solid ${RULE}` }}>
+        <Receipt size={15} style={{ color: GREEN }} /> Add expense
+      </Link>
+      <button onClick={() => { onWater(); onClose() }} className={item} style={{ borderBottom: `1px solid ${RULE}` }}>
+        <Droplets size={15} style={{ color: GREEN }} /> Log 250ml water
+      </button>
+      <Link href="/schedule" className={item}>
+        <CalendarDays size={15} style={{ color: GREEN }} /> My schedule
+      </Link>
+    </div>
+  )
+}
+
 export default function LedgerPrototype() {
   const d = useHomeData()
   const [newTask, setNewTask] = useState('')
@@ -80,8 +124,20 @@ export default function LedgerPrototype() {
   const [mealText, setMealText] = useState('')
   const [mealOpen, setMealOpen] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState(false)
+  const [fabOpen, setFabOpen] = useState(false)
+  const [dark, setDark] = useState(false)
   const now = new Date()
   const today = toLocalDateStr(now)
+
+  useEffect(() => {
+    try { setDark(localStorage.getItem('ledger-dark') === '1') } catch {}
+  }, [])
+  function toggleDark() {
+    setDark(prev => {
+      try { localStorage.setItem('ledger-dark', prev ? '0' : '1') } catch {}
+      return !prev
+    })
+  }
 
   const habitList = d.rightNow?.top?.habits?.filter(h => !d.justDone.has(h.id)) ?? []
   const hasTop = !!(d.rightNow?.top && d.rightNow.top.title?.trim())
@@ -96,46 +152,40 @@ export default function LedgerPrototype() {
   const billsToday = d.data?.finance.upcomingBills ?? []
 
   return (
-    <div className="min-h-screen" style={{ background: PAPER, color: INK }}>
+    <div className={cn('min-h-screen', dark && 'dark')} style={{ background: PAPER, color: INK, ...(dark ? DARK_VARS : LIGHT_VARS) }}>
 
-      {/* ── App chrome: sticky header with nav + quick actions ── */}
-      <header className="sticky top-0 z-40" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', borderBottom: `1px solid ${BORDER}` }}>
+      {/* ── App chrome: FIXED header (sticky breaks under overflow-x ancestors) ── */}
+      <header className="fixed top-0 left-0 right-0 z-40"
+        style={{ background: HEADER_BG, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: `1px solid ${BORDER}` }}>
         <div className="max-w-xl mx-auto px-5">
-          <div className="flex items-center justify-between py-3">
+          <div className="flex items-center justify-between py-2.5">
             <p className="font-mono text-[12px] font-bold uppercase" style={{ letterSpacing: '0.2em' }}>Life OS</p>
-            <div className="flex items-center gap-2">
-              <Link href="/" className="text-[11px] font-semibold uppercase px-2" style={{ letterSpacing: '0.12em', color: FAINT }}>← current</Link>
-              <div className="relative">
+            <div className="flex items-center gap-1.5">
+              <GlobalSearch mobileIconOnly />
+              <button onClick={toggleDark} aria-label="Toggle theme"
+                className="p-2 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors" style={{ color: FAINT }}>
+                {dark ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+              <Link href="/" className="text-[11px] font-semibold uppercase px-1.5" style={{ letterSpacing: '0.12em', color: FAINT }}>← current</Link>
+              {/* Desktop: + New lives here. Mobile gets the FAB instead. */}
+              <div className="relative hidden md:block">
                 <button onClick={() => setNewOpen(o => !o)}
                   className="flex items-center gap-1.5 text-[13px] font-semibold text-white pl-3 pr-3.5 py-1.5 rounded-lg active:scale-95 transition-transform"
-                  style={{ background: newOpen ? INK : GREEN }}>
+                  style={{ background: newOpen ? INK : GREEN, color: newOpen ? PAPER : '#fff' }}>
                   {newOpen ? <X size={14} /> : <Plus size={14} />} New
                 </button>
                 {newOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setNewOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 z-50 w-52 rounded-xl overflow-hidden"
-                      style={{ background: CARD, border: `1px solid ${BORDER}`, boxShadow: '0 8px 24px rgba(27,27,30,0.12)' }}>
-                      <Link href="/finance/scan" className="flex items-center gap-2.5 px-4 py-3 text-[14px] hover:bg-black/[0.03]" style={{ borderBottom: `1px solid ${RULE}` }}>
-                        <Camera size={15} style={{ color: GREEN }} /> Scan receipt
-                      </Link>
-                      <Link href="/finance/expenses/personal" className="flex items-center gap-2.5 px-4 py-3 text-[14px] hover:bg-black/[0.03]" style={{ borderBottom: `1px solid ${RULE}` }}>
-                        <Receipt size={15} style={{ color: GREEN }} /> Add expense
-                      </Link>
-                      <button onClick={() => { d.logWater('Water', 250); setNewOpen(false) }}
-                        className="flex items-center gap-2.5 px-4 py-3 text-[14px] hover:bg-black/[0.03] w-full text-left" style={{ borderBottom: `1px solid ${RULE}` }}>
-                        <Droplets size={15} style={{ color: GREEN }} /> Log 250ml water
-                      </button>
-                      <Link href="/schedule" className="flex items-center gap-2.5 px-4 py-3 text-[14px] hover:bg-black/[0.03]">
-                        <CalendarDays size={15} style={{ color: GREEN }} /> My schedule
-                      </Link>
+                    <div className="absolute right-0 top-full mt-2 z-50">
+                      <QuickMenu onClose={() => setNewOpen(false)} onWater={() => d.logWater('Water', 250)} />
                     </div>
                   </>
                 )}
               </div>
             </div>
           </div>
-          <nav className="flex gap-5 overflow-x-auto pb-2.5 -mt-0.5" style={{ scrollbarWidth: 'none' }}>
+          <nav className="flex gap-5 overflow-x-auto pb-2.5" style={{ scrollbarWidth: 'none' }}>
             {NAV.map(n => (
               <Link key={n.href} href={n.href}
                 className="text-[13px] font-medium whitespace-nowrap hover:opacity-100 transition-opacity"
@@ -146,8 +196,27 @@ export default function LedgerPrototype() {
           </nav>
         </div>
       </header>
+      {/* Spacer for the fixed header */}
+      <div className="h-[86px]" />
 
-      <div className="max-w-xl mx-auto px-5 py-6 pb-24 space-y-4">
+      {/* ── Mobile: floating + New in the thumb zone ── */}
+      <div className="md:hidden fixed bottom-6 right-5 z-50">
+        {fabOpen && (
+          <>
+            <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setFabOpen(false)} />
+            <div className="absolute bottom-full right-0 mb-3 z-50">
+              <QuickMenu onClose={() => setFabOpen(false)} onWater={() => d.logWater('Water', 250)} />
+            </div>
+          </>
+        )}
+        <button onClick={() => setFabOpen(o => !o)} aria-label="Quick actions"
+          className="relative z-50 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg active:scale-95 transition-all"
+          style={{ background: fabOpen ? INK : GREEN, color: fabOpen ? PAPER : '#fff', boxShadow: '0 6px 20px rgba(0,0,0,0.25)' }}>
+          <Plus size={24} strokeWidth={2.5} className={cn('transition-transform duration-200', fabOpen && 'rotate-45')} />
+        </button>
+      </div>
+
+      <div className="max-w-xl mx-auto px-5 py-6 pb-28 space-y-4">
 
         {/* Greeting */}
         <div className="px-1 pb-1">
@@ -185,7 +254,7 @@ export default function LedgerPrototype() {
                     className="flex items-center gap-3 w-full text-left py-2.5 group"
                     style={{ borderTop: `1px solid ${RULE}` }}>
                     <span className="w-[18px] h-[18px] rounded-full border-2 shrink-0 flex items-center justify-center transition-all"
-                      style={{ borderColor: done ? GREEN : 'rgba(27,27,30,0.25)', background: done ? GREEN : 'transparent' }}>
+                      style={{ borderColor: done ? GREEN : CHECKBOX, background: done ? GREEN : 'transparent' }}>
                       {done && <Check size={11} className="text-white" strokeWidth={3.5} />}
                     </span>
                     <span className={cn('text-[14px]', done && 'line-through')} style={{ color: done ? FAINT : INK }}>{h.name}</span>
@@ -248,7 +317,7 @@ export default function LedgerPrototype() {
                 const pct = day.total > 0 ? Math.round((day.completed / day.total) * 100) : 0
                 const label = new Date(day.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })
                 return (
-                  <div key={day.date} className="pt-2.5 pb-1.5 text-center rounded-b-lg" style={isToday ? { background: 'rgba(46,125,79,0.07)' } : undefined}>
+                  <div key={day.date} className="pt-2.5 pb-1.5 text-center rounded-b-lg" style={isToday ? { background: GREEN_TINT } : undefined}>
                     <p className="text-[11px] font-bold uppercase" style={{ color: isToday ? GREEN : FAINT }}>{label}</p>
                     <p className="font-mono text-[13px] tabular-nums mt-1 font-semibold" style={{ color: day.total === 0 ? BORDER : pct === 100 ? GREEN : INK }}>
                       {day.total === 0 ? '·' : pct === 100 ? '✓' : `${day.completed}/${day.total}`}
@@ -269,12 +338,12 @@ export default function LedgerPrototype() {
           )}
         </Card>
 
-        {/* Outstanding */}
+        {/* Outstanding — no red accent: it's "pending", not "wrong" */}
         {d.catchUp && catchCount > 0 && (
-          <Card className="p-5" accent={URGENT}>
+          <Card className="p-5">
             <div className="flex items-baseline justify-between">
               <Label>Outstanding</Label>
-              <span className="font-mono text-[12px] font-semibold" style={{ color: URGENT }}>{catchCount}</span>
+              <span className="font-mono text-[12px] font-semibold" style={{ color: FAINT }}>{catchCount}</span>
             </div>
             <div className="mt-1">
               {showExpensesRow && (
@@ -314,7 +383,7 @@ export default function LedgerPrototype() {
                   <button key={h.id} onClick={() => !done && d.catchUpHabit(h.id)}
                     className="flex items-center gap-3 w-full text-left py-3" style={{ borderTop: `1px solid ${RULE}` }}>
                     <span className="w-[18px] h-[18px] rounded-full border-2 shrink-0 flex items-center justify-center transition-all"
-                      style={{ borderColor: done ? GREEN : 'rgba(27,27,30,0.25)', background: done ? GREEN : 'transparent' }}>
+                      style={{ borderColor: done ? GREEN : CHECKBOX, background: done ? GREEN : 'transparent' }}>
                       {done && <Check size={11} className="text-white" strokeWidth={3.5} />}
                     </span>
                     <span className={cn('text-[14px] flex-1', done && 'line-through')} style={{ color: done ? FAINT : INK }}>{h.name}</span>
@@ -357,12 +426,12 @@ export default function LedgerPrototype() {
                 <button key={t.id} onClick={() => !done && d.toggleTask(t.id)}
                   className="flex items-center gap-3 w-full text-left py-2.5" style={{ borderTop: `1px solid ${RULE}` }}>
                   <span className="w-[18px] h-[18px] rounded-full border-2 shrink-0 flex items-center justify-center transition-all"
-                    style={{ borderColor: done ? GREEN : t.priority ? URGENT : 'rgba(27,27,30,0.25)', background: done ? GREEN : 'transparent' }}>
+                    style={{ borderColor: done ? GREEN : t.priority ? URGENT : CHECKBOX, background: done ? GREEN : 'transparent' }}>
                     {done && <Check size={11} className="text-white" strokeWidth={3.5} />}
                   </span>
                   <span className={cn('text-[14px] flex-1', done && 'line-through')} style={{ color: done ? FAINT : INK }}>{t.text}</span>
                   {t.priority && !done && (
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ color: URGENT, background: 'rgba(192,68,44,0.08)', letterSpacing: '0.08em' }}>priority</span>
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ color: URGENT, background: URGENT_TINT, letterSpacing: '0.08em' }}>priority</span>
                   )}
                 </button>
               )
@@ -463,7 +532,7 @@ export default function LedgerPrototype() {
 
         <footer className="pt-4 text-center">
           <p className="font-mono text-[11px]" style={{ color: FAINT }}>
-            Ledger v3 · design lab · <Link href="/design/nova" className="underline underline-offset-2">compare Nova</Link>
+            Ledger v4 · design lab · <Link href="/design/nova" className="underline underline-offset-2">compare Nova</Link>
           </p>
         </footer>
       </div>
