@@ -164,7 +164,7 @@ export default function HistoryPage() {
                 onClick={() => setPeriod(p)}
                 className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
                   period === p
-                    ? 'bg-blue-600 text-white border-blue-600'
+                    ? 'bg-ldg-green text-white border-ldg-green'
                     : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >

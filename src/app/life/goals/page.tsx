@@ -52,7 +52,7 @@ function GoalCard({ goal, isBucket, onUpdate, onDelete, onAddMilestone, onToggle
               {goal.name}
             </p>
             {daysLeft != null && (
-              <p className={cn('text-xs mt-0.5', daysLeft < 0 ? 'text-red-400' : daysLeft < 14 ? 'text-amber-500' : 'text-gray-400')}>
+              <p className={cn('text-xs mt-0.5', daysLeft < 14 ? 'text-ldg-urgent' : 'text-ldg-ink/40')}>
                 {daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : daysLeft === 0 ? 'Due today' : `${daysLeft}d left`}
               </p>
             )}
@@ -159,7 +159,7 @@ function AddGoalModal({ onClose, onAdd, defaultType }: { onClose: () => void; on
           <label className="text-xs text-gray-400 font-medium mb-1.5 block">Emoji</label>
           <div className="flex flex-wrap gap-1.5">
             {DEFAULT_EMOJIS.map(e => (
-              <button key={e} onClick={() => setEmoji(e)} className={cn('w-9 h-9 rounded-xl text-lg flex items-center justify-center transition-all', emoji === e ? 'ring-2 ring-indigo-500 bg-indigo-50' : 'bg-gray-100 dark:bg-gray-800')}>
+              <button key={e} onClick={() => setEmoji(e)} className={cn('w-9 h-9 rounded-xl text-lg flex items-center justify-center transition-all', emoji === e ? 'ring-2 ring-ldg-green bg-ldg-green/10' : 'bg-gray-100 dark:bg-gray-800')}>
                 {e}
               </button>
             ))}
@@ -267,7 +267,7 @@ export default function GoalsPage() {
             <button key={t.key} onClick={() => setActiveTab(t.key)} className={cn('flex-1 text-xs font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-1', activeTab === t.key ? 'bg-surface dark:bg-surface shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500')}>
               <span>{t.emoji}</span>
               <span>{t.label}</span>
-              {count > 0 && <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900 text-[rgb(var(--l-green))] dark:text-[rgb(var(--l-green))] rounded-full px-1.5">{count}</span>}
+              {count > 0 && <span className="text-[10px] bg-ldg-green/10 text-[rgb(var(--l-green))] dark:text-[rgb(var(--l-green))] rounded-full px-1.5">{count}</span>}
             </button>
           )
         })}
@@ -281,7 +281,7 @@ export default function GoalsPage() {
             placeholder="Search goals…"
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-black/10 dark:border-white/10 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-indigo-500"
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-black/10 dark:border-white/10 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-ldg-green"
           />
           {searchText && (
             <button onClick={() => setSearchText('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">

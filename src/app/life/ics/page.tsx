@@ -158,12 +158,12 @@ export default function ICSPage() {
           <button
             onClick={() => fetchEvents(calendars)}
             disabled={loading}
-            className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-indigo-500 transition-colors disabled:opacity-50"
+            className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-ldg-green transition-colors disabled:opacity-50"
             title="Refresh"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
-          <Link href="/schedule/settings" className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-indigo-500 transition-colors">
+          <Link href="/schedule/settings" className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-ldg-green transition-colors">
             <Settings size={16} />
           </Link>
         </div>

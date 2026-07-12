@@ -5,6 +5,7 @@ import { Check, TrendingUp, TrendingDown, Minus, ChevronRight } from 'lucide-rea
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
+import { Card, Label } from '@/components/ledger/primitives'
 
 interface SubTask { id: string; name: string; order: number }
 interface Habit {
@@ -259,7 +260,7 @@ function WeeklyHabitRow({ item, onToggle, onValue }: {
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
             {habit.category}
-            {recommendedDays && <span className="ml-2 text-indigo-400">· rec. {recommendedDays}</span>}
+            {recommendedDays && <span className="ml-2 text-ldg-green">· rec. {recommendedDays}</span>}
           </p>
         </div>
         <span
@@ -288,7 +289,7 @@ function WeeklyHabitRow({ item, onToggle, onValue }: {
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
             {habit.category}
-            {recommendedDays && <span className="ml-2 text-indigo-400">· rec. {recommendedDays}</span>}
+            {recommendedDays && <span className="ml-2 text-ldg-green">· rec. {recommendedDays}</span>}
           </p>
         </div>
         <div className="shrink-0">
@@ -380,7 +381,7 @@ export default function WeeklyPage() {
   }
 
   const DirIcon  = scoreData?.direction === 'up' ? TrendingUp : scoreData?.direction === 'down' ? TrendingDown : Minus
-  const dirColor = scoreData?.direction === 'up' ? 'text-green-400' : scoreData?.direction === 'down' ? 'text-red-400' : 'text-gray-400'
+  const dirColor = scoreData?.direction === 'up' ? 'text-ldg-green' : scoreData?.direction === 'down' ? 'text-ldg-urgent' : 'text-ldg-ink/40'
 
   // Monthly metrics: show if first Sunday OR overdue (> 28 days since last log)
   const showMonthly = isFirstSundayOfMonth_ || MONTHLY_METRICS.some(m => {
@@ -418,27 +419,27 @@ export default function WeeklyPage() {
 
       {/* Score card */}
       {scoreData && (
-        <div className="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl p-5 text-white">
-          <p className="text-xs font-semibold tracking-widest uppercase text-white/60 mb-1">Weekly Score</p>
-          <div className="flex items-end gap-3">
-            <span className="text-5xl font-bold">{scoreData.thisWeek.score}%</span>
+        <Card className="p-5">
+          <Label>Weekly Score</Label>
+          <div className="flex items-end gap-3 mt-1">
+            <span className="font-mono text-[32px] tabular-nums tracking-tight leading-none">{scoreData.thisWeek.score}%</span>
             {scoreData.lastWeek.total > 0 && (
-              <div className={cn('flex items-center gap-1 pb-1 text-white/80', dirColor)}>
-                <DirIcon size={18} />
-                <span className="text-sm font-semibold">
+              <div className={cn('flex items-center gap-1 pb-1', dirColor)}>
+                <DirIcon size={16} />
+                <span className="font-mono text-[12px] font-semibold">
                   {scoreData.delta > 0 ? '+' : ''}{scoreData.delta}% vs last week
                 </span>
               </div>
             )}
           </div>
-          <div className="mt-3 w-full h-2 bg-white/20 rounded-full overflow-hidden">
-            <div className="h-full bg-white rounded-full transition-all duration-700" style={{ width: `${scoreData.thisWeek.score}%` }} />
+          <div className="mt-3 w-full h-[6px] bg-ldg-ink/[0.07] rounded-full overflow-hidden">
+            <div className="h-full bg-ldg-green rounded-full transition-all duration-700" style={{ width: `${scoreData.thisWeek.score}%` }} />
           </div>
           {scoreData.thisWeek.total > 0
-            ? <p className="text-xs text-white/60 mt-2">{scoreData.thisWeek.completed} of {scoreData.thisWeek.total} habit days logged this week</p>
-            : <p className="text-xs text-white/60 mt-2">Start logging habits on the Today tab to build your score</p>
+            ? <p className="font-mono text-[11px] text-ldg-ink/55 mt-2">{scoreData.thisWeek.completed} of {scoreData.thisWeek.total} habit days logged this week</p>
+            : <p className="font-mono text-[11px] text-ldg-ink/55 mt-2">Start logging habits on the Today tab to build your score</p>
           }
-        </div>
+        </Card>
       )}
 
       {/* ── Body Metrics ─────────────────────────────────────────────────────── */}
@@ -448,7 +449,7 @@ export default function WeeklyPage() {
             📏 Body Metrics
           </h2>
           <Link href="/fitness/body"
-            className="flex items-center gap-0.5 text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
+            className="flex items-center gap-0.5 text-xs text-ldg-green hover:underline font-medium">
             All charts <ChevronRight size={13} />
           </Link>
         </div>

@@ -222,7 +222,7 @@ function HabitsPage() {
         <h1 className="text-2xl font-bold">Manage Habits</h1>
         <button
           onClick={() => { resetForm(); setShowForm(true) }}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors min-h-[44px]"
+          className="px-4 py-2 bg-ldg-green text-white text-sm font-medium rounded-lg hover:opacity-90 transition-colors min-h-[44px]"
         >
           + Add habit
         </button>
@@ -270,19 +270,19 @@ function HabitsPage() {
                   <span className="text-xl">{h.icon ?? '📋'}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={cn('font-medium text-sm', !h.active && 'text-gray-400 line-through', h.paused && 'text-amber-600 dark:text-amber-400')}>
+                      <span className={cn('font-medium text-sm', !h.active && 'text-ldg-ink/40 line-through', h.paused && 'text-ldg-ink/55')}>
                         {h.name}
                       </span>
-                      {h.paused && <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-medium">Paused</span>}
-                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                      {h.paused && <span className="text-xs px-1.5 py-0.5 rounded-full bg-ldg-ink/[0.06] text-ldg-ink/55 font-medium">Paused</span>}
+                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-ldg-ink/[0.06] text-ldg-ink/55">
                         {h.type}
                       </span>
                       {h.type === 'quantity' && (
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-ldg-ink/55">
                           {h.target} {h.unit}
                         </span>
                       )}
-                      <span className="text-xs text-gray-400">{h.frequency}</span>
+                      <span className="text-xs text-ldg-ink/40">{h.frequency}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
@@ -304,8 +304,8 @@ function HabitsPage() {
                       className={cn(
                         'px-2 py-1 text-xs rounded-full font-medium min-h-[36px] transition-colors',
                         h.active && !h.paused
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-gray-100 text-gray-500 dark:bg-gray-800'
+                          ? 'bg-ldg-green/10 text-ldg-green'
+                          : 'bg-ldg-ink/[0.06] text-ldg-ink/55'
                       )}
                     >
                       {h.active ? 'Active' : 'Inactive'}
@@ -317,8 +317,8 @@ function HabitsPage() {
                         className={cn(
                           'p-1.5 rounded-full min-h-[36px] min-w-[36px] flex items-center justify-center transition-colors',
                           h.paused
-                            ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100'
-                            : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                            ? 'text-ldg-green bg-ldg-green/10 hover:bg-ldg-green/20'
+                            : 'text-ldg-ink/40 hover:bg-ldg-ink/[0.06]'
                         )}
                       >
                         {h.paused ? <PlayCircle size={16} /> : <PauseCircle size={16} />}
@@ -412,7 +412,7 @@ function HabitsPage() {
                   className={cn(
                     'px-3 py-1.5 text-sm rounded-lg border transition-colors min-h-[44px]',
                     form.timeOfDay === t.value
-                      ? 'bg-blue-600 text-white border-blue-600'
+                      ? 'bg-ldg-green text-white border-ldg-green'
                       : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                   )}
                 >
@@ -432,7 +432,7 @@ function HabitsPage() {
                   className={cn(
                     'px-3 py-1.5 text-sm rounded-lg border transition-colors min-h-[44px]',
                     form.type === t
-                      ? 'bg-blue-600 text-white border-blue-600'
+                      ? 'bg-ldg-green text-white border-ldg-green'
                       : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                   )}
                 >
@@ -504,7 +504,7 @@ function HabitsPage() {
                     className={cn(
                       'px-2.5 py-1.5 text-xs rounded-lg border min-h-[36px]',
                       form.frequencyDays.includes(i)
-                        ? 'bg-blue-600 text-white border-blue-600'
+                        ? 'bg-ldg-green text-white border-ldg-green'
                         : 'border-gray-300 dark:border-gray-700'
                     )}
                   >
@@ -567,7 +567,7 @@ function HabitsPage() {
           <div className="flex gap-2 pt-1">
             <button
               onClick={saveHabit}
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors min-h-[44px]"
+              className="flex items-center gap-1.5 px-4 py-2 bg-ldg-green text-white text-sm font-medium rounded-lg hover:opacity-90 transition-colors min-h-[44px]"
             >
               <Check size={15} />
               {editId ? 'Save changes' : 'Add habit'}

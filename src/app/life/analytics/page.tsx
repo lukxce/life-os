@@ -57,7 +57,7 @@ export default function AnalyticsPage() {
         <div className="flex gap-1">
           {([7, 30, 90, 0] as Period[]).map(p => (
             <button key={p} onClick={() => setPeriod(p)}
-              className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${period === p ? 'bg-[rgb(var(--l-green))] text-white border-indigo-600' : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+              className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${period === p ? 'bg-[rgb(var(--l-green))] text-white border-ldg-green' : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
               {p === 0 ? 'All' : `${p}d`}
             </button>
           ))}
@@ -76,7 +76,7 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Star size={14} className="text-indigo-500" />
+                <Star size={14} className="text-ldg-green" />
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Completions</p>
               </div>
               <p className="text-2xl font-bold text-[rgb(var(--l-green))]">{totalCompletions}</p>
@@ -84,18 +84,18 @@ export default function AnalyticsPage() {
             </div>
             <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-4">
               <div className="flex items-center gap-2 mb-1">
-                <TrendingUp size={14} className="text-blue-500" />
+                <TrendingUp size={14} className="text-ldg-green" />
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Avg rate</p>
               </div>
-              <p className="text-2xl font-bold text-blue-600">{avgRate}%</p>
+              <p className="text-2xl font-bold text-ldg-green">{avgRate}%</p>
               <p className="text-xs text-gray-400 mt-0.5">across all habits</p>
             </div>
             <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Flame size={14} className="text-orange-500" />
+                <Flame size={14} className="text-ldg-green" />
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Best streak</p>
               </div>
-              <p className="text-2xl font-bold text-orange-500">{bestStreak?.longestStreak ?? 0}d</p>
+              <p className="text-2xl font-bold text-ldg-green">{bestStreak?.longestStreak ?? 0}d</p>
               <p className="text-xs text-gray-400 mt-0.5 truncate">{bestStreak?.name ?? '—'}</p>
             </div>
             <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-4">
@@ -142,7 +142,7 @@ export default function AnalyticsPage() {
                   <span className="text-gray-300 dark:text-gray-600 text-xs w-5 text-center font-semibold">#{i+1}</span>
                   <span className="text-lg shrink-0">{h.icon ?? '📋'}</span>
                   <span className="flex-1 text-sm font-medium truncate">{h.name}</span>
-                  <span className="text-sm font-bold text-orange-500 shrink-0">🔥 {h.currentStreak}d</span>
+                  <span className="text-sm font-bold text-ldg-green shrink-0">🔥 {h.currentStreak}d</span>
                 </div>
               ))}
             </div>
