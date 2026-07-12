@@ -50,7 +50,7 @@ function useIsActive(home: string) {
 function Sidebar({ config }: { config: ModuleConfig }) {
   const isActive = useIsActive(config.home)
   return (
-    <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-ldg-ink/10 bg-ldg-card h-[calc(100vh-78px)] sticky top-[78px]">
+    <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-ldg-ink/10 bg-transparent h-[calc(100vh-78px)] sticky top-[78px]">
       <div className="px-3 pt-4 pb-2">
         <div className="flex items-center gap-2 px-2.5">
           <config.icon size={18} className="text-ldg-ink/70" />
