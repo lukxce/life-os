@@ -5,7 +5,7 @@ import { cn, formatEUR, formatRSD } from '@/lib/utils'
 import { Mascot } from '@/components/ui/Mascot'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { useHomeData, toLocalDateStr } from '../useHomeData'
-import { Check, Camera, Receipt, CalendarDays, Droplets, Flame, FileText, Plus, X, Moon, Sun } from 'lucide-react'
+import { Check, Camera, Receipt, CalendarDays, Droplets, Flame, FileText, Plus, X, Moon, Sun, ChevronDown } from 'lucide-react'
 
 // ── LEDGER v4 — cool neutrals, dark mode, fixed chrome, reachable actions ─────
 // Tokens live in CSS variables so light/dark swap in one place. The header is
@@ -125,6 +125,7 @@ export default function LedgerPrototype() {
   const [mealOpen, setMealOpen] = useState<string | null>(null)
   const [newOpen, setNewOpen] = useState(false)
   const [fabOpen, setFabOpen] = useState(false)
+  const [outstandingOpen, setOutstandingOpen] = useState(false)
   const [dark, setDark] = useState(false)
   const now = new Date()
   const today = toLocalDateStr(now)
@@ -145,9 +146,17 @@ export default function LedgerPrototype() {
   const tomorrowList = d.tomorrowTasks ?? []
   const pinned = (d.accounts ?? []).filter(a => a.pinned)
   const waterMl = (d.waterLogs ?? []).filter(w => w.drink === 'Water').reduce((a, w) => a + w.volumeMl, 0)
-  const openCatchHabits = (d.catchUp?.pendingHabits ?? []).filter(h => !d.catchDone.has(h.id))
+  // Outstanding excludes whatever the Now hero is already showing — the two
+  // used to both list the same pending habits, which is why it felt doubled
+  const heroHabitIds = new Set((d.rightNow?.top?.habits ?? []).map(h => h.id))
+  const openCatchHabits = (d.catchUp?.pendingHabits ?? []).filter(h => !d.catchDone.has(h.id) && !heroHabitIds.has(h.id))
   const showExpensesRow = !!d.catchUp && d.catchUp.expensesToday === 0 && !d.catchUp.noExpenses
   const catchCount = openCatchHabits.length + (d.catchUp?.unloggedMeals.length ?? 0) + (showExpensesRow ? 1 : 0)
+  const outstandingSummary = [
+    showExpensesRow && 'expenses',
+    d.catchUp && d.catchUp.unloggedMeals.length > 0 && `${d.catchUp.unloggedMeals.length} meal${d.catchUp.unloggedMeals.length === 1 ? '' : 's'}`,
+    openCatchHabits.length > 0 && `${openCatchHabits.length} habit${openCatchHabits.length === 1 ? '' : 's'}`,
+  ].filter(Boolean).join(' · ')
   const todayScore = d.dayScores?.days.find(x => x.date === today)
   const billsToday = d.data?.finance.upcomingBills ?? []
 
@@ -166,7 +175,6 @@ export default function LedgerPrototype() {
                 className="p-2 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors" style={{ color: FAINT }}>
                 {dark ? <Sun size={16} /> : <Moon size={16} />}
               </button>
-              <Link href="/" className="text-[11px] font-semibold uppercase px-1.5" style={{ letterSpacing: '0.12em', color: FAINT }}>← current</Link>
               {/* Desktop: + New lives here. Mobile gets the FAB instead. */}
               <div className="relative hidden md:block">
                 <button onClick={() => setNewOpen(o => !o)}
@@ -338,14 +346,22 @@ export default function LedgerPrototype() {
           )}
         </Card>
 
-        {/* Outstanding — no red accent: it's "pending", not "wrong" */}
+        {/* Outstanding — no red accent: it's "pending", not "wrong".
+            Collapsed by default (was doubling up with the Now hero and
+            running long on mobile); tap to expand and populate. */}
         {d.catchUp && catchCount > 0 && (
           <Card className="p-5">
-            <div className="flex items-baseline justify-between">
-              <Label>Outstanding</Label>
-              <span className="font-mono text-[12px] font-semibold" style={{ color: FAINT }}>{catchCount}</span>
-            </div>
-            <div className="mt-1">
+            <button onClick={() => setOutstandingOpen(o => !o)} className="flex items-center justify-between w-full text-left">
+              <div className="flex items-baseline gap-2">
+                <Label>Outstanding</Label>
+                <span className="font-mono text-[12px] font-semibold" style={{ color: FAINT }}>{catchCount}</span>
+              </div>
+              <ChevronDown size={15} style={{ color: FAINT, transform: outstandingOpen ? 'rotate(180deg)' : undefined, transition: 'transform 0.15s' }} />
+            </button>
+            {!outstandingOpen && (
+              <p className="font-mono text-[12px] mt-1.5" style={{ color: FAINT }}>{outstandingSummary}</p>
+            )}
+            <div className={cn('mt-1', !outstandingOpen && 'hidden')}>
               {showExpensesRow && (
                 <div className="flex items-center gap-3 py-3" style={{ borderTop: `1px solid ${RULE}` }}>
                   <p className="text-[14px] flex-1">Expenses — none recorded today</p>
