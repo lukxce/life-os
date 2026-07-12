@@ -103,7 +103,7 @@ export default function MealPlanPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-gray-400">
-                  <span className="flex items-center gap-1"><Flame size={11} className="text-orange-400" /> {total.calories} kcal</span>
+                  <span className="flex items-center gap-1"><Flame size={11} className="text-ldg-ink/55" /> {total.calories} kcal</span>
                   <span className="flex items-center gap-1"><Beef size={11} className="text-red-400" /> {total.protein}g</span>
                 </div>
               </div>
@@ -168,7 +168,7 @@ export default function MealPlanPage() {
                             <p className="text-sm text-gray-700 dark:text-gray-200 leading-snug">{slot.name}</p>
                             {slot.notes && <p className="text-xs text-gray-400 mt-0.5">{slot.notes}</p>}
                             <div className="flex items-center gap-3 mt-1.5">
-                              <span className="text-[11px] font-semibold text-orange-500">{slot.calories} kcal</span>
+                              <span className="text-[11px] font-semibold text-ldg-ink/55">{slot.calories} kcal</span>
                               <span className="text-[11px] font-semibold text-red-500">{slot.protein}g protein</span>
                             </div>
                           </div>

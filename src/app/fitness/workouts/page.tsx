@@ -10,11 +10,11 @@ interface WorkoutEntry {
 }
 
 const TYPES = [
-  { value: 'pt',           label: 'PT Session',     icon: '🏋️', color: 'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300' },
-  { value: 'cardio_bike',  label: 'Bike Ride',      icon: '🚴', color: 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300' },
-  { value: 'cardio_other', label: 'Cardio (other)', icon: '🏃', color: 'bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300' },
-  { value: 'rest',         label: 'Active Rest',    icon: '🧘', color: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300' },
-  { value: 'other',        label: 'Other',          icon: '⚡', color: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' },
+  { value: 'pt',           label: 'PT Session',     icon: '🏋️', color: 'bg-ldg-ink/[0.06] text-ldg-ink/70' },
+  { value: 'cardio_bike',  label: 'Bike Ride',      icon: '🚴', color: 'bg-ldg-ink/[0.06] text-ldg-ink/70' },
+  { value: 'cardio_other', label: 'Cardio (other)', icon: '🏃', color: 'bg-ldg-ink/[0.06] text-ldg-ink/70' },
+  { value: 'rest',         label: 'Active Rest',    icon: '🧘', color: 'bg-ldg-green/10 text-ldg-green' },
+  { value: 'other',        label: 'Other',          icon: '⚡', color: 'bg-ldg-ink/[0.06] text-ldg-ink/55' },
 ]
 
 const typeOf = (v: string) => TYPES.find(t => t.value === v) ?? TYPES[4]
@@ -118,7 +118,7 @@ export default function WorkoutsPage() {
       </div>
 
       {habitLogs.length === 0 && (
-        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-2xl px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+        <div className="bg-ldg-ink/[0.04] border border-ldg-ink/10 rounded-2xl px-4 py-3 text-sm text-ldg-ink/70">
           Tick <strong>PT Session</strong> or <strong>Bike Ride</strong> in{' '}
           <Link href="/life" className="underline font-semibold">Habits</Link> and they'll appear here automatically.
         </div>
