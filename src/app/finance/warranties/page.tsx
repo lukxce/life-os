@@ -32,11 +32,11 @@ export default function Page() {
   const fmtDate = (d: Date | string) => new Date(d).toLocaleDateString('sr-RS')
 
   const statusLabel = (days: number) => {
-    if (days < 0) return { text: 'Expired ' + Math.abs(days) + 'd ago', color: 'text-gray-400 bg-gray-100' }
-    if (days === 0) return { text: 'Expires today', color: 'text-red-700 bg-red-100' }
-    if (days <= 30) return { text: days + 'd left', color: 'text-orange-700 bg-orange-100' }
-    if (days <= 90) return { text: days + 'd left', color: 'text-yellow-700 bg-yellow-100' }
-    return { text: days + 'd left', color: 'text-green-700 bg-green-100' }
+    if (days < 0) return { text: 'Expired ' + Math.abs(days) + 'd ago', color: 'text-ldg-ink/40 bg-ldg-ink/[0.06]' }
+    if (days === 0) return { text: 'Expires today', color: 'text-ldg-urgent bg-ldg-urgent/[0.08]' }
+    if (days <= 30) return { text: days + 'd left', color: 'text-ldg-urgent bg-ldg-urgent/[0.08]' }
+    if (days <= 90) return { text: days + 'd left', color: 'text-ldg-ink/55 bg-ldg-ink/[0.06]' }
+    return { text: days + 'd left', color: 'text-ldg-green bg-ldg-green/10' }
   }
 
   return (
@@ -74,7 +74,7 @@ export default function Page() {
                       <span>{item.warrantyMonths} months</span>
                     </div>
                   </div>
-                  {item.sufUrl ? <a href={item.sufUrl} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[rgb(var(--l-green))] p-2 rounded hover:bg-blue-50 shrink-0" title="View receipt"><FileText size={16} /></a> : null}
+                  {item.sufUrl ? <a href={item.sufUrl} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[rgb(var(--l-green))] p-2 rounded hover:bg-ldg-green/10 shrink-0" title="View receipt"><FileText size={16} /></a> : null}
                 </li>
               )
             })}

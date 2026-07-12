@@ -148,20 +148,20 @@ export default function SubscriptionsPage() {
 
       {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-          <p className="text-xs text-blue-500 dark:text-[rgb(var(--l-green))] font-medium mb-1">Total (active)</p>
-          <p className="text-lg font-bold text-blue-700 dark:text-blue-300">€{(personalTotal + businessTotal).toFixed(2)}<span className="text-sm font-normal ml-1">/mo</span></p>
-          {rate > 0 && <p className="text-xs text-blue-400 mt-0.5">≈ {Math.round((personalTotal + businessTotal) * rate).toLocaleString()} RSD</p>}
+        <div className="bg-ldg-ink/[0.06] dark:bg-ldg-ink/[0.06] border border-ldg-ink/10 dark:border-ldg-ink/10 rounded-xl p-4">
+          <p className="text-xs text-ldg-ink/55 dark:text-[rgb(var(--l-green))] font-medium mb-1">Total (active)</p>
+          <p className="text-lg font-bold text-ldg-ink/55 dark:text-ldg-ink/55">€{(personalTotal + businessTotal).toFixed(2)}<span className="text-sm font-normal ml-1">/mo</span></p>
+          {rate > 0 && <p className="text-xs text-ldg-ink/55 mt-0.5">≈ {Math.round((personalTotal + businessTotal) * rate).toLocaleString()} RSD</p>}
         </div>
-        <div className="bg-indigo-50 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
-          <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium mb-1">Personal</p>
-          <p className="text-lg font-bold text-indigo-700 dark:text-indigo-300">€{personalTotal.toFixed(2)}<span className="text-sm font-normal ml-1">/mo</span></p>
-          {rate > 0 && <p className="text-xs text-indigo-400 mt-0.5">≈ {Math.round(personalTotal * rate).toLocaleString()} RSD</p>}
+        <div className="bg-ldg-ink/[0.06] dark:bg-ldg-ink/[0.06] border border-ldg-ink/10 dark:border-ldg-ink/10 rounded-xl p-4">
+          <p className="text-xs text-ldg-ink/55 dark:text-ldg-ink/55 font-medium mb-1">Personal</p>
+          <p className="text-lg font-bold text-ldg-ink/55 dark:text-ldg-ink/55">€{personalTotal.toFixed(2)}<span className="text-sm font-normal ml-1">/mo</span></p>
+          {rate > 0 && <p className="text-xs text-ldg-ink/55 mt-0.5">≈ {Math.round(personalTotal * rate).toLocaleString()} RSD</p>}
         </div>
-        <div className="bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-xl p-4">
-          <p className="text-xs text-purple-500 dark:text-purple-400 font-medium mb-1">Business</p>
-          <p className="text-lg font-bold text-purple-700 dark:text-purple-300">€{businessTotal.toFixed(2)}<span className="text-sm font-normal ml-1">/mo</span></p>
-          {rate > 0 && <p className="text-xs text-purple-400 mt-0.5">≈ {Math.round(businessTotal * rate).toLocaleString()} RSD</p>}
+        <div className="bg-ldg-ink/[0.06] dark:bg-ldg-ink/[0.06] border border-ldg-ink/10 dark:border-ldg-ink/10 rounded-xl p-4">
+          <p className="text-xs text-ldg-ink/55 dark:text-ldg-ink/55 font-medium mb-1">Business</p>
+          <p className="text-lg font-bold text-ldg-ink/55 dark:text-ldg-ink/55">€{businessTotal.toFixed(2)}<span className="text-sm font-normal ml-1">/mo</span></p>
+          {rate > 0 && <p className="text-xs text-ldg-ink/55 mt-0.5">≈ {Math.round(businessTotal * rate).toLocaleString()} RSD</p>}
         </div>
       </div>
 
@@ -293,8 +293,8 @@ export default function SubscriptionsPage() {
                   <span className="font-semibold text-gray-900 dark:text-gray-100">{s.name}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                     (s.type || 'personal') === 'business'
-                      ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
-                      : 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                      ? 'bg-ldg-ink/[0.06] dark:bg-ldg-ink/[0.06] text-ldg-ink/55 dark:text-ldg-ink/55'
+                      : 'bg-ldg-ink/[0.06] dark:bg-ldg-ink/[0.06] text-ldg-ink/55 dark:text-ldg-ink/55'
                   }`}>
                     {(s.type || 'personal') === 'business' ? 'Business' : 'Personal'}
                   </span>
@@ -310,7 +310,7 @@ export default function SubscriptionsPage() {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button onClick={() => openLogPayment(s)} className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-700">Log payment</button>
-                <button onClick={() => startEdit(s)} className="text-gray-400 hover:text-blue-500 p-1"><Pencil size={15} /></button>
+                <button onClick={() => startEdit(s)} className="text-gray-400 hover:text-ldg-green p-1"><Pencil size={15} /></button>
                 <button onClick={() => del(s.id)} className="text-gray-400 hover:text-red-500 p-1"><Trash2 size={15} /></button>
               </div>
             </div>

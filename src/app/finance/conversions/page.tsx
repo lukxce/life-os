@@ -97,12 +97,12 @@ export default function ConversionsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100">Conversions</h2>
         <button onClick={() => { setEditingId(null); setForm(defaultForm); setShowForm(s => !s) }}
-          className="flex items-center justify-center gap-2 bg-orange-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-orange-700">
+          className="flex items-center justify-center gap-2 bg-ldg-green text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90">
           <Plus size={16} /> New Conversion
         </button>
       </div>
 
-      <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-sm text-orange-700">
+      <div className="bg-ldg-ink/[0.06] border border-ldg-ink/10 rounded-xl p-3 text-sm text-ldg-ink/55">
         Default rate: <strong>{defaultRate} RSD/EUR</strong> — you can override it per conversion below
       </div>
 
@@ -152,7 +152,7 @@ export default function ConversionsPage() {
                   className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
                 />
                 {form.customRate && +form.customRate > 0 && (
-                  <p className="text-xs text-orange-700 mt-1">
+                  <p className="text-xs text-ldg-ink/55 mt-1">
                     Using custom rate: <strong>{(+form.customRate).toFixed(4)} RSD/EUR</strong>
                     {' '}({((+form.customRate / defaultRate - 1) * 100).toFixed(2)}% vs default)
                   </p>
@@ -168,8 +168,8 @@ export default function ConversionsPage() {
             </div>
 
             {form.amountSent && form.fromAccountId && form.toAccountId && (
-              <div className="md:col-span-2 bg-orange-50 border border-orange-200 rounded-lg p-3">
-                <p className="text-sm text-orange-700">
+              <div className="md:col-span-2 bg-ldg-ink/[0.06] border border-ldg-ink/10 rounded-lg p-3">
+                <p className="text-sm text-ldg-ink/55">
                   Amount received: <strong>{calcReceived().toLocaleString()} {to?.currency}</strong>
                   {!sameCurrency && <span className="text-xs ml-2">at rate {effectiveRate}</span>}
                 </p>
@@ -177,7 +177,7 @@ export default function ConversionsPage() {
             )}
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={submit} className="flex-1 sm:flex-initial bg-orange-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium">{editingId ? 'Update' : 'Save'}</button>
+            <button onClick={submit} className="flex-1 sm:flex-initial bg-ldg-green text-white px-5 py-2.5 rounded-lg text-sm font-medium">{editingId ? 'Update' : 'Save'}</button>
             <button onClick={cancel} className="flex-1 sm:flex-initial border border-gray-300 dark:border-gray-600 px-5 py-2.5 rounded-lg text-sm">Cancel</button>
           </div>
         </div>
@@ -205,7 +205,7 @@ export default function ConversionsPage() {
                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400 dark:text-gray-500">{e.notes || '-'}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <button onClick={() => startEdit(e)} className="text-gray-400 dark:text-gray-500 hover:text-blue-500"><Pencil size={14} /></button>
+                    <button onClick={() => startEdit(e)} className="text-gray-400 dark:text-gray-500 hover:text-ldg-green"><Pencil size={14} /></button>
                     <button onClick={() => del(e.id)} className="text-gray-400 dark:text-gray-500 hover:text-red-500"><Trash2 size={14} /></button>
                   </div>
                 </td>
@@ -225,7 +225,7 @@ export default function ConversionsPage() {
             <div className="flex items-start justify-between mb-2">
               <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(e.date)} · rate {e.rateUsed}</span>
               <div className="flex items-center gap-1">
-                <button onClick={() => startEdit(e)} className="text-gray-400 dark:text-gray-500 hover:text-blue-500 p-1"><Pencil size={15} /></button>
+                <button onClick={() => startEdit(e)} className="text-gray-400 dark:text-gray-500 hover:text-ldg-green p-1"><Pencil size={15} /></button>
                 <button onClick={() => del(e.id)} className="text-gray-400 dark:text-gray-500 hover:text-red-500 -mr-1 -mt-1 p-1"><Trash2 size={16} /></button>
               </div>
             </div>

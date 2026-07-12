@@ -360,7 +360,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
           {activeFilterCount > 0 && (
             <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300">
               Showing <strong className="text-gray-900 dark:text-gray-100 dark:text-gray-100">{filteredEntries.length}</strong> of {entries.length} expenses
-              · Total <strong className={color === 'red' ? 'text-red-600' : 'text-purple-600'}>{filteredTotalRSD.toLocaleString()} RSD</strong>
+              · Total <strong className={color === 'red' ? 'text-red-600' : 'text-ldg-ink/55'}>{filteredTotalRSD.toLocaleString()} RSD</strong>
             </div>
           )}
         </div>
@@ -371,9 +371,9 @@ function ExpensesContent({ params }: { params: { type: string } }) {
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 dark:text-gray-100 mb-4">{editingId ? 'Edit Expense' : 'New Expense'}</h3>
 
           {form.merchantName && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm">
-              <div className="font-medium text-blue-900">📱 From scanned receipt</div>
-              <div className="text-blue-700 mt-1">{form.merchantName} {form.merchantPib && `(PIB: ${form.merchantPib})`}</div>
+            <div className="bg-ldg-ink/[0.06] border border-ldg-ink/10 rounded-lg p-3 mb-4 text-sm">
+              <div className="font-medium text-ldg-ink/55">📱 From scanned receipt</div>
+              <div className="text-ldg-ink/55 mt-1">{form.merchantName} {form.merchantPib && `(PIB: ${form.merchantPib})`}</div>
               {form.sufUrl ? <a href={form.sufUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[rgb(var(--l-green))] underline mt-1 inline-flex items-center gap-1"><FileText size={12} /> View original receipt</a> : null}
             </div>
           )}
@@ -497,9 +497,9 @@ function ExpensesContent({ params }: { params: { type: string } }) {
               {form.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {form.tags.map(t => (
-                    <span key={t} className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full">
+                    <span key={t} className="flex items-center gap-1 bg-ldg-ink/[0.06] dark:bg-ldg-ink/[0.06] text-ldg-ink/55 dark:text-ldg-ink/55 text-xs px-2 py-0.5 rounded-full">
                       {t}
-                      <button type="button" onClick={() => removeTag(t)} className="text-blue-500 hover:text-blue-800 dark:hover:text-blue-100"><X size={10} /></button>
+                      <button type="button" onClick={() => removeTag(t)} className="text-ldg-ink/55 hover:text-ldg-green dark:hover:text-ldg-green"><X size={10} /></button>
                     </span>
                   ))}
                 </div>
@@ -533,7 +533,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
                   {e.hasWarranty && <span title={`${e.warrantyMonths}mo warranty${e.warrantyNotes ? `: ${e.warrantyNotes}` : ''}`} className="ml-1">🛡️</span>}
                   {e.sufUrl ? <a href={e.sufUrl} target="_blank" rel="noopener noreferrer" title="View receipt" className="ml-1">📄</a> : null}
                   {e.photoUrl ? <button onClick={() => setPhotoViewer(e.photoUrl)} title="View photo" className="ml-1">📷</button> : null}
-                  {e.tags?.length > 0 && e.tags.map((t: string) => <span key={t} className="ml-1 text-xs bg-blue-100 dark:bg-blue-900 text-[rgb(var(--l-green))] dark:text-blue-300 px-1.5 py-0.5 rounded-full">{t}</span>)}
+                  {e.tags?.length > 0 && e.tags.map((t: string) => <span key={t} className="ml-1 text-xs bg-ldg-ink/[0.06] dark:bg-ldg-ink/[0.06] text-[rgb(var(--l-green))] dark:text-ldg-ink/55 px-1.5 py-0.5 rounded-full">{t}</span>)}
                 </td>
                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">{e.subcategory || '-'}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-300 dark:text-gray-300">{e.description || e.merchantName || '-'}</td>
@@ -543,7 +543,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs">{e.account?.name}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <button onClick={() => startEdit(e)} className="text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-blue-500"><Pencil size={14} /></button>
+                    <button onClick={() => startEdit(e)} className="text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-ldg-green"><Pencil size={14} /></button>
                     <button onClick={() => del(e.id)} className="text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-red-500"><Trash2 size={14} /></button>
                   </div>
                 </td>
@@ -577,18 +577,18 @@ function ExpensesContent({ params }: { params: { type: string } }) {
                 </div>
                 {e.tags?.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-1">
-                    {e.tags.map((t: string) => <span key={t} className="text-xs bg-blue-100 dark:bg-blue-900 text-[rgb(var(--l-green))] dark:text-blue-300 px-1.5 py-0.5 rounded-full">{t}</span>)}
+                    {e.tags.map((t: string) => <span key={t} className="text-xs bg-ldg-ink/[0.06] dark:bg-ldg-ink/[0.06] text-[rgb(var(--l-green))] dark:text-ldg-ink/55 px-1.5 py-0.5 rounded-full">{t}</span>)}
                   </div>
                 )}
                 <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(e.date)}</div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <button onClick={() => startEdit(e)} className="text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-blue-500 p-1"><Pencil size={15} /></button>
+                <button onClick={() => startEdit(e)} className="text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-ldg-green p-1"><Pencil size={15} /></button>
                 <button onClick={() => del(e.id)} className="text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-red-500 -mr-1 -mt-1 p-1"><Trash2 size={16} /></button>
               </div>
             </div>
             <div className="flex items-baseline justify-between mb-2">
-              <span className={`text-lg font-bold ${color === 'red' ? 'text-red-600' : 'text-purple-600'}`}>{e.amount.toLocaleString()} {e.currency}</span>
+              <span className={`text-lg font-bold ${color === 'red' ? 'text-red-600' : 'text-ldg-ink/55'}`}>{e.amount.toLocaleString()} {e.currency}</span>
               {e.currency === 'EUR' && <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">{e.amountRSD.toLocaleString()} RSD</span>}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 space-y-0.5">

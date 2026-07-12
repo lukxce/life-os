@@ -4,6 +4,7 @@ import { Plus, Trash2, Pencil, CheckCircle, CalendarDays } from 'lucide-react'
 import { toast } from 'sonner'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { cn } from '@/lib/utils'
+import { Card, SolidBtn } from '@/components/ledger/primitives'
 
 const defaultForm = { name: '', amount: '', currency: 'RSD', category: '', subcategory: '', accountId: '', dayOfMonth: '1', notes: '', isLoan: false, lender: '', loanEndDate: '', type: 'personal' }
 
@@ -22,11 +23,9 @@ function isPaidThisMonth(payments: any[]): boolean {
 }
 
 function statusBadge(days: number, paid: boolean) {
-  if (paid) return 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-  if (days < 0) return 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
-  if (days <= 3) return 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300'
-  if (days <= 7) return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300'
-  return 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
+  if (paid) return 'bg-ldg-green/10 text-ldg-green'
+  if (days <= 3) return 'bg-ldg-urgent/[0.08] text-ldg-urgent'
+  return 'bg-ldg-ink/[0.06] text-ldg-ink/55'
 }
 
 function equivalent(amount: number, currency: string, rate: number) {
@@ -113,25 +112,24 @@ export default function BillsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Bills & Loans</h2>
-        <button onClick={() => { setEditingId(null); setForm({ ...defaultForm, isLoan: tab === 'loans' }); if (tab === 'calendar') setTab('bills'); setShowForm(s => !s) }}
-          className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-teal-700">
-          <Plus size={16} /> Add {tab === 'loans' ? 'Loan' : 'Bill'}
-        </button>
+        <h2 className="text-2xl font-bold text-ldg-ink">Bills & Loans</h2>
+        <SolidBtn onClick={() => { setEditingId(null); setForm({ ...defaultForm, isLoan: tab === 'loans' }); if (tab === 'calendar') setTab('bills'); setShowForm(s => !s) }}>
+          <span className="flex items-center gap-2"><Plus size={16} /> Add {tab === 'loans' ? 'Loan' : 'Bill'}</span>
+        </SolidBtn>
       </div>
 
       {/* Tabs + type filter */}
       <div className="flex flex-wrap items-center gap-3">
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
+      <div className="flex gap-1 bg-ldg-ink/[0.05] p-1 rounded-lg w-fit">
         {(['bills', 'loans'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors capitalize ${tab === t ? 'bg-surface/90 dark:bg-surface/70 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}>
-            {t} <span className="ml-1 text-xs text-gray-400">({t === 'bills' ? allBills.length : allLoans.length})</span>
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors capitalize ${tab === t ? 'bg-ldg-card text-ldg-ink shadow-sm' : 'text-ldg-ink/55 hover:text-ldg-ink/80'}`}>
+            {t} <span className="ml-1 text-xs text-ldg-ink/40">({t === 'bills' ? allBills.length : allLoans.length})</span>
           </button>
         ))}
         <button onClick={() => setTab('calendar')}
           className={cn('flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
-            tab === 'calendar' ? 'bg-surface/90 dark:bg-surface/70 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200')}>
+            tab === 'calendar' ? 'bg-ldg-card text-ldg-ink shadow-sm' : 'text-ldg-ink/55 hover:text-ldg-ink/80')}>
           <CalendarDays size={14} /> Calendar
         </button>
       </div>
@@ -141,7 +139,7 @@ export default function BillsPage() {
         <div className="flex gap-1">
           {(['all', 'personal', 'company'] as const).map(t => (
             <button key={t} onClick={() => setTypeFilter(t)}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors capitalize ${typeFilter === t ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}>
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors capitalize ${typeFilter === t ? 'bg-ldg-green/10 text-ldg-green border border-ldg-green/30' : 'bg-ldg-ink/[0.05] text-ldg-ink/55 hover:text-ldg-ink/80'}`}>
               {t}
             </button>
           ))}
@@ -150,72 +148,72 @@ export default function BillsPage() {
       </div>
 
       {shown.length > 0 && (
-        <div className="bg-teal-50 dark:bg-teal-950 border border-teal-200 dark:border-teal-800 rounded-xl p-4">
-          <p className="text-sm text-teal-700 dark:text-teal-300">
-            Total monthly {tab}: <strong>{totalMonthly.toLocaleString()} {totalCurrency}</strong>
-            {rate > 0 && <span className="ml-2 text-teal-500 dark:text-teal-400">{equivalent(totalMonthly, totalCurrency, rate)}</span>}
+        <Card className="p-4" accent="green">
+          <p className="text-sm text-ldg-ink">
+            Total monthly {tab}: <strong className="font-mono">{totalMonthly.toLocaleString()} {totalCurrency}</strong>
+            {rate > 0 && <span className="ml-2 font-mono text-ldg-ink/55">{equivalent(totalMonthly, totalCurrency, rate)}</span>}
           </p>
-        </div>
+        </Card>
       )}
 
       {showForm && (
-        <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4 md:p-6">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">{editingId ? `Edit ${form.isLoan ? 'Loan' : 'Bill'}` : `New ${tab === 'loans' ? 'Loan' : 'Bill'}`}</h3>
+        <div className="bg-ldg-card rounded-2xl border border-ldg-ink/10 p-4 md:p-6">
+          <h3 className="font-semibold text-ldg-ink mb-4">{editingId ? `Edit ${form.isLoan ? 'Loan' : 'Bill'}` : `New ${tab === 'loans' ? 'Loan' : 'Bill'}`}</h3>
           <div className="grid grid-cols-2 gap-4">
             {/* Row 1: Name + Lender (loans) or Monthly Amount (bills) */}
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Name</label>
+              <label className="text-xs font-medium text-ldg-ink/55">Name</label>
               <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100" />
+                className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink" />
             </div>
             {(tab === 'loans' || form.isLoan) ? (
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Lender</label>
+                <label className="text-xs font-medium text-ldg-ink/55">Lender</label>
                 <input type="text" value={form.lender} onChange={e => setForm(p => ({ ...p, lender: e.target.value }))}
                   placeholder="e.g. Erste Bank"
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100" />
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink" />
               </div>
             ) : (
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Monthly Amount</label>
+                <label className="text-xs font-medium text-ldg-ink/55">Monthly Amount</label>
                 <NumberInput value={form.amount} onChange={v => setForm(p => ({ ...p, amount: v }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100" />
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink" />
               </div>
             )}
 
             {/* Row 2: Monthly Amount + Currency (loans) | Currency + Due Day (bills) */}
             {(tab === 'loans' || form.isLoan) && (
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Monthly Amount</label>
+                <label className="text-xs font-medium text-ldg-ink/55">Monthly Amount</label>
                 <NumberInput value={form.amount} onChange={v => setForm(p => ({ ...p, amount: v }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100" />
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink" />
               </div>
             )}
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Currency</label>
+              <label className="text-xs font-medium text-ldg-ink/55">Currency</label>
               <select value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100">
+                className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink">
                 <option>RSD</option><option>EUR</option>
               </select>
             </div>
 
             {/* Row 3: Due Day + Loan End Date (loans) | Due Day + Category (bills) */}
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Payment Day of Month</label>
+              <label className="text-xs font-medium text-ldg-ink/55">Payment Day of Month</label>
               <input type="number" min="1" max="31" value={form.dayOfMonth} onChange={e => setForm(p => ({ ...p, dayOfMonth: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100" />
+                className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink" />
             </div>
             {(tab === 'loans' || form.isLoan) ? (
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Loan End Date</label>
+                <label className="text-xs font-medium text-ldg-ink/55">Loan End Date</label>
                 <input type="date" value={form.loanEndDate} onChange={e => setForm(p => ({ ...p, loanEndDate: e.target.value }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100" />
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink" />
               </div>
             ) : (
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Category</label>
+                <label className="text-xs font-medium text-ldg-ink/55">Category</label>
                 <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100">
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink">
                   <option value="">None</option>
                   {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
@@ -225,18 +223,18 @@ export default function BillsPage() {
             {/* Row 4: Category + Account (loans) | Account alone (bills) */}
             {(tab === 'loans' || form.isLoan) && (
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Category</label>
+                <label className="text-xs font-medium text-ldg-ink/55">Category</label>
                 <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100">
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink">
                   <option value="">None</option>
                   {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
             )}
             <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Account</label>
+              <label className="text-xs font-medium text-ldg-ink/55">Account</label>
               <select value={form.accountId} onChange={e => setForm(p => ({ ...p, accountId: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100">
+                className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink">
                 <option value="">Select account</option>
                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
@@ -244,11 +242,11 @@ export default function BillsPage() {
 
             {/* Personal / Company toggle */}
             <div className="col-span-2">
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Type</label>
+              <label className="text-xs font-medium text-ldg-ink/55">Type</label>
               <div className="mt-1 flex gap-2">
                 {(['personal', 'company'] as const).map(t => (
                   <button key={t} type="button" onClick={() => setForm(p => ({ ...p, type: t }))}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors capitalize ${form.type === t ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors capitalize ${form.type === t ? 'bg-ldg-green border-ldg-green text-white' : 'border-ldg-ink/10 text-ldg-ink/70 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                     {t}
                   </button>
                 ))}
@@ -257,9 +255,9 @@ export default function BillsPage() {
 
             {subcats.length > 0 && (
               <div className="col-span-2">
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Subcategory</label>
+                <label className="text-xs font-medium text-ldg-ink/55">Subcategory</label>
                 <select value={form.subcategory} onChange={e => setForm(p => ({ ...p, subcategory: e.target.value }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100">
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink">
                   <option value="">None</option>
                   {subcats.map((s: string) => <option key={s} value={s}>{s}</option>)}
                 </select>
@@ -267,20 +265,20 @@ export default function BillsPage() {
             )}
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={submit} className="flex-1 sm:flex-initial bg-teal-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-teal-700">{editingId ? 'Update' : 'Save'}</button>
-            <button onClick={() => { setShowForm(false); setEditingId(null); setForm(defaultForm) }} className="flex-1 sm:flex-initial border border-gray-300 dark:border-gray-600 px-5 py-2.5 rounded-lg text-sm">Cancel</button>
+            <button onClick={submit} className="flex-1 sm:flex-initial bg-ldg-green text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:opacity-90">{editingId ? 'Update' : 'Save'}</button>
+            <button onClick={() => { setShowForm(false); setEditingId(null); setForm(defaultForm) }} className="flex-1 sm:flex-initial border border-ldg-ink/10 px-5 py-2.5 rounded-lg text-sm">Cancel</button>
           </div>
         </div>
       )}
 
       {payingBill && (
-        <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Mark as paid — {payingBill.name}</h3>
+        <div className="bg-ldg-card rounded-2xl border border-ldg-ink/10 p-4">
+          <h3 className="font-semibold text-ldg-ink mb-3">Mark as paid — {payingBill.name}</h3>
           <div className="flex gap-3">
             <NumberInput value={payAmount || String(payingBill.amount)} onChange={setPayAmount} placeholder={String(payingBill.amount)}
-              className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
-            <button onClick={markPaid} className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-teal-700">Confirm</button>
-            <button onClick={() => { setPayingBill(null); setPayAmount('') }} className="border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg text-sm">Cancel</button>
+              className="flex-1 border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none" />
+            <button onClick={markPaid} className="bg-ldg-green text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90">Confirm</button>
+            <button onClick={() => { setPayingBill(null); setPayAmount('') }} className="border border-ldg-ink/10 px-4 py-2 rounded-lg text-sm">Cancel</button>
           </div>
         </div>
       )}
@@ -290,7 +288,7 @@ export default function BillsPage() {
       ) : (
       <div className="space-y-3">
         {shown.length === 0 ? (
-          <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-8 text-center text-gray-400 dark:text-gray-500">
+          <div className="bg-ldg-card rounded-2xl border border-ldg-ink/10 p-8 text-center text-ldg-ink/40">
             No {tab} yet
           </div>
         ) : shown.map(b => {
@@ -298,35 +296,35 @@ export default function BillsPage() {
           const paid = isPaidThisMonth(b.payments)
           const eq = rate > 0 ? equivalent(b.amount, b.currency, rate) : null
           return (
-            <div key={b.id} className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
+            <div key={b.id} className="bg-ldg-card rounded-2xl border border-ldg-ink/10 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">{b.name}</span>
-                    {b.lender && <span className="text-xs text-gray-400 dark:text-gray-500">{b.lender}</span>}
+                    <span className="font-semibold text-ldg-ink">{b.name}</span>
+                    {b.lender && <span className="text-xs text-ldg-ink/40">{b.lender}</span>}
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusBadge(days, paid)}`}>
                       {paid ? 'Paid this month' : days < 0 ? `${Math.abs(days)}d overdue` : days === 0 ? 'Due today' : `${days}d left`}
                     </span>
                     {b.type === 'company' && (
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300">company</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-ldg-ink/[0.06] dark:bg-ldg-ink/[0.06] text-ldg-ink/55 dark:text-ldg-ink/55">company</span>
                     )}
                   </div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                  <p className="text-sm font-medium text-ldg-ink/70">
                     {b.amount.toLocaleString()} {b.currency}
-                    {eq && <span className="ml-2 text-xs text-gray-400 dark:text-gray-500 font-normal">{eq}</span>}
-                    <span className="ml-2 text-xs text-gray-400 font-normal">· due day {b.dayOfMonth}</span>
+                    {eq && <span className="ml-2 text-xs text-ldg-ink/40 font-normal">{eq}</span>}
+                    <span className="ml-2 text-xs text-ldg-ink/40 font-normal">· due day {b.dayOfMonth}</span>
                   </p>
-                  {b.category && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{b.category}</p>}
+                  {b.category && <p className="text-xs text-ldg-ink/55 mt-0.5">{b.category}</p>}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {!paid && (
                     <button onClick={() => { setPayingBill(b); setPayAmount(String(b.amount)) }}
-                      className="bg-teal-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-teal-700 flex items-center gap-1">
+                      className="bg-ldg-green text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 flex items-center gap-1">
                       <CheckCircle size={12} /> Mark paid
                     </button>
                   )}
-                  <button onClick={() => startEdit(b)} className="text-gray-400 hover:text-blue-500 p-1"><Pencil size={15} /></button>
-                  <button onClick={() => del(b.id)} className="text-gray-400 hover:text-red-500 p-1"><Trash2 size={15} /></button>
+                  <button onClick={() => startEdit(b)} className="text-ldg-ink/40 hover:text-ldg-green p-1"><Pencil size={15} /></button>
+                  <button onClick={() => del(b.id)} className="text-ldg-ink/40 hover:text-ldg-urgent p-1"><Trash2 size={15} /></button>
                 </div>
               </div>
             </div>
@@ -371,9 +369,9 @@ function BillCalendar({ bills, rate, onMarkPaid }: { bills: any[]; rate: number;
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{monthName}</h3>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          Total: <span className="font-semibold text-gray-900 dark:text-gray-100">
+        <h3 className="text-lg font-semibold text-ldg-ink">{monthName}</h3>
+        <div className="text-sm text-ldg-ink/55">
+          Total: <span className="font-semibold text-ldg-ink">
             {Math.round(totalRSDEq).toLocaleString()} RSD
           </span>
           {totalEUR > 0 && <span className="ml-1">+ {totalEUR.toLocaleString()} EUR</span>}
@@ -383,7 +381,7 @@ function BillCalendar({ bills, rate, onMarkPaid }: { bills: any[]; rate: number;
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-1">
         {['M','T','W','T','F','S','S'].map((d, i) => (
-          <div key={i} className="text-center text-[10px] font-semibold text-gray-400 py-1">{d}</div>
+          <div key={i} className="text-center text-[10px] font-semibold text-ldg-ink/40 py-1">{d}</div>
         ))}
 
         {/* Offset for first day of month */}
@@ -404,12 +402,11 @@ function BillCalendar({ bills, rate, onMarkPaid }: { bills: any[]; rate: number;
             <div key={day}
               className={cn(
                 'min-h-[60px] rounded-lg border p-1 transition-colors',
-                isToday ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30' : 'border-black/5 dark:border-white/5 bg-surface/90 dark:bg-surface/70',
-                hasBills && !allPaid && !hasOverdue && 'border-amber-200 dark:border-amber-800',
-                hasOverdue && 'border-red-200 dark:border-red-800'
+                isToday ? 'border-ldg-green/30 bg-ldg-green/[0.06]' : 'border-ldg-ink/[0.07] bg-ldg-card',
+                hasOverdue && 'border-ldg-urgent/30'
               )}>
               <div className={cn('text-xs font-bold mb-0.5 text-right',
-                isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400')}>
+                isToday ? 'text-ldg-green' : 'text-ldg-ink/55')}>
                 {day}
               </div>
               <div className="space-y-0.5">
@@ -423,10 +420,10 @@ function BillCalendar({ bills, rate, onMarkPaid }: { bills: any[]; rate: number;
                       className={cn(
                         'w-full text-left text-[9px] leading-tight px-1 py-0.5 rounded truncate font-medium transition-opacity',
                         paid
-                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 line-through'
+                          ? 'bg-ldg-ink/[0.06] text-ldg-ink/40 line-through'
                           : hasOverdue
-                            ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 hover:bg-red-200'
-                            : 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 hover:bg-amber-200'
+                            ? 'bg-ldg-urgent/[0.08] text-ldg-urgent hover:bg-ldg-urgent/[0.15]'
+                            : 'bg-ldg-ink/[0.06] text-ldg-ink/70 hover:bg-ldg-ink/[0.1]'
                       )}>
                       {b.name}
                     </button>
@@ -439,12 +436,12 @@ function BillCalendar({ bills, rate, onMarkPaid }: { bills: any[]; rate: number;
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-100 dark:bg-amber-900/50 inline-block" />Upcoming</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-100 dark:bg-red-900/50 inline-block" />Overdue</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-100 dark:bg-gray-700 inline-block" />Paid</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-indigo-400 inline-block" />Today</span>
-        <span className="ml-auto text-gray-400">Click a bill to mark paid</span>
+      <div className="flex flex-wrap gap-3 text-xs text-ldg-ink/55">
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-ldg-ink/[0.06] inline-block" />Upcoming</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-ldg-urgent/[0.08] inline-block" />Overdue</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-ldg-ink/[0.06] inline-block" />Paid</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-ldg-green/30 inline-block" />Today</span>
+        <span className="ml-auto text-ldg-ink/40">Click a bill to mark paid</span>
       </div>
     </div>
   )

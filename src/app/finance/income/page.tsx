@@ -77,7 +77,7 @@ export default function IncomePage() {
   }
 
   const typeBadge = (type: string) => {
-    if (type === 'Salary') return 'bg-blue-100 text-blue-700'
+    if (type === 'Salary') return 'bg-ldg-ink/[0.06] text-ldg-ink/55'
     if (type === 'Invoice') return 'bg-green-100 text-green-700'
     return 'bg-gray-100 text-gray-700 dark:text-gray-300 dark:text-gray-300'
   }
@@ -175,7 +175,7 @@ export default function IncomePage() {
                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs">{e.account?.name}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <button onClick={() => startEdit(e)} className="text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-blue-500"><Pencil size={14} /></button>
+                    <button onClick={() => startEdit(e)} className="text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-ldg-green"><Pencil size={14} /></button>
                     <button onClick={() => del(e.id)} className="text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-red-500"><Trash2 size={14} /></button>
                   </div>
                 </td>
@@ -198,7 +198,7 @@ export default function IncomePage() {
                 <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(e.date)}</span>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => startEdit(e)} className="text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-blue-500 p-1"><Pencil size={15} /></button>
+                <button onClick={() => startEdit(e)} className="text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-ldg-green p-1"><Pencil size={15} /></button>
                 <button onClick={() => del(e.id)} className="text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-red-500 -mr-1 -mt-1 p-1"><Trash2 size={16} /></button>
               </div>
             </div>

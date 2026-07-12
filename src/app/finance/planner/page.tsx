@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { Sparkles, SlidersHorizontal } from 'lucide-react'
 import { NumberInput } from '@/components/ui/NumberInput'
+import { Card, Label } from '@/components/ledger/primitives'
+import { cn } from '@/lib/utils'
 
 const HORIZON_OPTIONS = [1, 3, 6, 12]
 const AVG_MONTHS = 3
@@ -204,26 +206,26 @@ export default function PlannerPage() {
       {/* Result */}
       {incomeNum > 0 && (
         <>
-          <div className={`rounded-xl p-5 ${monthlySurplus >= 0 ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-red-500 to-rose-600'} text-white`}>
-            <p className="text-sm opacity-80">Monthly {monthlySurplus >= 0 ? 'surplus' : 'deficit'}</p>
-            <p className="text-3xl font-bold mt-1">{sym}{Math.abs(monthlySurplus).toLocaleString()} {unit}</p>
+          <Card className="p-5" accent={monthlySurplus >= 0 ? 'green' : 'urgent'}>
+            <Label>Monthly {monthlySurplus >= 0 ? 'surplus' : 'deficit'}</Label>
+            <p className={cn('font-mono text-[26px] tabular-nums tracking-tight leading-none mt-1', monthlySurplus >= 0 ? 'text-ldg-green' : 'text-ldg-urgent')}>{sym}{Math.abs(monthlySurplus).toLocaleString()} {unit}</p>
             {currency === 'EUR'
-              ? <p className="text-sm opacity-70 mt-0.5">≈ {Math.abs(Math.round(monthlySurplus * rate)).toLocaleString()} RSD</p>
-              : <p className="text-sm opacity-70 mt-0.5">≈ €{Math.abs(monthlySurplus / rate).toFixed(2)}</p>
+              ? <p className="font-mono text-[12px] text-ldg-ink/55 mt-0.5">≈ {Math.abs(Math.round(monthlySurplus * rate)).toLocaleString()} RSD</p>
+              : <p className="font-mono text-[12px] text-ldg-ink/55 mt-0.5">≈ €{Math.abs(monthlySurplus / rate).toFixed(2)}</p>
             }
-            <div className="mt-3 pt-3 border-t border-white/20 flex justify-between">
+            <div className="mt-3 pt-3 border-t border-ldg-ink/[0.07] flex justify-between">
               <div>
-                <p className="text-xs opacity-70">After {horizon} month{horizon > 1 ? 's' : ''}</p>
-                <p className="text-xl font-bold">{sym}{Math.abs(totalSaved).toLocaleString()} {unit} {totalSaved < 0 ? 'short' : 'saved'}</p>
+                <p className="text-[11px] text-ldg-ink/55">After {horizon} month{horizon > 1 ? 's' : ''}</p>
+                <p className="font-mono text-[17px] font-semibold text-ldg-ink">{sym}{Math.abs(totalSaved).toLocaleString()} {unit} {totalSaved < 0 ? 'short' : 'saved'}</p>
               </div>
               {savingsRate > 0 && (
                 <div className="text-right">
-                  <p className="text-xs opacity-70">Savings rate</p>
-                  <p className="text-xl font-bold">{savingsRate.toFixed(0)}%</p>
+                  <p className="text-[11px] text-ldg-ink/55">Savings rate</p>
+                  <p className="font-mono text-[17px] font-semibold text-ldg-ink">{savingsRate.toFixed(0)}%</p>
                 </div>
               )}
             </div>
-          </div>
+          </Card>
 
           {/* Impact on current totals */}
           {currentTotals && monthlySurplus !== 0 && (

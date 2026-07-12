@@ -286,7 +286,7 @@ function ScanInner() {
           <section className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/10 dark:border-white/10 p-4 space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <button onClick={startScanner} disabled={scanning || loading}
-                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white py-3 rounded-xl font-semibold transition-colors">
+                className="bg-ldg-green hover:opacity-90 disabled:opacity-40 text-white py-3 rounded-xl font-semibold transition-colors">
                 Scan QR
               </button>
               <button onClick={() => photoInputRef.current?.click()} disabled={scanning || loading}
@@ -350,7 +350,7 @@ function ScanInner() {
           <h3 className="font-semibold text-gray-900 dark:text-gray-100">Receipt details</h3>
 
           {parsed.warning && (
-            <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 rounded-lg p-3 text-xs">
+            <div className="bg-ldg-urgent/[0.08] border border-ldg-urgent/20 text-ldg-urgent rounded-lg p-3 text-xs">
               {parsed.warning}
             </div>
           )}
@@ -391,10 +391,10 @@ function ScanInner() {
             <div className="grid grid-cols-2 gap-2">
               {(['personal', 'business'] as const).map(t => (
                 <button key={t} onClick={() => setExpenseType(t)}
-                  className={`py-2 rounded-xl text-sm font-medium border transition-colors capitalize ${
+                  className={`py-2 rounded-lg text-sm font-medium border transition-colors capitalize ${
                     expenseType === t
-                      ? t === 'personal' ? 'bg-red-600 text-white border-red-600' : 'bg-purple-600 text-white border-purple-600'
-                      : 'border-black/10 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'bg-ldg-green/10 text-ldg-green border-ldg-green/30'
+                      : 'border-ldg-ink/10 text-ldg-ink/55 hover:bg-ldg-ink/[0.04]'
                   }`}>{t}</button>
               ))}
             </div>

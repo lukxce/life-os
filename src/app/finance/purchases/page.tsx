@@ -8,9 +8,9 @@ const PRIORITIES = ['high', 'medium', 'low'] as const
 type Priority = typeof PRIORITIES[number]
 
 const PRIORITY_CFG: Record<Priority, { label: string; badge: string; dot: string }> = {
-  high:   { label: 'High',   badge: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300',    dot: 'bg-red-500'    },
-  medium: { label: 'Medium', badge: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300', dot: 'bg-amber-500' },
-  low:    { label: 'Low',    badge: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',    dot: 'bg-gray-400'   },
+  high:   { label: 'High',   badge: 'bg-ldg-green/10 text-ldg-green',    dot: 'bg-ldg-green'    },
+  medium: { label: 'Medium', badge: 'bg-ldg-ink/[0.06] text-ldg-ink/55', dot: 'bg-ldg-ink/40' },
+  low:    { label: 'Low',    badge: 'bg-ldg-ink/[0.06] text-ldg-ink/40', dot: 'bg-ldg-ink/25'   },
 }
 
 const defaultForm = { name: '', price: '', currency: 'EUR', priority: 'medium' as Priority, category: '', notes: '', url: '' }
@@ -69,19 +69,19 @@ export default function PurchasesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Purchase List</h2>
         <button onClick={() => { setEditingId(null); setForm(defaultForm); setShowForm(s => !s) }}
-          className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-teal-700">
+          className="flex items-center gap-2 bg-ldg-green text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90">
           <Plus size={16} /> Add Item
         </button>
       </div>
 
       {/* Summary */}
       {pendingCount > 0 && (
-        <div className="bg-teal-50 dark:bg-teal-950 border border-teal-200 dark:border-teal-800 rounded-xl p-4 flex items-center justify-between">
-          <p className="text-sm text-teal-700 dark:text-teal-300">
+        <div className="bg-ldg-green/[0.07] dark:bg-ldg-green/[0.07] border border-ldg-green/30 dark:border-ldg-green/30 rounded-xl p-4 flex items-center justify-between">
+          <p className="text-sm text-ldg-green dark:text-ldg-green">
             <strong>{pendingCount}</strong> item{pendingCount !== 1 ? 's' : ''} to buy
           </p>
           {totalPending > 0 && (
-            <p className="text-sm font-semibold text-teal-700 dark:text-teal-300">
+            <p className="text-sm font-semibold text-ldg-green dark:text-ldg-green">
               ≈ {totalPending.toLocaleString('en', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} EUR est.
             </p>
           )}
@@ -97,19 +97,19 @@ export default function PurchasesPage() {
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Item name</label>
               <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                 placeholder="e.g. Sony WH-1000XM5"
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:text-gray-100" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ldg-green dark:bg-gray-800 dark:text-gray-100" />
             </div>
 
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Est. price</label>
               <input type="number" step="any" value={form.price} onChange={e => setForm(p => ({ ...p, price: e.target.value }))}
                 placeholder="0"
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:text-gray-100" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ldg-green dark:bg-gray-800 dark:text-gray-100" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Currency</label>
               <select value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:text-gray-100">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ldg-green dark:bg-gray-800 dark:text-gray-100">
                 <option>EUR</option><option>RSD</option><option>USD</option>
               </select>
             </div>
@@ -129,23 +129,23 @@ export default function PurchasesPage() {
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Category</label>
               <input type="text" value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
                 placeholder="e.g. Tech, Clothing…"
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:text-gray-100" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ldg-green dark:bg-gray-800 dark:text-gray-100" />
             </div>
 
             <div className="col-span-2">
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Link (optional)</label>
               <input type="url" value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
                 placeholder="https://…"
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:text-gray-100" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ldg-green dark:bg-gray-800 dark:text-gray-100" />
             </div>
             <div className="col-span-2">
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Notes</label>
               <input type="text" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-800 dark:text-gray-100" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ldg-green dark:bg-gray-800 dark:text-gray-100" />
             </div>
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={submit} className="flex-1 sm:flex-initial bg-teal-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-teal-700">{editingId ? 'Update' : 'Save'}</button>
+            <button onClick={submit} className="flex-1 sm:flex-initial bg-ldg-green text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:opacity-90">{editingId ? 'Update' : 'Save'}</button>
             <button onClick={() => { setShowForm(false); setEditingId(null); setForm(defaultForm) }} className="flex-1 sm:flex-initial border border-gray-300 dark:border-gray-600 px-5 py-2.5 rounded-lg text-sm">Cancel</button>
           </div>
         </div>
@@ -173,8 +173,8 @@ export default function PurchasesPage() {
           const cfg = PRIORITY_CFG[item.priority as Priority] ?? PRIORITY_CFG.medium
           return (
             <div key={item.id} className={cn('bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4 flex items-start gap-3', item.bought && 'opacity-60')}>
-              <button onClick={() => toggleBought(item)} className="mt-0.5 shrink-0 text-gray-400 hover:text-teal-500 transition-colors">
-                {item.bought ? <CheckCircle2 size={20} className="text-teal-500" /> : <Circle size={20} />}
+              <button onClick={() => toggleBought(item)} className="mt-0.5 shrink-0 text-gray-400 hover:text-ldg-green transition-colors">
+                {item.bought ? <CheckCircle2 size={20} className="text-ldg-green" /> : <Circle size={20} />}
               </button>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -189,16 +189,16 @@ export default function PurchasesPage() {
                 )}
                 {item.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{item.notes}</p>}
                 {item.bought && item.boughtAt && (
-                  <p className="text-xs text-teal-500 mt-0.5">Bought {new Date(item.boughtAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  <p className="text-xs text-ldg-green mt-0.5">Bought {new Date(item.boughtAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                 )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {item.url && (
-                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 p-1">
+                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-ldg-green p-1">
                     <ExternalLink size={14} />
                   </a>
                 )}
-                <button onClick={() => startEdit(item)} className="text-gray-400 hover:text-blue-500 p-1"><Pencil size={14} /></button>
+                <button onClick={() => startEdit(item)} className="text-gray-400 hover:text-ldg-green p-1"><Pencil size={14} /></button>
                 <button onClick={() => del(item.id)} className="text-gray-400 hover:text-red-500 p-1"><Trash2 size={14} /></button>
               </div>
             </div>

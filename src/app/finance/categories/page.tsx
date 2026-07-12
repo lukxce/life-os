@@ -130,7 +130,7 @@ export default function CategoriesPage() {
                 </button>
                 <div className="flex items-center gap-1 shrink-0">
                   <button onClick={() => setShowSubForm(cat.id)}
-                    className="text-xs text-[rgb(var(--l-green))] hover:text-blue-700 font-medium px-2">+ Sub</button>
+                    className="text-xs text-[rgb(var(--l-green))] hover:text-ldg-green font-medium px-2">+ Sub</button>
                   <button onClick={() => startRename(cat)}
                     className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded">
                     <Pencil size={14} />

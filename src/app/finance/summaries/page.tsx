@@ -63,13 +63,13 @@ export default function SummariesPage() {
   const renderSection = (title: string, color: string, rows: { label: string; data: number[]; ytdRSD: number; ytdEUR?: number }[], totalRSD: number, totalEUR?: number) => (
     <div className="bg-surface/90 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
       <div className="px-4 md:px-6 py-4 border-b border-gray-200">
-        <h3 className={`text-lg font-semibold ${color === 'blue' ? 'text-blue-700' : color === 'red' ? 'text-red-700' : 'text-purple-700'}`}>{title}</h3>
+        <h3 className={`text-lg font-semibold ${color === 'blue' ? 'text-ldg-ink/55' : color === 'red' ? 'text-red-700' : 'text-ldg-ink/55'}`}>{title}</h3>
       </div>
 
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className={color === 'blue' ? 'bg-blue-50' : color === 'red' ? 'bg-red-50' : 'bg-purple-50'}>
+          <thead className={color === 'blue' ? 'bg-ldg-ink/[0.06]' : color === 'red' ? 'bg-red-50' : 'bg-ldg-ink/[0.06]'}>
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-40">Source</th>
               {MONTHS.map(m => <th key={m} className="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase">{m}</th>)}
@@ -86,18 +86,18 @@ export default function SummariesPage() {
                     {v > 0 ? (v / 1000).toFixed(1) + 'k' : '-'}
                   </td>
                 ))}
-                <td className={`px-4 py-3 text-right font-semibold ${color === 'blue' ? 'text-[rgb(var(--l-green))]' : color === 'red' ? 'text-red-600' : 'text-purple-600'}`}>{formatRSD(row.ytdRSD)}</td>
+                <td className={`px-4 py-3 text-right font-semibold ${color === 'blue' ? 'text-[rgb(var(--l-green))]' : color === 'red' ? 'text-red-600' : 'text-ldg-ink/55'}`}>{formatRSD(row.ytdRSD)}</td>
                 {row.ytdEUR !== undefined && <td className="px-4 py-3 text-right text-gray-500">{formatEUR(row.ytdEUR)}</td>}
               </tr>
             ))}
-            <tr className={`font-bold ${color === 'blue' ? 'bg-blue-50' : color === 'red' ? 'bg-red-50' : 'bg-purple-50'}`}>
-              <td className={`px-4 py-3 ${color === 'blue' ? 'text-blue-700' : color === 'red' ? 'text-red-700' : 'text-purple-700'}`}>TOTAL</td>
+            <tr className={`font-bold ${color === 'blue' ? 'bg-ldg-ink/[0.06]' : color === 'red' ? 'bg-red-50' : 'bg-ldg-ink/[0.06]'}`}>
+              <td className={`px-4 py-3 ${color === 'blue' ? 'text-ldg-ink/55' : color === 'red' ? 'text-red-700' : 'text-ldg-ink/55'}`}>TOTAL</td>
               {MONTHS.map((_, i) => {
                 const total = rows.reduce((s, r) => s + r.data[i], 0)
-                return <td key={i} className={`px-2 py-3 text-right ${color === 'blue' ? 'text-blue-700' : color === 'red' ? 'text-red-700' : 'text-purple-700'}`}>{total > 0 ? (total / 1000).toFixed(1) + 'k' : '-'}</td>
+                return <td key={i} className={`px-2 py-3 text-right ${color === 'blue' ? 'text-ldg-ink/55' : color === 'red' ? 'text-red-700' : 'text-ldg-ink/55'}`}>{total > 0 ? (total / 1000).toFixed(1) + 'k' : '-'}</td>
               })}
-              <td className={`px-4 py-3 text-right ${color === 'blue' ? 'text-blue-700' : color === 'red' ? 'text-red-700' : 'text-purple-700'}`}>{formatRSD(totalRSD)}</td>
-              {totalEUR !== undefined && <td className={`px-4 py-3 text-right ${color === 'blue' ? 'text-blue-700' : color === 'red' ? 'text-red-700' : 'text-purple-700'}`}>{formatEUR(totalEUR)}</td>}
+              <td className={`px-4 py-3 text-right ${color === 'blue' ? 'text-ldg-ink/55' : color === 'red' ? 'text-red-700' : 'text-ldg-ink/55'}`}>{formatRSD(totalRSD)}</td>
+              {totalEUR !== undefined && <td className={`px-4 py-3 text-right ${color === 'blue' ? 'text-ldg-ink/55' : color === 'red' ? 'text-red-700' : 'text-ldg-ink/55'}`}>{formatEUR(totalEUR)}</td>}
             </tr>
           </tbody>
         </table>
@@ -109,7 +109,7 @@ export default function SummariesPage() {
           <div key={row.label} className="border border-gray-100 rounded-lg p-3">
             <div className="flex items-baseline justify-between mb-2">
               <span className="font-medium text-gray-700">{row.label}</span>
-              <span className={`font-semibold ${color === 'blue' ? 'text-[rgb(var(--l-green))]' : color === 'red' ? 'text-red-600' : 'text-purple-600'}`}>{formatRSD(row.ytdRSD)}</span>
+              <span className={`font-semibold ${color === 'blue' ? 'text-[rgb(var(--l-green))]' : color === 'red' ? 'text-red-600' : 'text-ldg-ink/55'}`}>{formatRSD(row.ytdRSD)}</span>
             </div>
             {row.ytdEUR !== undefined && (
               <div className="text-xs text-gray-500 mb-2">{formatEUR(row.ytdEUR)}</div>
@@ -126,7 +126,7 @@ export default function SummariesPage() {
             </div>
           </div>
         ))}
-        <div className={`rounded-lg p-3 font-bold ${color === 'blue' ? 'bg-blue-50 text-blue-700' : color === 'red' ? 'bg-red-50 text-red-700' : 'bg-purple-50 text-purple-700'}`}>
+        <div className={`rounded-lg p-3 font-bold ${color === 'blue' ? 'bg-ldg-ink/[0.06] text-ldg-ink/55' : color === 'red' ? 'bg-red-50 text-red-700' : 'bg-ldg-ink/[0.06] text-ldg-ink/55'}`}>
           <div className="flex items-baseline justify-between">
             <span>TOTAL</span>
             <span>{formatRSD(totalRSD)}</span>

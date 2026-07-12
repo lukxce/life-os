@@ -54,7 +54,7 @@ export default function SettingsPage() {
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Live EUR/RSD rate</p>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">From Frankfurter API — display only</p>
           </div>
-          <span className="text-lg font-bold text-orange-600">
+          <span className="text-lg font-bold text-ldg-ink/55">
             {liveRate ? liveRate.toFixed(2) : '—'}
           </span>
         </div>

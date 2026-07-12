@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, Pencil, TrendingUp, TrendingDown } from 'lucide-react'
 import { toast } from 'sonner'
+import { Card, Label } from '@/components/ledger/primitives'
 
 const SUPPORTED_SYMBOLS = ['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','TRX','DOT','MATIC','AVAX','LINK','UNI','LTC','ATOM','USDT','USDC']
 
@@ -62,11 +63,11 @@ export default function CryptoPage() {
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-5 text-white">
-        <p className="text-purple-200 text-sm">Total Portfolio Value</p>
-        <p className="text-3xl font-bold mt-1">€{totalEUR.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-        <p className="text-purple-200 text-xs mt-1">Prices cached 6h · CoinGecko · auto-synced to wallet</p>
-      </div>
+      <Card className="p-5">
+        <Label>Total Portfolio Value</Label>
+        <p className="font-mono text-[32px] tabular-nums tracking-tight leading-none mt-1">€{totalEUR.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        <p className="font-mono text-[11px] text-ldg-ink/55 mt-3">Prices cached 6h · CoinGecko · auto-synced to wallet</p>
+      </Card>
 
       {showForm && (
         <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-4">
@@ -122,10 +123,10 @@ export default function CryptoPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 font-semibold text-purple-600">€{value.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-3 font-semibold text-ldg-ink/55">€{value.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <button onClick={() => startEdit(h)} className="text-gray-400 hover:text-blue-500"><Pencil size={14} /></button>
+                        <button onClick={() => startEdit(h)} className="text-gray-400 hover:text-ldg-green"><Pencil size={14} /></button>
                         <button onClick={() => del(h.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
                       </div>
                     </td>

@@ -38,13 +38,13 @@ function BudgetBar({ current, budget }: { current: number; budget: number }) {
   const over = current > budget
   return (
     <div className="mt-1.5">
-      <div className="flex justify-between text-[10px] text-gray-400 mb-0.5">
+      <div className="flex justify-between text-[10px] text-ldg-ink/55 mb-0.5">
         <span>{pct}% of budget</span>
         <span>{over ? 'Over budget!' : `${formatRSD(budget - current)} left`}</span>
       </div>
-      <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div className="h-[6px] bg-ldg-ink/[0.07] rounded-full overflow-hidden">
         <div
-          className={cn('h-full rounded-full transition-all', over ? 'bg-red-500' : pct > 80 ? 'bg-amber-500' : 'bg-emerald-500')}
+          className={cn('h-full rounded-full transition-all', over ? 'bg-ldg-urgent' : 'bg-ldg-green')}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -153,7 +153,7 @@ export default function InsightsPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-gray-400 w-14 shrink-0">{thisLabel.slice(0, 3)}</span>
                     <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${thisPct}%` }} />
+                      <div className="h-full bg-ldg-ink/[0.08] rounded-full transition-all" style={{ width: `${thisPct}%` }} />
                     </div>
                     <span className="text-[10px] text-gray-500 w-20 text-right shrink-0">{formatRSD(cat.current)}</span>
                   </div>
