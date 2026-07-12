@@ -42,7 +42,7 @@ export default function Page() {
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
-        <Shield className="text-[rgb(232,120,90)]" size={24} />
+        <Shield className="text-[rgb(var(--l-green))]" size={24} />
         <h2 className="text-2xl font-bold text-gray-900">Warranties</h2>
         <span className="text-sm text-gray-500">({items.length})</span>
       </div>
@@ -74,7 +74,7 @@ export default function Page() {
                       <span>{item.warrantyMonths} months</span>
                     </div>
                   </div>
-                  {item.sufUrl ? <a href={item.sufUrl} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[rgb(232,120,90)] p-2 rounded hover:bg-blue-50 shrink-0" title="View receipt"><FileText size={16} /></a> : null}
+                  {item.sufUrl ? <a href={item.sufUrl} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[rgb(var(--l-green))] p-2 rounded hover:bg-blue-50 shrink-0" title="View receipt"><FileText size={16} /></a> : null}
                 </li>
               )
             })}

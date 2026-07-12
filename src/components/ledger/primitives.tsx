@@ -58,6 +58,17 @@ export function Rule() {
   return <div className="border-t border-ldg-ink/[0.07]" />
 }
 
+export const CHART_COLORS = [
+  '#2e7d4f', // green (primary)
+  '#8fb8a0', // sage tint
+  '#54555c', // graphite
+  '#a6a7ae', // gray
+  '#3d6650', // deep green
+  '#c9cad0', // light gray
+  '#6f9080', // muted green-gray
+  '#84858c', // mid gray
+]
+
 export function Row({ children, className }: { children: React.ReactNode; className?: string }) {
   return <div className={cn('flex items-center gap-3 py-2.5 border-t border-ldg-ink/[0.07]', className)}>{children}</div>
 }

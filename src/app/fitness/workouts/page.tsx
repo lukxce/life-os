@@ -95,7 +95,7 @@ export default function WorkoutsPage() {
           <p className="text-sm text-gray-400 mt-0.5">From habits + manual logs</p>
         </div>
         <button onClick={() => setShowForm(s => !s)}
-          className="flex items-center gap-1.5 bg-[rgb(220,161,84)] text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-[rgb(200,141,64)] active:scale-95 transition-all">
+          className="flex items-center gap-1.5 bg-[rgb(var(--l-green))] text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-[rgb(var(--l-green))] active:scale-95 transition-all">
           {showForm ? <X size={15} /> : <Plus size={15} />} {showForm ? 'Cancel' : 'Log'}
         </button>
       </div>
@@ -128,7 +128,7 @@ export default function WorkoutsPage() {
       {showForm && (
         <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
           <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <Dumbbell size={16} className="text-[rgb(220,161,84)]" /> Log workout manually
+            <Dumbbell size={16} className="text-[rgb(var(--l-green))]" /> Log workout manually
           </h2>
           <form onSubmit={addLog} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -157,7 +157,7 @@ export default function WorkoutsPage() {
                 className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2 text-sm bg-surface dark:bg-surface resize-none" />
             </div>
             <button type="submit" disabled={saving}
-              className="w-full bg-[rgb(220,161,84)] text-white rounded-xl py-2 text-sm font-semibold hover:bg-[rgb(200,141,64)] disabled:opacity-50 transition-colors">
+              className="w-full bg-[rgb(var(--l-green))] text-white rounded-xl py-2 text-sm font-semibold hover:bg-[rgb(var(--l-green))] disabled:opacity-50 transition-colors">
               {saving ? 'Saving…' : 'Save workout'}
             </button>
           </form>

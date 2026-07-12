@@ -9,9 +9,9 @@ const baseConfig: Omit<ModuleConfig, 'fab'> = {
   name: 'Food Map',
   icon: MapPin,
   home: '/food',
-  accentActive: 'bg-[rgb(220,161,84)]/10 text-[rgb(220,161,84)] dark:bg-[rgb(220,161,84)]/15 dark:text-[rgb(220,161,84)]',
-  accentText: 'text-[rgb(220,161,84)] dark:text-[rgb(220,161,84)]',
-  accentFab: 'bg-[rgb(220,161,84)] hover:bg-[rgb(200,141,64)]',
+  accentActive: 'bg-[rgb(var(--l-green))]/10 text-[rgb(var(--l-green))] dark:bg-[rgb(var(--l-green))]/15 dark:text-[rgb(var(--l-green))]',
+  accentText: 'text-[rgb(var(--l-green))] dark:text-[rgb(var(--l-green))]',
+  accentFab: 'bg-[rgb(var(--l-green))] hover:bg-[rgb(var(--l-green))]',
   glow: '220 161 84',
   fullBleed: true,
   groups: [

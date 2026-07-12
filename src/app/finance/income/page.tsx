@@ -87,7 +87,7 @@ export default function IncomePage() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 dark:text-gray-100">Income Log</h2>
-        <button onClick={() => { setEditingId(null); setForm(defaultForm); setShowForm(s => !s) }} className="flex items-center justify-center gap-2 bg-[rgb(232,120,90)] text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">
+        <button onClick={() => { setEditingId(null); setForm(defaultForm); setShowForm(s => !s) }} className="flex items-center justify-center gap-2 bg-[rgb(var(--l-green))] text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(var(--l-green))]">
           <Plus size={16} /> Add Income
         </button>
       </div>
@@ -99,17 +99,17 @@ export default function IncomePage() {
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Date</label>
               <input type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Gross Amount</label>
               <NumberInput value={form.grossAmount} onChange={v => setForm(p => ({ ...p, grossAmount: v }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Deduction</label>
               <NumberInput value={form.deduction} onChange={v => setForm(p => ({ ...p, deduction: v }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
             </div>
             {[
               { label: 'Client / Employer', key: 'client' },
@@ -119,34 +119,34 @@ export default function IncomePage() {
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">{f.label}</label>
                 <input type="text" value={(form as any)[f.key]}
                   onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                  className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
               </div>
             ))}
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Type</label>
               <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]">
                 {['Salary','Invoice','Other'].map(t => <option key={t}>{t}</option>)}
               </select>
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Currency</label>
               <select value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]">
                 {['RSD','EUR'].map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
             <div className="md:col-span-3">
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Account (optional — auto-routed)</label>
               <select value={form.accountId} onChange={e => setForm(p => ({ ...p, accountId: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]">
                 <option value="">Auto-route</option>
                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={submit} className="flex-1 sm:flex-initial bg-[rgb(232,120,90)] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">{editingId ? 'Update' : 'Save'}</button>
+            <button onClick={submit} className="flex-1 sm:flex-initial bg-[rgb(var(--l-green))] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(var(--l-green))]">{editingId ? 'Update' : 'Save'}</button>
             <button onClick={cancel} className="flex-1 sm:flex-initial border border-gray-300 dark:border-gray-600 dark:border-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-800 dark:bg-gray-800">Cancel</button>
           </div>
         </div>

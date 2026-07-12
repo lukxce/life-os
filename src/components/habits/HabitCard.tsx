@@ -31,7 +31,7 @@ export function HabitCard({ habit, log, streak, onToggle, onQuantityUpdate, onSu
   const [expanded, setExpanded] = useState(false)
   const completed = log?.completed ?? false
   const value = log?.value ?? 0
-  const accentColor = habit.color ?? '#6366f1'
+  const accentColor = habit.color ?? 'rgb(var(--l-green))'
   const subTasks = habit.subTasks ?? []
   const completedSubTaskIds = log?.completedSubTaskIds ?? []
   const subDone = completedSubTaskIds.length
@@ -51,8 +51,8 @@ export function HabitCard({ habit, log, streak, onToggle, onQuantityUpdate, onSu
           className={cn(
             'w-full flex items-center gap-4 px-4 py-3.5 transition-colors duration-150',
             completed
-              ? 'bg-gray-50 dark:bg-gray-800/30'
-              : 'active:bg-gray-50 dark:active:bg-gray-800/20'
+              ? 'bg-ldg-ink/[0.03]'
+              : 'active:bg-ldg-ink/[0.03]'
           )}
         >
           {/* Tinted icon circle */}
@@ -67,14 +67,14 @@ export function HabitCard({ habit, log, streak, onToggle, onQuantityUpdate, onSu
           <div className="flex-1 text-left min-w-0">
             <p className={cn(
               'text-sm font-medium leading-snug',
-              completed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'
+              completed ? 'line-through text-ldg-ink/35' : 'text-ldg-ink'
             )}>
               {habit.name}
             </p>
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              <p className="text-xs text-gray-400">{habit.category}</p>
+              <p className="text-xs text-ldg-ink/55">{habit.category}</p>
               {hasSubTasks && (
-                <span className="text-xs text-gray-400">· {subDone}/{subTasks.length} tasks</span>
+                <span className="text-xs text-ldg-ink/55">· {subDone}/{subTasks.length} tasks</span>
               )}
             </div>
           </div>
@@ -85,21 +85,22 @@ export function HabitCard({ habit, log, streak, onToggle, onQuantityUpdate, onSu
             {hasSubTasks && (
               <span
                 onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
-                className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400"
+                className="p-1 rounded-lg hover:bg-ldg-ink/[0.04] text-ldg-ink/55"
               >
                 <ChevronDown size={14} className={cn('transition-transform', expanded && 'rotate-180')} />
               </span>
             )}
             <span
               className={cn(
-                'w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 shrink-0'
+                'w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-all duration-200 shrink-0',
+                !completed && 'border-ldg-ink/25'
               )}
               style={completed
                 ? { backgroundColor: accentColor, borderColor: accentColor }
-                : { borderColor: '#d1d5db' }
+                : undefined
               }
             >
-              {completed && <Check size={12} strokeWidth={3} className="text-white" />}
+              {completed && <Check size={11} strokeWidth={3.5} className="text-white" />}
             </span>
           </div>
         </button>
@@ -113,20 +114,21 @@ export function HabitCard({ habit, log, streak, onToggle, onQuantityUpdate, onSu
                 <button
                   key={st.id}
                   onClick={() => onSubTask?.(st.id, !stDone)}
-                  className="w-full flex items-center gap-3 py-2 px-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                  className="w-full flex items-center gap-3 py-2 px-2 rounded-xl hover:bg-ldg-ink/[0.03] transition-colors"
                 >
                   <span
                     className={cn(
-                      'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-150'
+                      'w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-150',
+                      !stDone && 'border-ldg-ink/25'
                     )}
                     style={stDone
                       ? { backgroundColor: accentColor, borderColor: accentColor }
-                      : { borderColor: '#d1d5db' }
+                      : undefined
                     }
                   >
-                    {stDone && <Check size={10} strokeWidth={3} className="text-white" />}
+                    {stDone && <Check size={10} strokeWidth={3.5} className="text-white" />}
                   </span>
-                  <span className={cn('text-sm text-left', stDone && 'line-through text-gray-400')}>
+                  <span className={cn('text-sm text-left text-ldg-ink', stDone && 'line-through text-ldg-ink/35')}>
                     {st.name}
                   </span>
                 </button>
@@ -142,7 +144,7 @@ export function HabitCard({ habit, log, streak, onToggle, onQuantityUpdate, onSu
   return (
     <div className={cn(
       'px-4 py-3.5 transition-colors duration-150',
-      completed && 'opacity-80 bg-gray-50/80 dark:bg-gray-800/30'
+      completed && 'opacity-80 bg-ldg-ink/[0.03]'
     )}>
       <div className="flex items-center gap-4">
         <span
@@ -153,10 +155,10 @@ export function HabitCard({ habit, log, streak, onToggle, onQuantityUpdate, onSu
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-2">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{habit.name}</p>
-            <p className="text-xs text-gray-400">{habit.category}</p>
+            <p className="text-sm font-medium text-ldg-ink">{habit.name}</p>
+            <p className="text-xs text-ldg-ink/55">{habit.category}</p>
             <StreakBadge streak={streak} />
-            {completed && <span className="text-xs font-semibold text-green-500">✓</span>}
+            {completed && <span className="text-xs font-semibold text-ldg-green">✓</span>}
           </div>
           {habit.target != null && (
             <QuantityInput

@@ -8,21 +8,24 @@
   margin: 0;
 }
 
-/* ── Warm palette tokens ──────────────────────────────────────────────────────
-   Warm-neutral base (paper, not hospital-white / cold blue-black), plus one
-   warm color family used across the whole app instead of per-module rainbow
-   tinting. Habits/Fitness keep sharp precision; everything else stays quiet. */
+/* ── Ledger palette tokens ────────────────────────────────────────────────────
+   Cool neutral base, one saturated accent (green) used everywhere instead of
+   per-module rainbow tinting. Legacy names (canvas/surface/ink/coral/amber/
+   rose/plum) are KEPT so old pages don't need editing to cool down — they now
+   just point at Ledger values instead of the retired warm palette. */
 :root {
-  --canvas: 250 247 242;       /* warm ivory */
-  --canvas-alt: 245 240 232;
-  --surface: 255 253 250;      /* card surface, warm-tinted white */
-  --ink: 28 23 20;             /* warm near-black text */
+  --canvas: 244 244 246;       /* = ldg-paper */
+  --canvas-alt: 235 235 238;
+  --surface: 255 255 255;      /* = ldg-card */
+  --ink: 27 27 30;             /* = ldg-ink */
 
-  --coral:  232 120 90;   /* signature accent — legacy, being phased out module by module */
-  --amber:  220 161 84;
-  --rose:   217 138 148;
-  --plum:   167 120 160;
-  --sage:   38 189 116;   /* mascot body + glow — vivid spring green, not muted */
+  /* Legacy accent names — all remapped to green so old pages using them cool
+     down instantly without per-file edits */
+  --coral:  46 125 79;
+  --amber:  46 125 79;
+  --rose:   46 125 79;
+  --plum:   46 125 79;
+  --sage:   38 189 116;   /* mascot body + glow — unchanged, its own thing */
 
   /* ── Ledger tokens — the decided app-wide language (July 2026) ────────────
      Cool neutrals, one saturated accent (green), used at rollout via l-*
@@ -35,10 +38,15 @@
   --l-urgent: 192 68 44;  /* money genuinely due — never used for "pending" */
 }
 .dark {
-  --canvas: 26 22 19;          /* warm charcoal, brown undertone — not navy */
-  --canvas-alt: 32 27 24;
-  --surface: 38 33 29;
-  --ink: 240 235 229;
+  --canvas: 20 20 22;
+  --canvas-alt: 41 41 46;
+  --surface: 31 31 35;
+  --ink: 234 234 236;
+
+  --coral:  67 163 111;
+  --amber:  67 163 111;
+  --rose:   67 163 111;
+  --plum:   67 163 111;
 
   --l-paper: 20 20 22;
   --l-card:  31 31 35;

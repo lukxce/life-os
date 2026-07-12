@@ -111,7 +111,7 @@ export default function AccountsPage() {
   }
 
   const fmt = (val: number, currency: string) => currency === 'RSD' ? formatRSD(val) : formatEUR(val)
-  const inputCls = "mt-1 w-full border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
+  const inputCls = "mt-1 w-full border border-black/10 dark:border-white/10 rounded-lg px-3 py-2 text-sm bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]"
 
   const renderCard = (a: any) => (
     <div key={a.id} className="bg-surface/90 border border-black/5 dark:border-white/5 rounded-2xl p-4 shadow-sm">
@@ -143,7 +143,7 @@ export default function AccountsPage() {
             </div>
             <div className="flex items-center gap-0.5 shrink-0">
               <button onClick={() => togglePin(a)}
-                className={`p-1.5 rounded ${a.pinned ? 'text-[rgb(220,161,84)]' : 'text-ink/30 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5'}`}
+                className={`p-1.5 rounded ${a.pinned ? 'text-[rgb(var(--l-green))]' : 'text-ink/30 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5'}`}
                 title={a.pinned ? 'Shown on dashboard — click to hide' : 'Pin to dashboard'}>
                 <Star className="w-4 h-4" fill={a.pinned ? 'currentColor' : 'none'} />
               </button>
@@ -151,10 +151,10 @@ export default function AccountsPage() {
                 <Pencil className="w-4 h-4" />
               </button>
               <button onClick={() => { setEditId(editId === a.id ? null : a.id); setOverrideForm({ ...overrideForm, [a.id]: '' }) }}
-                className={`p-1.5 rounded ${editId === a.id ? 'text-[rgb(232,120,90)] bg-[rgb(232,120,90)]/10' : 'text-ink/30 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5'}`} title="Edit balance">
+                className={`p-1.5 rounded ${editId === a.id ? 'text-[rgb(var(--l-green))] bg-[rgb(var(--l-green))]/10' : 'text-ink/30 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5'}`} title="Edit balance">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
               </button>
-              <button onClick={() => deleteAccount(a)} className="p-1.5 text-ink/30 hover:text-[rgb(232,120,90)] hover:bg-[rgb(232,120,90)]/10 rounded" title="Delete">
+              <button onClick={() => deleteAccount(a)} className="p-1.5 text-ink/30 hover:text-[rgb(var(--l-green))] hover:bg-[rgb(var(--l-green))]/10 rounded" title="Delete">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -167,9 +167,9 @@ export default function AccountsPage() {
           <div className="flex justify-between items-center pt-2">
             <span className="flex items-center gap-1.5 text-ink/80 font-medium">
               Live portfolio
-              <span className="text-[10px] font-semibold bg-[rgb(167,120,160)]/15 text-[rgb(167,120,160)] px-1.5 py-0.5 rounded-full">AUTO</span>
+              <span className="text-[10px] font-semibold bg-[rgb(var(--l-green))]/15 text-[rgb(var(--l-green))] px-1.5 py-0.5 rounded-full">AUTO</span>
             </span>
-            <span className="font-bold text-[rgb(167,120,160)] tabular-nums">{fmt(a.currentBalance ?? 0, a.currency)}</span>
+            <span className="font-bold text-[rgb(var(--l-green))] tabular-nums">{fmt(a.currentBalance ?? 0, a.currency)}</span>
           </div>
         ) : (
           <>
@@ -181,8 +181,8 @@ export default function AccountsPage() {
               <div className="flex justify-between items-center">
                 <span className="text-ink/40">Manual override</span>
                 <span className="flex items-center gap-2">
-                  <span className="font-medium text-[rgb(220,161,84)] tabular-nums">{fmt(a.manualOverride, a.currency)}</span>
-                  <button onClick={() => clearOverride(a.id)} className="text-ink/30 hover:text-[rgb(232,120,90)]">
+                  <span className="font-medium text-[rgb(var(--l-green))] tabular-nums">{fmt(a.manualOverride, a.currency)}</span>
+                  <button onClick={() => clearOverride(a.id)} className="text-ink/30 hover:text-[rgb(var(--l-green))]">
                     <X size={12} />
                   </button>
                 </span>
@@ -281,7 +281,7 @@ export default function AccountsPage() {
             />
             <p className="text-[10px] text-ink/30 mt-1">Override = "as of today my balance is X". Tracks forward from this date.</p>
             <div className="flex gap-2 mt-2">
-              <button onClick={() => saveOverride(a.id)} className="flex-1 bg-[rgb(232,120,90)] text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-[rgb(212,100,72)]">Save Override</button>
+              <button onClick={() => saveOverride(a.id)} className="flex-1 bg-[rgb(var(--l-green))] text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-[rgb(var(--l-green))]">Save Override</button>
               <button onClick={() => setEditId(null)} className="flex-1 border border-black/10 dark:border-white/10 text-ink/70 px-3 py-1.5 rounded text-xs font-medium hover:bg-black/5 dark:hover:bg-white/5">Cancel</button>
             </div>
           </div>
@@ -297,7 +297,7 @@ export default function AccountsPage() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-2xl font-black text-ink tracking-tight">Bank Accounts</h2>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center justify-center gap-2 bg-[rgb(232,120,90)] text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">
+        <button onClick={() => setShowForm(!showForm)} className="flex items-center justify-center gap-2 bg-[rgb(var(--l-green))] text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(var(--l-green))]">
           <Plus size={16} /> Add Account
         </button>
       </div>
@@ -329,7 +329,7 @@ export default function AccountsPage() {
             </div>
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={submit} className="flex-1 sm:flex-initial bg-[rgb(232,120,90)] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)]">Save</button>
+            <button onClick={submit} className="flex-1 sm:flex-initial bg-[rgb(var(--l-green))] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[rgb(var(--l-green))]">Save</button>
             <button onClick={() => setShowForm(false)} className="flex-1 sm:flex-initial border border-black/10 dark:border-white/10 text-ink/70 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-black/5 dark:hover:bg-white/5">Cancel</button>
           </div>
         </div>

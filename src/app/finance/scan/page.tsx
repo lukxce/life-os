@@ -290,7 +290,7 @@ function ScanInner() {
                 Scan QR
               </button>
               <button onClick={() => photoInputRef.current?.click()} disabled={scanning || loading}
-                className="bg-[rgb(232,120,90)] hover:bg-[rgb(212,100,72)] disabled:opacity-40 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                className="bg-[rgb(var(--l-green))] hover:bg-[rgb(var(--l-green))] disabled:opacity-40 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
                 <Camera size={17} /> Photo
               </button>
             </div>
@@ -321,11 +321,11 @@ function ScanInner() {
               }}
               placeholder="https://suf.purs.gov.rs/v/?vl=..."
               autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-              className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-3 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
+              className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-3 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]"
             />
             {url && !isSufUrl(url) && (
               <button onClick={() => handleSufUrl(url.trim())} disabled={loading}
-                className="w-full bg-[rgb(232,120,90)] hover:bg-[rgb(212,100,72)] disabled:opacity-40 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors">
+                className="w-full bg-[rgb(var(--l-green))] hover:bg-[rgb(var(--l-green))] disabled:opacity-40 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors">
                 {loading ? 'Parsing…' : 'Parse'}
               </button>
             )}
@@ -359,7 +359,7 @@ function ScanInner() {
             <div>
               <label className="text-xs text-gray-400 block mb-1">Merchant</label>
               <input
-                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
+                className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]"
                 value={parsed.merchantName ?? ''}
                 onChange={e => setParsed(p => p && ({ ...p, merchantName: e.target.value }))}
                 placeholder="e.g. Maxi, Lidl, DM…"
@@ -369,7 +369,7 @@ function ScanInner() {
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Amount (RSD)</label>
                 <input type="number"
-                  className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
+                  className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]"
                   value={parsed.total ?? ''}
                   onChange={e => setParsed(p => p && ({ ...p, total: parseFloat(e.target.value) || null }))}
                   placeholder="0.00"
@@ -378,7 +378,7 @@ function ScanInner() {
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Date</label>
                 <input type="date"
-                  className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
+                  className="w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]"
                   value={parsed.date ? new Date(parsed.date).toISOString().split('T')[0] : ''}
                   onChange={e => setParsed(p => p && ({ ...p, date: e.target.value ? new Date(e.target.value).toISOString() : null }))}
                 />
@@ -411,7 +411,7 @@ function ScanInner() {
               })
               router.push(`/finance/expenses/${expenseType}?${p.toString()}`)
             }}
-            className="w-full bg-[rgb(232,120,90)] hover:bg-[rgb(212,100,72)] text-white py-3 rounded-xl font-semibold transition-colors">
+            className="w-full bg-[rgb(var(--l-green))] hover:bg-[rgb(var(--l-green))] text-white py-3 rounded-xl font-semibold transition-colors">
             Continue → Add Expense
           </button>
           <button onClick={() => { setParsed(null); setUrl('') }}

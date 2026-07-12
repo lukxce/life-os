@@ -57,7 +57,7 @@ export default function AnalyticsPage() {
         <div className="flex gap-1">
           {([7, 30, 90, 0] as Period[]).map(p => (
             <button key={p} onClick={() => setPeriod(p)}
-              className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${period === p ? 'bg-[rgb(167,120,160)] text-white border-indigo-600' : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+              className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${period === p ? 'bg-[rgb(var(--l-green))] text-white border-indigo-600' : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
               {p === 0 ? 'All' : `${p}d`}
             </button>
           ))}
@@ -79,7 +79,7 @@ export default function AnalyticsPage() {
                 <Star size={14} className="text-indigo-500" />
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Completions</p>
               </div>
-              <p className="text-2xl font-bold text-[rgb(167,120,160)]">{totalCompletions}</p>
+              <p className="text-2xl font-bold text-[rgb(var(--l-green))]">{totalCompletions}</p>
               <p className="text-xs text-gray-400 mt-0.5">{periodLabel}</p>
             </div>
             <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-4">

@@ -111,7 +111,7 @@ export default function CategoriesPage() {
                     if (e.key === 'Enter') saveRename(cat)
                     if (e.key === 'Escape') setEditingCatId(null)
                   }}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]"
                 />
                 <button onClick={() => saveRename(cat)} className="p-1.5 text-green-600 hover:bg-green-50 rounded">
                   <Check size={16} />
@@ -130,7 +130,7 @@ export default function CategoriesPage() {
                 </button>
                 <div className="flex items-center gap-1 shrink-0">
                   <button onClick={() => setShowSubForm(cat.id)}
-                    className="text-xs text-[rgb(232,120,90)] hover:text-blue-700 font-medium px-2">+ Sub</button>
+                    className="text-xs text-[rgb(var(--l-green))] hover:text-blue-700 font-medium px-2">+ Sub</button>
                   <button onClick={() => startRename(cat)}
                     className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded">
                     <Pencil size={14} />
@@ -169,9 +169,9 @@ export default function CategoriesPage() {
                 <input value={subForm} onChange={e => setSubForm(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') addSubcategory(cat) }}
                   placeholder="New subcategory name"
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
                 <button onClick={() => addSubcategory(cat)}
-                  className="bg-[rgb(232,120,90)] text-white px-3 py-1.5 rounded-lg text-sm font-medium">Add</button>
+                  className="bg-[rgb(var(--l-green))] text-white px-3 py-1.5 rounded-lg text-sm font-medium">Add</button>
                 <button onClick={() => { setShowSubForm(null); setSubForm('') }}
                   className="border border-gray-300 px-3 py-1.5 rounded-lg text-sm">Cancel</button>
               </div>
@@ -191,17 +191,17 @@ export default function CategoriesPage() {
             <div>
               <label className="text-xs font-medium text-gray-500">Category Name</label>
               <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500">Subcategories (comma separated)</label>
               <input value={form.subcategories} onChange={e => setForm(p => ({ ...p, subcategories: e.target.value }))}
                 placeholder="e.g. Online, In-store, Other"
-                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
             </div>
             <div className="flex gap-2">
               <button onClick={() => addCategory(type)}
-                className="bg-[rgb(232,120,90)] text-white px-4 py-2 rounded-lg text-sm font-medium">Save</button>
+                className="bg-[rgb(var(--l-green))] text-white px-4 py-2 rounded-lg text-sm font-medium">Save</button>
               <button onClick={() => setShowForm(null)}
                 className="border border-gray-300 px-4 py-2 rounded-lg text-sm">Cancel</button>
             </div>

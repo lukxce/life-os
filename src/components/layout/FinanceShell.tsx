@@ -10,9 +10,9 @@ const config: ModuleConfig = {
   name: 'Finance',
   icon: Wallet,
   home: '/finance',
-  accentActive: 'bg-[rgb(232,120,90)]/10 text-[rgb(232,120,90)] dark:bg-[rgb(232,120,90)]/15 dark:text-[rgb(232,120,90)]',
-  accentText: 'text-[rgb(232,120,90)] dark:text-[rgb(232,120,90)]',
-  accentFab: 'bg-[rgb(232,120,90)] hover:bg-[rgb(212,100,72)]',
+  accentActive: 'bg-[rgb(var(--l-green))]/10 text-[rgb(var(--l-green))] dark:bg-[rgb(var(--l-green))]/15 dark:text-[rgb(var(--l-green))]',
+  accentText: 'text-[rgb(var(--l-green))] dark:text-[rgb(var(--l-green))]',
+  accentFab: 'bg-[rgb(var(--l-green))] hover:bg-[rgb(var(--l-green))]',
   glow: '232 120 90',
   contentClassName: 'max-w-none',
   groups: [

@@ -73,10 +73,10 @@ export default function MealPlanPage() {
 
       {/* calorie target banner */}
       <div className="bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900 rounded-2xl px-5 py-3 flex items-center gap-4">
-        <Flame size={18} className="text-[rgb(220,161,84)] shrink-0" />
+        <Flame size={18} className="text-[rgb(var(--l-green))] shrink-0" />
         <div>
           <p className="text-sm font-semibold text-green-800 dark:text-green-300">Target: 2,100 kcal · 140–160g protein</p>
-          <p className="text-xs text-[rgb(220,161,84)] dark:text-green-500">Eating window 12:00 – 20:00 · 16:8 IF</p>
+          <p className="text-xs text-[rgb(var(--l-green))] dark:text-green-500">Eating window 12:00 – 20:00 · 16:8 IF</p>
         </div>
       </div>
 
@@ -149,7 +149,7 @@ export default function MealPlanPage() {
                           </div>
                           <div className="flex gap-2">
                             <button onClick={saveEdit} disabled={saving}
-                              className="flex items-center gap-1 bg-[rgb(220,161,84)] text-white px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-[rgb(200,141,64)] disabled:opacity-50 transition-colors">
+                              className="flex items-center gap-1 bg-[rgb(var(--l-green))] text-white px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-[rgb(var(--l-green))] disabled:opacity-50 transition-colors">
                               <Check size={12} /> Save
                             </button>
                             <button onClick={() => setEditId(null)}

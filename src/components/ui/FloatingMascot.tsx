@@ -162,13 +162,13 @@ export function FloatingMascot() {
                             placeholder={`What was ${m.mealType}?`}
                             className="flex-1 min-w-0 bg-canvas-alt rounded-lg px-2.5 py-1.5 text-xs text-ink placeholder:text-ink/30 focus:outline-none" />
                           <button onClick={() => mealText.trim() && logMeal(m.mealType, mealText.trim())}
-                            className="text-[10px] font-bold text-white bg-[rgb(220,161,84)] px-2.5 rounded-lg shrink-0">Log</button>
+                            className="text-[10px] font-bold text-white bg-[rgb(var(--l-green))] px-2.5 rounded-lg shrink-0">Log</button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-ink/70 capitalize flex-1 truncate">{m.mealType} — {m.plannedName}</span>
                           <button onClick={() => { setMealOpen(m.mealType); setMealText('') }}
-                            className="text-[10px] font-bold text-[rgb(220,161,84)] shrink-0">Log</button>
+                            className="text-[10px] font-bold text-[rgb(var(--l-green))] shrink-0">Log</button>
                           <button onClick={() => logMeal(m.mealType, null)}
                             className="text-[10px] font-medium text-ink/35 shrink-0">Skipped</button>
                         </div>
@@ -182,7 +182,7 @@ export function FloatingMascot() {
               {top.action === 'no-expenses' && (
                 <div className="flex gap-2 mt-2.5">
                   <Link href="/finance/expenses/personal" onClick={() => setOpen(false)}
-                    className="text-[11px] font-bold text-white bg-[rgb(232,120,90)] px-3 py-1.5 rounded-full">Add expense</Link>
+                    className="text-[11px] font-bold text-white bg-[rgb(var(--l-green))] px-3 py-1.5 rounded-full">Add expense</Link>
                   <button onClick={noExpenses}
                     className="text-[11px] font-medium text-ink/45 hover:text-ink/70 px-1.5">No spending today</button>
                 </div>

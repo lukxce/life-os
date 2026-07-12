@@ -4,9 +4,10 @@ import { HabitCard } from '@/components/habits/HabitCard'
 import { ReentryModal } from '@/components/habits/ReentryModal'
 import { calcStreak, startOfDay } from '@/lib/utils'
 import { cn } from '@/lib/utils'
-import { ChevronLeft, ChevronRight, Pencil, Plane, Heart, Cake } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Plane, Heart, Cake, Flame, Sun, SunMedium, Moon, Clock, PartyPopper, Sparkles, TreePalm } from 'lucide-react'
 import Link from 'next/link'
-import { ScoreRing, TrendBars, Delta, HeroStat } from '@/components/ui/synth'
+import { TrendBars, Delta } from '@/components/ui/synth'
+import { Card, Label } from '@/components/ledger/primitives'
 import { toast } from 'sonner'
 
 interface Contact {
@@ -54,10 +55,10 @@ interface HabitLog {
 interface TodayItem { habit: Habit; log: HabitLog | null; isScheduled: boolean }
 
 const TIME_BLOCKS = [
-  { key: 'morning', label: '🌅 Morning' },
-  { key: 'noon',    label: '☀️ Noon'    },
-  { key: 'night',   label: '🌙 Night'   },
-  { key: 'all_day', label: '🕐 All Day' },
+  { key: 'morning', label: 'Morning', icon: Sun },
+  { key: 'noon',    label: 'Noon',    icon: SunMedium },
+  { key: 'night',   label: 'Night',   icon: Moon },
+  { key: 'all_day', label: 'All Day', icon: Clock },
 ]
 const FILTER_TABS = [
   { key: 'all',     label: 'All'     },
@@ -239,116 +240,116 @@ export default function TodayPage() {
   const streak = dayScores?.bestStreak
 
   return (
-    <div className="-mx-4 -mt-6 md:-mx-6 md:-mt-8">
+    <div className="max-w-5xl mx-auto space-y-4 pb-6">
       {/* ── Hero: the day, synthesized ── */}
-      <div className="relative overflow-hidden rounded-b-[2rem] bg-[#1f1815] text-white px-5 pt-8 pb-5">
-        {/* aurora */}
-        <div aria-hidden className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(640px 420px at 85% -20%, rgba(167,120,160,0.35), transparent 65%), radial-gradient(500px 380px at -10% 110%, rgba(232,120,90,0.18), transparent 60%)' }} />
-
-        <div className="relative">
-          {/* Top row: identity + day controls */}
-          <div className="flex items-start justify-between mb-5">
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase">
-                {selectedDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </p>
-              {editingName ? (
-                <input autoFocus className="text-xl font-bold bg-white/10 rounded-lg px-2 py-0.5 mt-0.5 text-white placeholder-white/40 outline-none w-40"
-                  value={nameInput} onChange={e => setNameInput(e.target.value)}
-                  onBlur={saveName} onKeyDown={e => e.key === 'Enter' && saveName()} placeholder="Your name" />
-              ) : (
-                <button onClick={() => { setNameInput(name); setEditingName(true) }} className="flex items-center gap-1.5 group mt-0.5">
-                  <h1 className="text-xl font-bold">{name ? `${greeting()}, ${name}` : greeting()}</h1>
-                  <Pencil size={11} className="text-white/25 group-hover:text-white/60 transition-colors" />
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 mt-1">
-              <button onClick={toggleHoliday}
-                className={cn('px-2.5 py-1.5 rounded-full text-xs transition-colors',
-                  isHoliday ? 'bg-amber-400/90 text-amber-950 font-semibold' : 'bg-white/10 hover:bg-white/20 text-white/60')}>
-                🏖️
+      <Card className="p-5">
+        {/* Top row: identity + day controls */}
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <Label>{selectedDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</Label>
+            {editingName ? (
+              <input autoFocus className="text-[17px] font-semibold bg-ldg-paper rounded-lg px-2 py-0.5 mt-0.5 text-ldg-ink outline-none w-40"
+                value={nameInput} onChange={e => setNameInput(e.target.value)}
+                onBlur={saveName} onKeyDown={e => e.key === 'Enter' && saveName()} placeholder="Your name" />
+            ) : (
+              <button onClick={() => { setNameInput(name); setEditingName(true) }} className="flex items-center gap-1.5 group mt-0.5">
+                <h1 className="text-[17px] font-semibold text-ldg-ink">{name ? `${greeting()}, ${name}` : greeting()}</h1>
+                <Pencil size={11} className="text-ldg-ink/25 group-hover:text-ldg-ink/60 transition-colors" />
               </button>
-              <button onClick={() => setShowReentry(true)}
-                className="p-1.5 px-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors" title="Just got back?">
-                <Plane size={13} className="text-white/60" />
-              </button>
-            </div>
+            )}
           </div>
-
-          {/* Score row: ring + synthesized stats */}
-          <div className="flex items-center gap-6">
-            <ScoreRing value={pct} size={132} sub={isToday ? 'today' : 'day score'} track="rgba(255,255,255,0.08)" />
-            <div className="flex-1 grid grid-cols-1 gap-3.5 min-w-0">
-              <HeroStat label="Week"
-                value={
-                  <span className="flex items-center gap-2">
-                    {weekScore ? `${weekScore.thisWeek.score}%` : '—'}
-                    {weekScore && <Delta value={weekScore.delta} />}
-                  </span>
-                }
-                sub={weekScore ? `${weekScore.thisWeek.completed}/${weekScore.thisWeek.total} this week` : undefined} />
-              <HeroStat label="Best streak"
-                value={streak && streak.count > 0 ? `${streak.icon ?? '🔥'} ${streak.count} days` : '—'}
-                sub={streak && streak.count > 0 ? streak.name : 'complete habits to build one'} />
-              <HeroStat label="Done" value={`${totalDone} / ${total}`} sub={isToday ? 'so far today' : undefined} />
-            </div>
-          </div>
-
-          {/* 14-day trend — tap a bar to jump to that day */}
-          {dayScores && dayScores.days.length > 0 && (
-            <div className="mt-5">
-              <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[10px] font-bold tracking-[0.18em] text-white/35 uppercase">Last 14 days</p>
-                <p className="text-[10px] text-white/35">
-                  avg {Math.round(dayScores.days.reduce((s, d) => s + d.score, 0) / dayScores.days.length)}%
-                </p>
-              </div>
-              <TrendBars days={dayScores.days} selected={selectedKey} onSelect={selectDay} height={40} />
-            </div>
-          )}
-
-          {/* Week strip */}
-          <div className="relative mt-5 flex items-center justify-between">
-            <button onClick={() => setWeekStart(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}
-              className="p-1.5 rounded-full hover:bg-white/10 transition-colors text-white/50">
-              <ChevronLeft size={16} />
+          <div className="flex items-center gap-1.5 mt-1">
+            <button onClick={toggleHoliday}
+              className={cn('p-1.5 px-2.5 rounded-lg border transition-colors',
+                isHoliday ? 'bg-ldg-green/10 text-ldg-green border-ldg-green/30' : 'border-ldg-ink/10 text-ldg-ink/55 hover:bg-ldg-ink/[0.04]')}>
+              <TreePalm size={13} />
             </button>
-            <div className="flex gap-1 flex-1 justify-center">
-              {days.map(day => {
-                const isT = isSameDay(day, today)
-                const sel = isSameDay(day, selectedDate)
-                const future = day > today
-                return (
-                  <button key={day.toISOString()} onClick={() => !future && setSelectedDate(startOfDay(new Date(day)))}
-                    className={cn('flex flex-col items-center gap-0.5 rounded-2xl transition-all px-1.5 py-2 min-w-[38px]',
-                      sel ? 'bg-white' : future ? 'opacity-30 cursor-default' : 'hover:bg-white/10')}>
-                    <span className={cn('text-[9px] font-bold tracking-wider',
-                      sel ? 'text-[rgb(167,120,160)]' : isT ? 'text-white' : 'text-white/40')}>
-                      {isT ? 'TDY' : DAY_ABBR[day.getDay()]}
-                    </span>
-                    <span className={cn('text-sm font-bold', sel ? 'text-[rgb(167,120,160)]' : 'text-white')}>
-                      {day.getDate()}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-            <button onClick={() => setWeekStart(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })}
-              className="p-1.5 rounded-full hover:bg-white/10 transition-colors text-white/50">
-              <ChevronRight size={16} />
+            <button onClick={() => setShowReentry(true)}
+              className="p-1.5 px-2.5 rounded-lg border border-ldg-ink/10 text-ldg-ink/55 hover:bg-ldg-ink/[0.04] transition-colors" title="Just got back?">
+              <Plane size={13} />
             </button>
           </div>
         </div>
-      </div>
+
+        {/* Score row: figures per §2, no ring gimmick */}
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-ldg-ink/55">Today</p>
+            <p className="font-mono text-[26px] tabular-nums tracking-tight leading-none mt-1">{pct}%</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-ldg-ink/55">Week</p>
+            <p className="font-mono text-[26px] tabular-nums tracking-tight leading-none mt-1 flex items-baseline gap-1.5">
+              {weekScore ? `${weekScore.thisWeek.score}%` : '—'}
+              {weekScore && <Delta value={weekScore.delta} />}
+            </p>
+            {weekScore && <p className="font-mono text-[11px] text-ldg-ink/55 mt-0.5">{weekScore.thisWeek.completed}/{weekScore.thisWeek.total} this week</p>}
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-ldg-ink/55">Done</p>
+            <p className="font-mono text-[26px] tabular-nums tracking-tight leading-none mt-1">{totalDone}/{total}</p>
+            {isToday && <p className="font-mono text-[11px] text-ldg-ink/55 mt-0.5">so far today</p>}
+          </div>
+        </div>
+
+        {streak && streak.count > 0 && (
+          <p className="font-mono text-[12px] text-ldg-ink/55 mt-3 flex items-center gap-1.5">
+            <Flame size={13} className="text-ldg-green" /> best streak — {streak.count} days · {streak.name}
+          </p>
+        )}
+
+        {/* 14-day trend — tap a bar to jump to that day */}
+        {dayScores && dayScores.days.length > 0 && (
+          <div className="mt-5 pt-4 border-t border-ldg-ink/[0.07]">
+            <div className="flex items-center justify-between mb-1.5">
+              <Label>Last 14 days</Label>
+              <p className="font-mono text-[11px] text-ldg-ink/55">
+                avg {Math.round(dayScores.days.reduce((s, d) => s + d.score, 0) / dayScores.days.length)}%
+              </p>
+            </div>
+            <TrendBars days={dayScores.days} selected={selectedKey} onSelect={selectDay} height={40} />
+          </div>
+        )}
+
+        {/* Week strip */}
+        <div className="relative mt-5 pt-4 border-t border-ldg-ink/[0.07] flex items-center justify-between">
+          <button onClick={() => setWeekStart(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}
+            className="p-1.5 rounded-full hover:bg-ldg-ink/[0.05] transition-colors text-ldg-ink/55">
+            <ChevronLeft size={16} />
+          </button>
+          <div className="flex gap-1 flex-1 justify-center">
+            {days.map(day => {
+              const isT = isSameDay(day, today)
+              const sel = isSameDay(day, selectedDate)
+              const future = day > today
+              return (
+                <button key={day.toISOString()} onClick={() => !future && setSelectedDate(startOfDay(new Date(day)))}
+                  className={cn('flex flex-col items-center gap-0.5 rounded-lg transition-all px-1.5 py-2 min-w-[38px]',
+                    sel ? 'bg-ldg-green/10 border border-ldg-green/30' : future ? 'opacity-30 cursor-default' : 'hover:bg-ldg-ink/[0.05]')}>
+                  <span className={cn('text-[9px] font-bold tracking-wider',
+                    sel ? 'text-ldg-green' : isT ? 'text-ldg-ink' : 'text-ldg-ink/40')}>
+                    {isT ? 'TDY' : DAY_ABBR[day.getDay()]}
+                  </span>
+                  <span className={cn('text-sm font-bold', sel ? 'text-ldg-green' : 'text-ldg-ink')}>
+                    {day.getDate()}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <button onClick={() => setWeekStart(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })}
+            className="p-1.5 rounded-full hover:bg-ldg-ink/[0.05] transition-colors text-ldg-ink/55">
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </Card>
 
       {/* ── Filter tabs ── */}
-      <div className="flex gap-1.5 px-4 pt-4 pb-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
         {FILTER_TABS.map(tab => (
           <button key={tab.key} onClick={() => setFilterTime(tab.key)}
-            className={cn('px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors shrink-0',
-              filterTime === tab.key ? 'bg-[rgb(167,120,160)] text-white' : 'bg-surface/90 dark:bg-surface/70 text-gray-500 dark:text-gray-400 border border-black/5 dark:border-white/5')}>
+            className={cn('shrink-0 text-[13px] px-3 py-1.5 rounded-lg border whitespace-nowrap transition-colors',
+              filterTime === tab.key ? 'font-semibold bg-ldg-green/10 text-ldg-green border-ldg-green/30' : 'font-medium text-ldg-ink/55 border-ldg-ink/10')}>
             {tab.label}
           </button>
         ))}
@@ -356,21 +357,22 @@ export default function TodayPage() {
 
       {/* ── Contact alerts ── */}
       {(birthdays.length > 0 || overdue.length > 0) && (
-        <div className="px-4 pt-3 space-y-2">
+        <div className="space-y-2">
           {birthdays.map(c => {
             const [bm, bd] = (c.birthday ?? '').split('-')
             const isTodayBday = bm === String(today.getMonth() + 1).padStart(2, '0') && bd === String(today.getDate()).padStart(2, '0')
             return (
-              <Link key={c.id} href="/people"
-                className="flex items-center gap-3 bg-pink-50 dark:bg-pink-950/30 border border-pink-100 dark:border-pink-900/50 rounded-2xl px-4 py-3">
-                <span className="text-xl">{c.emoji ?? '👤'}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-pink-700 dark:text-pink-300 truncate">
-                    {isTodayBday ? `🎂 It's ${c.name}'s birthday today!` : `🎂 ${c.name}'s birthday is coming up`}
-                  </p>
-                  <p className="text-xs text-pink-500 dark:text-pink-400">{isTodayBday ? 'Don\'t forget to send wishes' : 'Within the next 7 days'}</p>
-                </div>
-                <Cake size={16} className="text-pink-400 shrink-0" />
+              <Link key={c.id} href="/people">
+                <Card className="flex items-center gap-3 px-4 py-3">
+                  <span className="text-xl">{c.emoji ?? '👤'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-medium text-ldg-ink truncate">
+                      {isTodayBday ? `It's ${c.name}'s birthday today!` : `${c.name}'s birthday is coming up`}
+                    </p>
+                    <p className="font-mono text-[11px] text-ldg-ink/55">{isTodayBday ? 'Don\'t forget to send wishes' : 'Within the next 7 days'}</p>
+                  </div>
+                  <Cake size={16} className="text-ldg-ink/55 shrink-0" />
+                </Card>
               </Link>
             )
           })}
@@ -381,18 +383,19 @@ export default function TodayPage() {
               ? Math.floor((today.getTime() - new Date(c.lastContactDate).getTime()) / 86400000)
               : null
             return (
-              <Link key={c.id} href="/people"
-                className="flex items-center gap-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 rounded-2xl px-4 py-3">
-                <span className="text-xl">{c.emoji ?? '👤'}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-300 truncate">
-                    Reach out to {c.name}
-                  </p>
-                  <p className="text-xs text-amber-500 dark:text-amber-400">
-                    {daysSince != null ? `Last contact ${daysSince}d ago · every ${daysFreq}d` : 'Never contacted'}
-                  </p>
-                </div>
-                <Heart size={16} className="text-amber-400 shrink-0" />
+              <Link key={c.id} href="/people">
+                <Card className="flex items-center gap-3 px-4 py-3">
+                  <span className="text-xl">{c.emoji ?? '👤'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-medium text-ldg-ink truncate">
+                      Reach out to {c.name}
+                    </p>
+                    <p className="font-mono text-[11px] text-ldg-ink/55">
+                      {daysSince != null ? `Last contact ${daysSince}d ago · every ${daysFreq}d` : 'Never contacted'}
+                    </p>
+                  </div>
+                  <Heart size={16} className="text-ldg-ink/55 shrink-0" />
+                </Card>
               </Link>
             )
           })}
@@ -400,60 +403,63 @@ export default function TodayPage() {
       )}
 
       {/* ── Habit list ── */}
-      <div className="px-4 pb-6">
+      <div>
         {isHoliday ? (
           <div className="text-center py-20">
-            <div className="text-6xl mb-4">🏖️</div>
-            <p className="font-bold text-lg text-gray-700 dark:text-gray-300">On holiday</p>
-            <p className="text-sm text-gray-400 mt-1">Habits are paused. Enjoy the break.</p>
-            <button onClick={toggleHoliday} className="mt-4 text-xs text-gray-400 underline">Remove holiday</button>
+            <TreePalm size={40} className="mx-auto mb-4 text-ldg-ink/25" />
+            <p className="font-bold text-lg text-ldg-ink">On holiday</p>
+            <p className="text-sm text-ldg-ink/55 mt-1">Habits are paused. Enjoy the break.</p>
+            <button onClick={toggleHoliday} className="mt-4 font-mono text-[12px] text-ldg-ink/55 underline underline-offset-2">Remove holiday</button>
           </div>
         ) : loading ? (
-          <div className="space-y-2 mt-4">
-            {[1,2,3,4].map(i => <div key={i} className="h-16 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
+          <div className="space-y-2">
+            {[1,2,3,4].map(i => <div key={i} className="h-16 bg-ldg-ink/[0.05] rounded-2xl animate-pulse" />)}
           </div>
         ) : total === 0 ? (
           <div className="text-center py-20">
-            <div className="text-6xl mb-4">✨</div>
-            <p className="font-bold text-lg text-gray-700 dark:text-gray-300">Looking Ahead</p>
-            <p className="text-sm text-gray-400 mt-1">No habits yet. Add some below.</p>
+            <Sparkles size={40} className="mx-auto mb-4 text-ldg-ink/25" />
+            <p className="font-bold text-lg text-ldg-ink">Looking Ahead</p>
+            <p className="text-sm text-ldg-ink/55 mt-1">No habits yet. Add some below.</p>
           </div>
         ) : (
           <>
             {filterTime === 'all' ? (
               pendingGrouped.map(group => (
-                <div key={group.key} className="mt-4">
+                <div key={group.key} className={group.key === pendingGrouped[0].key ? '' : 'mt-4'}>
                   <div className="flex items-center justify-between mb-2 px-1">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">{group.label}</p>
-                    <p className="text-[10px] font-bold text-gray-300 dark:text-gray-600">{group.items.length} left</p>
+                    <div className="flex items-center gap-1.5">
+                      <group.icon size={12} className="text-ldg-ink/55" />
+                      <Label>{group.label}</Label>
+                    </div>
+                    <p className="font-mono text-[11px] text-ldg-ink/55">{group.items.length} left</p>
                   </div>
-                  <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
+                  <Card className="overflow-hidden divide-y divide-ldg-ink/[0.07]">
                     {group.items.map(renderHabit)}
-                  </div>
+                  </Card>
                 </div>
               ))
             ) : pending.length > 0 ? (
-              <div className="mt-4 bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
+              <Card className="overflow-hidden divide-y divide-ldg-ink/[0.07]">
                 {pending.map(renderHabit)}
-              </div>
+              </Card>
             ) : (
-              <p className="text-center text-gray-400 text-sm mt-10">No habits in this slot</p>
+              <p className="text-center font-mono text-[12px] text-ldg-ink/55 mt-10">nothing in this slot</p>
             )}
 
             {pending.length === 0 && filterTime === 'all' && done.length > 0 && (
               <div className="text-center pt-10 pb-2">
-                <div className="text-5xl mb-3">🎉</div>
-                <p className="font-bold text-gray-700 dark:text-gray-200">All done for the day</p>
-                <p className="text-xs text-gray-400 mt-1">Every habit completed. Go live your life.</p>
+                <PartyPopper size={36} className="mx-auto mb-3 text-ldg-green" />
+                <p className="font-bold text-ldg-ink">All done for the day</p>
+                <p className="text-sm text-ldg-ink/55 mt-1">Every habit completed. Go live your life.</p>
               </div>
             )}
 
             {done.length > 0 && (
               <div className="mt-6">
-                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 px-1">✅ Completed</p>
-                <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden opacity-60">
+                <Label className="mb-2 px-1">Completed</Label>
+                <Card className="overflow-hidden divide-y divide-ldg-ink/[0.07] opacity-60">
                   {done.map(renderHabit)}
-                </div>
+                </Card>
               </div>
             )}
           </>

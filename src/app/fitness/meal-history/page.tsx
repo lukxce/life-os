@@ -78,7 +78,7 @@ export default function MealHistoryPage() {
             <div key={date} className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
               <div className="px-4 py-2.5 border-b border-black/5 dark:border-white/5 flex items-center gap-2">
                 <span className="text-sm font-semibold text-gray-900 dark:text-white">{label}</span>
-                {isToday && <span className="text-[10px] font-bold text-[rgb(220,161,84)] bg-[rgb(220,161,84)]/10 px-2 py-0.5 rounded-full">Today</span>}
+                {isToday && <span className="text-[10px] font-bold text-[rgb(var(--l-green))] bg-[rgb(var(--l-green))]/10 px-2 py-0.5 rounded-full">Today</span>}
               </div>
               <div className="divide-y divide-black/5 dark:divide-white/5">
                 {MEAL_ORDER.map(mt => {

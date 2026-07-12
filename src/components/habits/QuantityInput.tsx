@@ -11,12 +11,12 @@ interface Props {
 
 export function QuantityInput({ value, target, unit, color, onUpdate }: Props) {
   const pct = Math.min(100, target > 0 ? (value / target) * 100 : 0)
-  const barColor = color ?? '#6366f1'
+  const barColor = color ?? 'rgb(var(--l-green))'
   const done = pct >= 100
   const containerRef = useRef<HTMLDivElement>(null)
   const [editing, setEditing] = useState(false)
   const [inputVal, setInputVal] = useState(String(value))
-  const activeColor = done ? '#22c55e' : barColor
+  const activeColor = done ? 'rgb(var(--l-green))' : barColor
 
   function commit(v: number) {
     onUpdate(Math.max(0, Math.min(Math.round(v), target * 2)))
@@ -65,7 +65,7 @@ export function QuantityInput({ value, target, unit, color, onUpdate }: Props) {
             onClick={e => { e.stopPropagation(); setInputVal(String(value)); setEditing(true) }}
           >
             {value.toLocaleString()}
-            <span className="text-gray-400 font-normal text-xs"> / {target.toLocaleString()} {unit}</span>
+            <span className="text-ldg-ink/55 font-normal text-xs"> / {target.toLocaleString()} {unit}</span>
           </button>
         )}
         <span className="text-xs font-bold" style={{ color: activeColor }}>

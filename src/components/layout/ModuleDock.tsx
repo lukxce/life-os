@@ -11,14 +11,14 @@ import {
 // Jump between modules from anywhere without going back home.
 const MODULES = [
   { href: '/',          icon: LayoutDashboard, label: 'Dashboard', match: (p: string) => p === '/' },
-  { href: '/finance',   icon: Wallet,          label: 'Finance',   match: (p: string) => p.startsWith('/finance'), tint: 'rgb(232,120,90)' },
-  { href: '/life',      icon: Sparkles,        label: 'Habits',    match: (p: string) => p.startsWith('/life'), tint: 'rgb(167,120,160)' },
-  { href: '/fitness',   icon: Dumbbell,        label: 'Fitness',   match: (p: string) => p.startsWith('/fitness'), tint: 'rgb(220,161,84)' },
-  { href: '/schedule',  icon: CalendarDays,    label: 'Schedule',  match: (p: string) => p.startsWith('/schedule'), tint: 'rgb(217,138,148)' },
-  { href: '/journal',   icon: BookOpen,        label: 'Journal',   match: (p: string) => p.startsWith('/journal'), tint: 'rgb(232,120,90)' },
-  { href: '/food',      icon: MapPin,          label: 'Food',      match: (p: string) => p.startsWith('/food'), tint: 'rgb(220,161,84)' },
-  { href: '/personal',  icon: FolderLock,      label: 'Personal',  match: (p: string) => p.startsWith('/personal'), tint: 'rgb(167,120,160)' },
-  { href: '/watchlist', icon: Clapperboard,    label: 'Watchlist', match: (p: string) => p.startsWith('/watchlist') || p.startsWith('/books'), tint: 'rgb(217,138,148)' },
+  { href: '/finance',   icon: Wallet,          label: 'Finance',   match: (p: string) => p.startsWith('/finance'), tint: 'rgb(var(--l-green))' },
+  { href: '/life',      icon: Sparkles,        label: 'Habits',    match: (p: string) => p.startsWith('/life'), tint: 'rgb(var(--l-green))' },
+  { href: '/fitness',   icon: Dumbbell,        label: 'Fitness',   match: (p: string) => p.startsWith('/fitness'), tint: 'rgb(var(--l-green))' },
+  { href: '/schedule',  icon: CalendarDays,    label: 'Schedule',  match: (p: string) => p.startsWith('/schedule'), tint: 'rgb(var(--l-green))' },
+  { href: '/journal',   icon: BookOpen,        label: 'Journal',   match: (p: string) => p.startsWith('/journal'), tint: 'rgb(var(--l-green))' },
+  { href: '/food',      icon: MapPin,          label: 'Food',      match: (p: string) => p.startsWith('/food'), tint: 'rgb(var(--l-green))' },
+  { href: '/personal',  icon: FolderLock,      label: 'Personal',  match: (p: string) => p.startsWith('/personal'), tint: 'rgb(var(--l-green))' },
+  { href: '/watchlist', icon: Clapperboard,    label: 'Watchlist', match: (p: string) => p.startsWith('/watchlist') || p.startsWith('/books'), tint: 'rgb(var(--l-green))' },
 ]
 
 export function ModuleDock() {

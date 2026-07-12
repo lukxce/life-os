@@ -4,9 +4,8 @@ import { formatRSD, formatEUR, Period, formatDate } from '@/lib/utils'
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { HeroStat } from '@/components/ui/synth'
-
-const COLORS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4']
+import { Card, Label, CHART_COLORS } from '@/components/ledger/primitives'
+import { ArrowUp, ArrowDown, ArrowLeftRight } from 'lucide-react'
 
 type DashboardData = {
   liveRate: number
@@ -60,279 +59,273 @@ export default function Dashboard() {
   const monthOut = data ? data.personalExpenses.concat(data.businessExpenses).reduce((s, e) => s + e.amountRSD, 0) : 0
 
   return (
-    <div className="-mx-4 -mt-6 md:-mx-6 md:-mt-8 max-w-none">
-      {/* ── Hero: net worth, synthesized ── */}
-      <div className="relative overflow-hidden rounded-b-[2rem] bg-[#1f1815] text-white px-5 pt-8 pb-6 md:px-8">
-        <div aria-hidden className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(640px 420px at 88% -20%, rgba(232,120,90,0.4), transparent 65%), radial-gradient(520px 400px at -10% 115%, rgba(220,161,84,0.2), transparent 60%)' }} />
-        <div className="relative max-w-5xl mx-auto">
-          <p className="text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase">Net worth</p>
-          {data ? (
-            <>
-              <p className="text-4xl md:text-5xl font-bold mt-1 tabular-nums">{formatEUR(data.totals.totalEUR)}</p>
-              <p className="text-sm text-white/50 mt-1 tabular-nums">{formatRSD(data.totals.totalRSD)}</p>
-              <div className="grid grid-cols-3 gap-4 mt-6">
-                <HeroStat label="Personal" value={formatEUR(data.totals.personalEUR)} />
-                <HeroStat label="Company"  value={formatEUR(data.totals.companyEUR)} />
-                <HeroStat label={`Out · ${period === 'month' ? 'this month' : period}`}
-                  value={<span className="text-red-400">{formatRSD(monthOut)}</span>} />
+    <div className="max-w-5xl mx-auto space-y-4 pb-8">
+      {/* ── Net worth ── */}
+      <Card className="p-5">
+        <Label>Net worth</Label>
+        {data ? (
+          <>
+            <p className="font-mono text-[32px] tabular-nums tracking-tight leading-none mt-1">{formatEUR(data.totals.totalEUR)}</p>
+            <p className="font-mono text-[12px] text-ldg-ink/55 mt-1">{formatRSD(data.totals.totalRSD)}</p>
+            <div className="grid grid-cols-3 mt-4 border-t border-ldg-ink/[0.07] pt-3">
+              <div>
+                <p className="text-[11px] text-ldg-ink/55">Personal</p>
+                <p className="font-mono text-[15px] font-semibold tabular-nums mt-0.5">{formatEUR(data.totals.personalEUR)}</p>
               </div>
-              <p className="text-[10px] text-white/30 mt-5">EUR/RSD live {data.liveRate.toFixed(2)} · manual {data.manualRate.toFixed(2)}</p>
-            </>
-          ) : (
-            <div className="h-36 flex items-center text-white/40 animate-pulse">Loading…</div>
-          )}
-        </div>
+              <div>
+                <p className="text-[11px] text-ldg-ink/55">Company</p>
+                <p className="font-mono text-[15px] font-semibold tabular-nums mt-0.5">{formatEUR(data.totals.companyEUR)}</p>
+              </div>
+              <div>
+                <p className="text-[11px] text-ldg-ink/55">Out · {period === 'month' ? 'this month' : period}</p>
+                <p className="font-mono text-[15px] font-semibold tabular-nums mt-0.5 text-ldg-urgent">{formatRSD(monthOut)}</p>
+              </div>
+            </div>
+            <p className="font-mono text-[11px] text-ldg-ink/55 mt-3">EUR/RSD live {data.liveRate.toFixed(2)} · manual {data.manualRate.toFixed(2)}</p>
+          </>
+        ) : (
+          <div className="h-36 flex items-center text-ldg-ink/40 animate-pulse">Loading…</div>
+        )}
+      </Card>
+
+      {/* ── Period pills ── */}
+      <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        {[
+          { label: 'Today',      period: 'day'   as Period, offset: 0 },
+          { label: 'This Week',  period: 'week'  as Period, offset: 0 },
+          { label: 'This Month', period: 'month' as Period, offset: 0 },
+          { label: 'Last Month', period: 'month' as Period, offset: -1 },
+          { label: 'YTD',        period: 'year'  as Period, offset: 0 },
+          { label: 'All Time',   period: 'all'   as Period, offset: 0 },
+        ].map(s => {
+          const d = new Date()
+          if (s.offset) d.setMonth(d.getMonth() + s.offset)
+          const dStr = d.toISOString().split('T')[0]
+          const active = period === s.period && (s.period === 'all' || date === dStr)
+          return (
+            <button key={s.label}
+              onClick={() => { setPeriod(s.period); setDate(dStr) }}
+              className={cn('shrink-0 text-[13px] px-3 py-1.5 rounded-lg border transition-colors',
+                active ? 'font-semibold bg-ldg-green/10 text-ldg-green border-ldg-green/30'
+                       : 'font-medium text-ldg-ink/55 border-ldg-ink/10')}>
+              {s.label}
+            </button>
+          )
+        })}
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 md:px-6 space-y-6 pt-4 pb-8">
-        {/* ── Period pills ── */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-          {[
-            { label: 'Today',      period: 'day'   as Period, offset: 0 },
-            { label: 'This Week',  period: 'week'  as Period, offset: 0 },
-            { label: 'This Month', period: 'month' as Period, offset: 0 },
-            { label: 'Last Month', period: 'month' as Period, offset: -1 },
-            { label: 'YTD',        period: 'year'  as Period, offset: 0 },
-            { label: 'All Time',   period: 'all'   as Period, offset: 0 },
-          ].map(s => {
-            const d = new Date()
-            if (s.offset) d.setMonth(d.getMonth() + s.offset)
-            const dStr = d.toISOString().split('T')[0]
-            const active = period === s.period && (s.period === 'all' || date === dStr)
-            return (
-              <button key={s.label}
-                onClick={() => { setPeriod(s.period); setDate(dStr) }}
-                className={cn('shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors',
-                  active ? 'bg-[rgb(232,120,90)] text-white'
-                         : 'bg-surface/90 dark:bg-surface/70 text-gray-500 dark:text-gray-400 border border-black/5 dark:border-white/5')}>
-                {s.label}
-              </button>
-            )
-          })}
+      {/* ── Accounts: pinned ones only — the rest live behind "See all" ── */}
+      {data && (() => {
+        const pinned = data.accounts.filter((a: any) => a.pinned)
+        const shown = pinned.length > 0 ? pinned : data.accounts
+        const hiddenCount = data.accounts.length - shown.length
+        return (
+        <div>
+          <div className="flex items-center justify-between mb-2 px-1">
+            <Label>Accounts</Label>
+            <Link href="/finance/accounts" className="font-mono text-[12px] underline underline-offset-2 text-ldg-ink/55">
+              {pinned.length > 0 ? `See all ${data.accounts.length} →` : 'Pin your favorites →'}
+            </Link>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x md:grid md:grid-cols-3 md:gap-3 md:overflow-visible md:mx-0 md:px-0 md:pb-0"
+            style={{ scrollbarWidth: 'none' }}>
+            {shown.map(acc => (
+              <Card key={acc.id} className="snap-start shrink-0 w-[190px] md:w-auto p-4">
+                <Label>{acc.name}</Label>
+                <p className="font-mono text-[15px] font-semibold tabular-nums mt-1.5">
+                  {acc.currency === 'EUR' ? formatEUR(acc.currentBalance) : formatRSD(acc.currentBalance)}
+                </p>
+                <p className="font-mono text-[12px] text-ldg-ink/55 tabular-nums">
+                  {acc.currency === 'EUR' ? formatRSD(acc.balanceRSD) : formatEUR(acc.balanceEUR)}
+                </p>
+              </Card>
+            ))}
+          </div>
+          {hiddenCount > 0 && (
+            <p className="font-mono text-[12px] text-ldg-ink/55 mt-2 px-1">+{hiddenCount} more account{hiddenCount > 1 ? 's' : ''} hidden — pin the ones you use daily</p>
+          )}
         </div>
+        )
+      })()}
 
-        {/* ── Accounts: pinned ones only — the rest live behind "See all" ── */}
-        {data && (() => {
-          const pinned = data.accounts.filter((a: any) => a.pinned)
-          const shown = pinned.length > 0 ? pinned : data.accounts
-          const hiddenCount = data.accounts.length - shown.length
-          return (
-          <div>
-            <div className="flex items-center justify-between mb-2 px-1">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-ink/40">Accounts</h3>
-              <Link href="/finance/accounts" className="text-xs text-[rgb(232,120,90)] hover:underline">
-                {pinned.length > 0 ? `See all ${data.accounts.length} →` : 'Pin your favorites →'}
+      {/* ── Recent activity ── */}
+      {recent.length > 0 && (
+        <Card className="overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-ldg-ink/[0.07]">
+            <Label>Recent activity</Label>
+          </div>
+          <div className="px-5">
+            {recent.map(r => (
+              <Link key={`${r.type}-${r.id}`} href={r.href}
+                className="flex items-center gap-3 py-2.5 border-t border-ldg-ink/[0.07] first:border-t-0 hover:bg-ldg-ink/[0.02] transition-colors -mx-5 px-5">
+                <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-ldg-ink/[0.06]">
+                  {r.type === 'expense' ? <ArrowUp size={15} className="text-ldg-urgent" />
+                    : r.type === 'income' ? <ArrowDown size={15} className="text-ldg-green" />
+                    : <ArrowLeftRight size={14} className="text-ldg-ink/55" />}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] text-ldg-ink truncate">{r.label || r.sub}</p>
+                  <p className="font-mono text-[12px] text-ldg-ink/55">{formatDate(r.date)}</p>
+                </div>
+                <span className={cn('font-mono text-[14px] tabular-nums shrink-0',
+                  r.type === 'expense' ? 'text-ldg-urgent' : r.type === 'income' ? 'text-ldg-green' : 'text-ldg-ink/55')}>
+                  {r.type === 'expense' ? '−' : r.type === 'income' ? '+' : ''}{r.amount.toLocaleString()}{r.currency ? ` ${r.currency}` : ''}
+                </span>
               </Link>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x md:grid md:grid-cols-3 md:gap-3 md:overflow-visible md:mx-0 md:px-0 md:pb-0"
-              style={{ scrollbarWidth: 'none' }}>
-              {shown.map(acc => {
-                const isCompany = acc.type === 'company'
-                const isCrypto = acc.name.toLowerCase().includes('crypto')
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* ── Budgets ── */}
+      {budgets.length > 0 && (
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <Label>Budgets · this month</Label>
+            <Link href="/finance/budgets" className="font-mono text-[12px] underline underline-offset-2 text-ldg-ink/55">Manage</Link>
+          </div>
+          <div className="space-y-4">
+            {budgets.map(b => {
+              const s = monthSpent[b.category] ?? { rsd: 0, eur: 0 }
+              const rows = [
+                b.amountRSD ? { spent: s.rsd, limit: b.amountRSD, fmt: (v: number) => `${v.toLocaleString()} RSD` } : null,
+                b.amountEUR ? { spent: s.eur, limit: b.amountEUR, fmt: (v: number) => `€${v.toLocaleString()}` } : null,
+              ].filter(Boolean) as { spent: number; limit: number; fmt: (v: number) => string }[]
+              return rows.map((row, ri) => {
+                const pct = Math.min(100, (row.spent / row.limit) * 100)
+                const overBudget = pct >= 100
                 return (
-                  <div key={acc.id}
-                    className={cn('snap-start shrink-0 w-[190px] md:w-auto rounded-2xl p-4 text-white shadow-md',
-                      isCrypto ? 'bg-gradient-to-br from-[rgb(220,161,84)] to-[rgb(200,141,64)]'
-                        : isCompany ? 'bg-gradient-to-br from-[rgb(167,120,160)] to-[rgb(147,100,140)]'
-                        : 'bg-gradient-to-br from-[rgb(232,120,90)] to-[rgb(212,100,72)]')}>
-                    <p className="text-[11px] font-medium text-white/75 truncate">{acc.name}</p>
-                    <p className="text-xl font-black mt-3 tabular-nums tracking-tight">
-                      {acc.currency === 'EUR' ? formatEUR(acc.currentBalance) : formatRSD(acc.currentBalance)}
-                    </p>
-                    <p className="text-[11px] text-white/70 tabular-nums">
-                      {acc.currency === 'EUR' ? formatRSD(acc.balanceRSD) : formatEUR(acc.balanceEUR)}
-                    </p>
+                  <div key={`${b.id}-${ri}`}>
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span className="text-[13px] font-semibold text-ldg-ink">{b.category}</span>
+                      <span className={cn('font-mono text-[11px] tabular-nums', overBudget ? 'text-ldg-urgent font-bold' : 'text-ldg-ink/55')}>
+                        {row.fmt(row.spent)} / {row.fmt(row.limit)} · {pct.toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="h-[6px] rounded-full bg-ldg-ink/[0.07] overflow-hidden">
+                      <div className={cn('h-full rounded-full transition-all duration-700', overBudget ? 'bg-ldg-urgent' : 'bg-ldg-green')} style={{ width: `${pct}%` }} />
+                    </div>
                   </div>
                 )
-              })}
-            </div>
-            {hiddenCount > 0 && (
-              <p className="text-[11px] text-ink/30 mt-2 px-1">+{hiddenCount} more account{hiddenCount > 1 ? 's' : ''} hidden — pin the ones you use daily</p>
-            )}
+              })
+            })}
           </div>
-          )
-        })()}
+        </Card>
+      )}
 
-        {/* ── Recent activity ── */}
-        {recent.length > 0 && (
-          <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Recent activity</h3>
-            </div>
-            <div className="divide-y divide-black/5 dark:divide-white/5">
-              {recent.map(r => (
-                <Link key={`${r.type}-${r.id}`} href={r.href}
-                  className="flex items-center gap-3 px-5 py-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors">
-                  <span className={cn('w-9 h-9 rounded-full flex items-center justify-center text-sm shrink-0',
-                    r.type === 'expense' ? 'bg-red-500/10 text-red-500' : r.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-gray-500/10 text-gray-400')}>
-                    {r.type === 'expense' ? '↑' : r.type === 'income' ? '↓' : '⇄'}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{r.label || r.sub}</p>
-                    <p className="text-xs text-gray-400">{formatDate(r.date)}</p>
-                  </div>
-                  <span className={cn('text-sm font-semibold tabular-nums shrink-0',
-                    r.type === 'expense' ? 'text-red-500' : r.type === 'income' ? 'text-emerald-500' : 'text-gray-500')}>
-                    {r.type === 'expense' ? '−' : r.type === 'income' ? '+' : ''}{r.amount.toLocaleString()}{r.currency ? ` ${r.currency}` : ''}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Budgets ── */}
-        {budgets.length > 0 && (
-          <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Budgets · this month</h3>
-              <Link href="/finance/budgets" className="text-xs text-[rgb(232,120,90)] dark:text-[rgb(232,120,90)] hover:underline">Manage</Link>
-            </div>
-            <div className="space-y-4">
-              {budgets.map(b => {
-                const s = monthSpent[b.category] ?? { rsd: 0, eur: 0 }
-                const rows = [
-                  b.amountRSD ? { spent: s.rsd, limit: b.amountRSD, fmt: (v: number) => `${v.toLocaleString()} RSD` } : null,
-                  b.amountEUR ? { spent: s.eur, limit: b.amountEUR, fmt: (v: number) => `€${v.toLocaleString()}` } : null,
-                ].filter(Boolean) as { spent: number; limit: number; fmt: (v: number) => string }[]
-                return rows.map((row, ri) => {
-                  const pct = Math.min(100, (row.spent / row.limit) * 100)
-                  const color = pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-400' : 'bg-emerald-500'
-                  return (
-                    <div key={`${b.id}-${ri}`}>
-                      <div className="flex justify-between items-baseline mb-1">
-                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{b.category}</span>
-                        <span className={cn('text-[11px] tabular-nums',
-                          pct >= 100 ? 'text-red-500 font-bold' : pct >= 80 ? 'text-amber-500 font-bold' : 'text-gray-400')}>
-                          {row.fmt(row.spent)} / {row.fmt(row.limit)} · {pct.toFixed(0)}%
-                        </span>
-                      </div>
-                      <div className="h-2 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
-                        <div className={cn('h-full rounded-full transition-all duration-700', color)} style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  )
-                })
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Spending ── */}
-        {data && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {[
-              { title: 'Personal spending', data: data.personalExpenses, color: 'text-red-500' },
-              { title: 'Business spending', data: data.businessExpenses, color: 'text-purple-500' },
-            ].map(section => (
-              <div key={section.title} className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">{section.title}</h3>
-                {section.data.filter(e => e.amountRSD > 0).length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-8">Nothing this period</p>
-                ) : (
-                  <>
-                    <ResponsiveContainer width="100%" height={170}>
-                      <PieChart>
-                        <Pie data={section.data.filter(e => e.amountRSD > 0)} dataKey="amountRSD" nameKey="category"
-                          cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3} strokeWidth={0}>
-                          {section.data.filter(e => e.amountRSD > 0).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                        </Pie>
-                        <Tooltip formatter={(v: any) => formatRSD(v)}
-                          contentStyle={{ fontSize: 12, borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="space-y-1.5 mt-2">
-                      {section.data.filter(e => e.amountRSD > 0).map((e, i) => (
-                        <div key={e.category} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
-                            <span className="text-gray-600 dark:text-gray-300 truncate text-[13px]">{e.category}</span>
-                          </div>
-                          <span className="font-medium text-gray-900 dark:text-gray-100 shrink-0 ml-2 text-[13px] tabular-nums">{formatRSD(e.amountRSD)}</span>
+      {/* ── Spending ── */}
+      {data && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {[
+            { title: 'Personal spending', data: data.personalExpenses },
+            { title: 'Business spending', data: data.businessExpenses },
+          ].map(section => (
+            <Card key={section.title} className="p-5">
+              <Label>{section.title}</Label>
+              {section.data.filter(e => e.amountRSD > 0).length === 0 ? (
+                <p className="font-mono text-[12px] text-ldg-ink/55 text-center py-8">nothing this period</p>
+              ) : (
+                <>
+                  <ResponsiveContainer width="100%" height={170}>
+                    <PieChart>
+                      <Pie data={section.data.filter(e => e.amountRSD > 0)} dataKey="amountRSD" nameKey="category"
+                        cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3} strokeWidth={0}>
+                        {section.data.filter(e => e.amountRSD > 0).map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip formatter={(v: any) => formatRSD(v)}
+                        contentStyle={{ fontSize: 12, borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="mt-2">
+                    {section.data.filter(e => e.amountRSD > 0).map((e, i) => (
+                      <div key={e.category} className="flex items-center justify-between py-2 border-t border-ldg-ink/[0.07] first:border-t-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                          <span className="text-[14px] text-ldg-ink truncate">{e.category}</span>
                         </div>
-                      ))}
-                      <div className="flex items-center justify-between text-sm font-bold pt-2 mt-1 border-t border-black/5 dark:border-white/5">
-                        <span className="text-gray-700 dark:text-gray-200">Total</span>
-                        <span className={cn('tabular-nums', section.color)}>
-                          {formatRSD(section.data.reduce((s, e) => s + e.amountRSD, 0))}
-                        </span>
+                        <span className="font-mono text-[14px] text-ldg-ink shrink-0 ml-2 tabular-nums">{formatRSD(e.amountRSD)}</span>
                       </div>
+                    ))}
+                    <div className="flex items-center justify-between pt-2 mt-1 border-t border-ldg-ink/[0.07]">
+                      <span className="text-[14px] font-semibold text-ldg-ink">Total</span>
+                      <span className="font-mono text-[14px] font-semibold tabular-nums text-ldg-urgent">
+                        {formatRSD(section.data.reduce((s, e) => s + e.amountRSD, 0))}
+                      </span>
                     </div>
-                  </>
-                )}
+                  </div>
+                </>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* ── Saving goals ── */}
+      {goals.length > 0 && (
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <Label>Saving goals</Label>
+            <Link href="/finance/goals" className="font-mono text-[12px] underline underline-offset-2 text-ldg-ink/55">Manage</Link>
+          </div>
+          <div className="space-y-4">
+            {goals.map((g: any) => {
+              const pct = Math.min(100, g.pct ?? 0)
+              return (
+                <div key={g.id}>
+                  <div className="flex justify-between items-baseline mb-1">
+                    <span className="text-[13px] font-semibold text-ldg-ink">{g.name}</span>
+                    <span className="font-mono text-[11px] text-ldg-ink/55 tabular-nums">
+                      {g.currency === 'EUR' ? '€' : ''}{g.saved.toLocaleString('en', { maximumFractionDigits: 0 })} / {g.currency === 'EUR' ? '€' : ''}{g.targetAmount.toLocaleString()} · {pct.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="h-[6px] rounded-full bg-ldg-ink/[0.07] overflow-hidden">
+                    <div className="h-full rounded-full bg-ldg-green transition-all duration-700" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* ── Income ── */}
+      {data && (
+        <Card className="p-5">
+          <Label>Income · {period === 'month' ? 'this month' : period}</Label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 mt-4 mb-4">
+            {[
+              { label: 'Salary', rsd: data.income.salaryRSD },
+              { label: 'Invoice (RSD)', rsd: data.income.invoiceRSD },
+              { label: 'Invoice (EUR)', rsd: data.income.invoiceEURinRSD },
+              { label: 'Other (RSD)', rsd: data.income.otherRSD },
+              { label: 'Other (EUR)', rsd: data.income.otherEURinRSD },
+            ].map(row => (
+              <div key={row.label} className="bg-ldg-paper rounded-lg p-3">
+                <p className="text-[11px] text-ldg-ink/55">{row.label}</p>
+                <p className="font-mono text-[14px] font-semibold mt-0.5 text-ldg-ink tabular-nums">{formatRSD(row.rsd)}</p>
+                <p className="font-mono text-[11px] text-ldg-ink/55 tabular-nums">{formatEUR(row.rsd / data.liveRate)}</p>
               </div>
             ))}
           </div>
-        )}
-
-        {/* ── Saving goals ── */}
-        {goals.length > 0 && (
-          <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Saving goals</h3>
-              <Link href="/finance/goals" className="text-xs text-[rgb(232,120,90)] dark:text-[rgb(232,120,90)] hover:underline">Manage</Link>
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-ldg-ink/[0.07]">
+            <div className="flex-1 bg-ldg-green/[0.07] border border-ldg-green/20 rounded-lg p-4 text-center">
+              <p className="text-[11px] text-ldg-ink/55">Total net</p>
+              <p className="font-mono text-[19px] font-bold text-ldg-green tabular-nums">{formatRSD(data.income.totalNetRSD)}</p>
+              <p className="font-mono text-[11px] text-ldg-ink/55 tabular-nums">{formatEUR(data.income.totalNetEUR)}</p>
             </div>
-            <div className="space-y-4">
-              {goals.map((g: any) => {
-                const pct = Math.min(100, g.pct ?? 0)
-                return (
-                  <div key={g.id}>
-                    <div className="flex justify-between items-baseline mb-1">
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{g.name}</span>
-                      <span className="text-[11px] text-gray-400 tabular-nums">
-                        {g.currency === 'EUR' ? '€' : ''}{g.saved.toLocaleString('en', { maximumFractionDigits: 0 })} / {g.currency === 'EUR' ? '€' : ''}{g.targetAmount.toLocaleString()} · {pct.toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="h-2 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
-                      <div className={cn('h-full rounded-full transition-all duration-700', pct >= 100 ? 'bg-emerald-500' : 'bg-blue-500')} style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-                )
-              })}
+            <div className="flex-1 bg-ldg-urgent/[0.07] border border-ldg-urgent/20 rounded-lg p-4 text-center">
+              <p className="text-[11px] text-ldg-ink/55">Deductions</p>
+              <p className="font-mono text-[19px] font-bold text-ldg-urgent tabular-nums">{formatRSD(data.income.totalDeductions)}</p>
             </div>
           </div>
-        )}
+        </Card>
+      )}
 
-        {/* ── Income ── */}
-        {data && (
-          <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-5">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Income · {period === 'month' ? 'this month' : period}</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 mb-4">
-              {[
-                { label: 'Salary', rsd: data.income.salaryRSD },
-                { label: 'Invoice (RSD)', rsd: data.income.invoiceRSD },
-                { label: 'Invoice (EUR)', rsd: data.income.invoiceEURinRSD },
-                { label: 'Other (RSD)', rsd: data.income.otherRSD },
-                { label: 'Other (EUR)', rsd: data.income.otherEURinRSD },
-              ].map(row => (
-                <div key={row.label} className="bg-black/[0.03] dark:bg-white/[0.04] rounded-xl p-3">
-                  <p className="text-[11px] text-gray-400">{row.label}</p>
-                  <p className="text-sm font-semibold mt-0.5 text-gray-900 dark:text-gray-100 tabular-nums">{formatRSD(row.rsd)}</p>
-                  <p className="text-[11px] text-gray-400 tabular-nums">{formatEUR(row.rsd / data.liveRate)}</p>
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-black/5 dark:border-white/5">
-              <div className="flex-1 bg-emerald-500/10 rounded-xl p-4 text-center">
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">Total net</p>
-                <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{formatRSD(data.income.totalNetRSD)}</p>
-                <p className="text-[11px] text-gray-400 tabular-nums">{formatEUR(data.income.totalNetEUR)}</p>
-              </div>
-              <div className="flex-1 bg-red-500/10 rounded-xl p-4 text-center">
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">Deductions</p>
-                <p className="text-xl font-bold text-red-500 tabular-nums">{formatRSD(data.income.totalDeductions)}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {loading && !data && (
-          <div className="space-y-4">
-            {[1,2,3].map(i => <div key={i} className="h-32 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
-          </div>
-        )}
-      </div>
+      {loading && !data && (
+        <div className="space-y-4">
+          {[1,2,3].map(i => <div key={i} className="h-32 bg-ldg-ink/[0.05] rounded-2xl animate-pulse" />)}
+        </div>
+      )}
     </div>
   )
 }

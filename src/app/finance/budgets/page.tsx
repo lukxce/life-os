@@ -15,7 +15,7 @@ function statusWord(pct: number) {
 }
 
 function inputCls() {
-  return 'mt-1 w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]'
+  return 'mt-1 w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]'
 }
 
 export default function BudgetsPage() {
@@ -108,7 +108,7 @@ export default function BudgetsPage() {
       )}
 
       <button onClick={() => { setEditingId(null); setForm(defaultForm); setShowForm(s => !s) }}
-        className="flex items-center justify-center gap-2 w-full bg-[rgb(232,120,90)] text-white px-4 py-3 rounded-2xl text-sm font-semibold hover:bg-[rgb(212,100,72)] active:scale-[0.98] transition-all">
+        className="flex items-center justify-center gap-2 w-full bg-[rgb(var(--l-green))] text-white px-4 py-3 rounded-2xl text-sm font-semibold hover:bg-[rgb(var(--l-green))] active:scale-[0.98] transition-all">
         {showForm ? <X size={16} /> : <Plus size={16} />} {showForm ? 'Never mind' : 'Set a new budget'}
       </button>
 
@@ -135,7 +135,7 @@ export default function BudgetsPage() {
             </div>
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={submit} className="flex-1 bg-[rgb(232,120,90)] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[rgb(212,100,72)]">
+            <button onClick={submit} className="flex-1 bg-[rgb(var(--l-green))] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[rgb(var(--l-green))]">
               {editingId ? 'Save changes' : "That's the one"}
             </button>
             <button onClick={() => { setShowForm(false); setEditingId(null); setForm(defaultForm) }}

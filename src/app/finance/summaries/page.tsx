@@ -86,7 +86,7 @@ export default function SummariesPage() {
                     {v > 0 ? (v / 1000).toFixed(1) + 'k' : '-'}
                   </td>
                 ))}
-                <td className={`px-4 py-3 text-right font-semibold ${color === 'blue' ? 'text-[rgb(232,120,90)]' : color === 'red' ? 'text-red-600' : 'text-purple-600'}`}>{formatRSD(row.ytdRSD)}</td>
+                <td className={`px-4 py-3 text-right font-semibold ${color === 'blue' ? 'text-[rgb(var(--l-green))]' : color === 'red' ? 'text-red-600' : 'text-purple-600'}`}>{formatRSD(row.ytdRSD)}</td>
                 {row.ytdEUR !== undefined && <td className="px-4 py-3 text-right text-gray-500">{formatEUR(row.ytdEUR)}</td>}
               </tr>
             ))}
@@ -109,7 +109,7 @@ export default function SummariesPage() {
           <div key={row.label} className="border border-gray-100 rounded-lg p-3">
             <div className="flex items-baseline justify-between mb-2">
               <span className="font-medium text-gray-700">{row.label}</span>
-              <span className={`font-semibold ${color === 'blue' ? 'text-[rgb(232,120,90)]' : color === 'red' ? 'text-red-600' : 'text-purple-600'}`}>{formatRSD(row.ytdRSD)}</span>
+              <span className={`font-semibold ${color === 'blue' ? 'text-[rgb(var(--l-green))]' : color === 'red' ? 'text-red-600' : 'text-purple-600'}`}>{formatRSD(row.ytdRSD)}</span>
             </div>
             {row.ytdEUR !== undefined && (
               <div className="text-xs text-gray-500 mb-2">{formatEUR(row.ytdEUR)}</div>

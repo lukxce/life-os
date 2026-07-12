@@ -6,9 +6,9 @@ const config: ModuleConfig = {
   name: 'Personal',
   icon: FolderLock,
   home: '/personal',
-  accentActive: 'bg-[rgb(167,120,160)]/10 text-[rgb(167,120,160)] dark:bg-[rgb(167,120,160)]/15 dark:text-[rgb(167,120,160)]',
-  accentText: 'text-[rgb(167,120,160)] dark:text-[rgb(167,120,160)]',
-  accentFab: 'bg-[rgb(167,120,160)] hover:bg-[rgb(147,100,140)]',
+  accentActive: 'bg-[rgb(var(--l-green))]/10 text-[rgb(var(--l-green))] dark:bg-[rgb(var(--l-green))]/15 dark:text-[rgb(var(--l-green))]',
+  accentText: 'text-[rgb(var(--l-green))] dark:text-[rgb(var(--l-green))]',
+  accentFab: 'bg-[rgb(var(--l-green))] hover:bg-[rgb(147,100,140)]',
   glow: '167 120 160',
   groups: [
     { items: [

@@ -134,7 +134,7 @@ export default function PlannerPage() {
           <div className="flex gap-2 mt-1">
             {(['RSD', 'EUR'] as const).map(c => (
               <button key={c} onClick={() => switchCurrency(c)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${currency === c ? 'bg-[rgb(232,120,90)] text-white border-[rgb(232,120,90)]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${currency === c ? 'bg-[rgb(var(--l-green))] text-white border-[rgb(var(--l-green))]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 {c}
               </button>
             ))}
@@ -144,7 +144,7 @@ export default function PlannerPage() {
         <div>
           <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Expected monthly income ({unit})</label>
           <NumberInput value={income} onChange={setIncome}
-            className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+            className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
           {income && currency === 'EUR' && (
             <p className="text-xs text-gray-400 mt-1">≈ {Math.round(+income * rate).toLocaleString()} RSD</p>
           )}
@@ -158,7 +158,7 @@ export default function PlannerPage() {
           <div className="flex gap-2 mt-1">
             {HORIZON_OPTIONS.map(h => (
               <button key={h} onClick={() => setHorizon(h)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${horizon === h ? 'bg-[rgb(232,120,90)] text-white border-[rgb(232,120,90)]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${horizon === h ? 'bg-[rgb(var(--l-green))] text-white border-[rgb(var(--l-green))]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                 {h}mo
               </button>
             ))}
@@ -169,11 +169,11 @@ export default function PlannerPage() {
       {/* Mode toggle */}
       <div className="flex gap-2">
         <button onClick={() => switchMode('auto')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-colors ${mode === 'auto' ? 'bg-[rgb(232,120,90)] text-white border-[rgb(232,120,90)]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-colors ${mode === 'auto' ? 'bg-[rgb(var(--l-green))] text-white border-[rgb(var(--l-green))]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
           <Sparkles size={15} /> Use my averages
         </button>
         <button onClick={() => switchMode('manual')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-colors ${mode === 'manual' ? 'bg-[rgb(232,120,90)] text-white border-[rgb(232,120,90)]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-colors ${mode === 'manual' ? 'bg-[rgb(var(--l-green))] text-white border-[rgb(var(--l-green))]' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
           <SlidersHorizontal size={15} /> Set manually
         </button>
       </div>
@@ -189,7 +189,7 @@ export default function PlannerPage() {
               <span className="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{row.category}</span>
               <div className="w-32">
                 <NumberInput value={row.amount} onChange={v => updateRow(row.category, v)}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
               </div>
               <span className="text-xs text-gray-400 w-8 shrink-0">{unit}</span>
             </div>

@@ -328,7 +328,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Category</label>
               <select value={filters.category} onChange={e => setFilters(f => ({ ...f, category: e.target.value, subcategory: '' }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800">
                 <option value="">All categories</option>
                 {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
@@ -337,7 +337,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Subcategory</label>
               <select value={filters.subcategory} onChange={e => setFilters(f => ({ ...f, subcategory: e.target.value }))}
                 disabled={!filters.category}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] disabled:bg-gray-50 disabled:text-gray-400 dark:bg-gray-800">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] disabled:bg-gray-50 disabled:text-gray-400 dark:bg-gray-800">
                 <option value="">All subcategories</option>
                 {filterSubcats.map((s: string) => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -345,7 +345,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Account</label>
               <select value={filters.account} onChange={e => setFilters(f => ({ ...f, account: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800">
                 <option value="">All accounts</option>
                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
@@ -354,7 +354,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Merchant / description</label>
               <input type="text" value={filters.merchant} onChange={e => setFilters(f => ({ ...f, merchant: e.target.value }))}
                 placeholder="e.g. MAXI, 100000139, milk"
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)] dark:bg-gray-800" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800" />
             </div>
           </div>
           {activeFilterCount > 0 && (
@@ -374,7 +374,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm">
               <div className="font-medium text-blue-900">📱 From scanned receipt</div>
               <div className="text-blue-700 mt-1">{form.merchantName} {form.merchantPib && `(PIB: ${form.merchantPib})`}</div>
-              {form.sufUrl ? <a href={form.sufUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[rgb(232,120,90)] underline mt-1 inline-flex items-center gap-1"><FileText size={12} /> View original receipt</a> : null}
+              {form.sufUrl ? <a href={form.sufUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[rgb(var(--l-green))] underline mt-1 inline-flex items-center gap-1"><FileText size={12} /> View original receipt</a> : null}
             </div>
           )}
 
@@ -382,12 +382,12 @@ function ExpensesContent({ params }: { params: { type: string } }) {
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Date</label>
               <input type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Category</label>
               <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]">
                 <option value="">Select category</option>
                 {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
@@ -395,7 +395,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Subcategory</label>
               <select value={form.subcategory} onChange={e => setForm(p => ({ ...p, subcategory: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]">
                 <option value="">Select...</option>
                 {subcats.map((s: string) => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -403,24 +403,24 @@ function ExpensesContent({ params }: { params: { type: string } }) {
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Description</label>
               <input type="text" value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Amount</label>
               <NumberInput value={form.amount} onChange={v => setForm(p => ({ ...p, amount: v }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Currency</label>
               <select value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]">
                 <option>RSD</option><option>EUR</option>
               </select>
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Account</label>
               <select value={form.accountId} onChange={e => setForm(p => ({ ...p, accountId: e.target.value }))}
-                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]">
+                className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]">
                 <option value="">Select account</option>
                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
@@ -445,18 +445,18 @@ function ExpensesContent({ params }: { params: { type: string } }) {
                   <div className="flex flex-wrap gap-2 mb-2">
                     {[6, 12, 24, 36, 60].map(m => (
                       <button key={m} type="button" onClick={() => setForm(p => ({ ...p, warrantyMonths: String(m) }))}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${form.warrantyMonths === String(m) ? 'bg-[rgb(232,120,90)] text-white border-[rgb(232,120,90)]' : 'border-gray-300 dark:border-gray-600 dark:border-gray-600 text-gray-700 dark:text-gray-300 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-800 dark:bg-gray-800'}`}>
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${form.warrantyMonths === String(m) ? 'bg-[rgb(var(--l-green))] text-white border-[rgb(var(--l-green))]' : 'border-gray-300 dark:border-gray-600 dark:border-gray-600 text-gray-700 dark:text-gray-300 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-800 dark:bg-gray-800'}`}>
                         {m === 12 ? '1 year' : m === 24 ? '2 years' : m === 36 ? '3 years' : m === 60 ? '5 years' : `${m} months`}
                       </button>
                     ))}
                   </div>
                   <input type="number" value={form.warrantyMonths} onChange={e => setForm(p => ({ ...p, warrantyMonths: e.target.value }))} placeholder="Or type custom months (e.g. 18)"
-                    className="w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                    className="w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Warranty notes (item, model, etc.)</label>
                   <input type="text" value={form.warrantyNotes} onChange={e => setForm(p => ({ ...p, warrantyNotes: e.target.value }))} placeholder="e.g. Laptop Lenovo X1"
-                    className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                    className="mt-1 w-full border border-gray-300 dark:border-gray-600 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
                 </div>
               </div>
             )}
@@ -491,7 +491,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
                 <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
                   placeholder="Add tag, press Enter"
-                  className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]" />
+                  className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]" />
                 <button type="button" onClick={addTag} className="px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-700">+</button>
               </div>
               {form.tags.length > 0 && (
@@ -533,7 +533,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
                   {e.hasWarranty && <span title={`${e.warrantyMonths}mo warranty${e.warrantyNotes ? `: ${e.warrantyNotes}` : ''}`} className="ml-1">🛡️</span>}
                   {e.sufUrl ? <a href={e.sufUrl} target="_blank" rel="noopener noreferrer" title="View receipt" className="ml-1">📄</a> : null}
                   {e.photoUrl ? <button onClick={() => setPhotoViewer(e.photoUrl)} title="View photo" className="ml-1">📷</button> : null}
-                  {e.tags?.length > 0 && e.tags.map((t: string) => <span key={t} className="ml-1 text-xs bg-blue-100 dark:bg-blue-900 text-[rgb(232,120,90)] dark:text-blue-300 px-1.5 py-0.5 rounded-full">{t}</span>)}
+                  {e.tags?.length > 0 && e.tags.map((t: string) => <span key={t} className="ml-1 text-xs bg-blue-100 dark:bg-blue-900 text-[rgb(var(--l-green))] dark:text-blue-300 px-1.5 py-0.5 rounded-full">{t}</span>)}
                 </td>
                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">{e.subcategory || '-'}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-gray-300 dark:text-gray-300">{e.description || e.merchantName || '-'}</td>
@@ -577,7 +577,7 @@ function ExpensesContent({ params }: { params: { type: string } }) {
                 </div>
                 {e.tags?.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-1">
-                    {e.tags.map((t: string) => <span key={t} className="text-xs bg-blue-100 dark:bg-blue-900 text-[rgb(232,120,90)] dark:text-blue-300 px-1.5 py-0.5 rounded-full">{t}</span>)}
+                    {e.tags.map((t: string) => <span key={t} className="text-xs bg-blue-100 dark:bg-blue-900 text-[rgb(var(--l-green))] dark:text-blue-300 px-1.5 py-0.5 rounded-full">{t}</span>)}
                   </div>
                 )}
                 <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatDate(e.date)}</div>

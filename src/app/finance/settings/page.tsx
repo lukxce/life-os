@@ -68,13 +68,13 @@ export default function SettingsPage() {
               step="0.01"
               value={manualRate}
               onChange={e => setManualRate(e.target.value)}
-              className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]"
+              className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]"
               placeholder="e.g. 117.50"
             />
             <button
               onClick={save}
               disabled={saving}
-              className="bg-[rgb(232,120,90)] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[rgb(212,100,72)] disabled:opacity-60"
+              className="bg-[rgb(var(--l-green))] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[rgb(var(--l-green))] disabled:opacity-60"
             >
               {saved ? 'Saved!' : saving ? 'Saving…' : 'Save'}
             </button>

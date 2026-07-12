@@ -139,7 +139,7 @@ export default function ICSPage() {
           <Calendar size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
           <p className="text-sm font-medium text-gray-500">No calendars connected</p>
           <p className="text-xs text-gray-400 mt-1">Add your Google Calendar or Outlook ICS URL in settings.</p>
-          <Link href="/schedule/settings" className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-[rgb(167,120,160)] text-white rounded-xl text-sm font-semibold">
+          <Link href="/schedule/settings" className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-[rgb(var(--l-green))] text-white rounded-xl text-sm font-semibold">
             <Settings size={15} /> Open Settings
           </Link>
         </div>

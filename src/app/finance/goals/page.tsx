@@ -9,12 +9,12 @@ import { cn } from '@/lib/utils'
 const defaultForm = { name: '', targetAmount: '', currency: 'EUR', accountId: '', targetDate: '', notes: '' }
 
 function inputCls() {
-  return 'mt-1 w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-[rgb(232,120,90)]'
+  return 'mt-1 w-full border border-black/10 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))]'
 }
 
 function GoalCard({ goal, onEdit, onDelete, onDeposit }: { goal: any; onEdit: () => void; onDelete: () => void; onDeposit: () => void }) {
   const pct = goal.pct ?? 0
-  const barColor = pct >= 100 ? 'bg-emerald-500' : pct >= 75 ? 'bg-[rgb(232,120,90)]' : 'bg-[rgb(220,161,84)]'
+  const barColor = pct >= 100 ? 'bg-emerald-500' : pct >= 75 ? 'bg-[rgb(var(--l-green))]' : 'bg-[rgb(var(--l-green))]'
 
   const daysLeft = goal.targetDate
     ? Math.ceil((new Date(goal.targetDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
@@ -24,13 +24,13 @@ function GoalCard({ goal, onEdit, onDelete, onDeposit }: { goal: any; onEdit: ()
     <div className="bg-surface/90 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm p-4">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-[rgb(232,120,90)]/10 flex items-center justify-center shrink-0">
-            <PiggyBank size={18} className="text-[rgb(232,120,90)]" />
+          <div className="w-9 h-9 rounded-xl bg-[rgb(var(--l-green))]/10 flex items-center justify-center shrink-0">
+            <PiggyBank size={18} className="text-[rgb(var(--l-green))]" />
           </div>
           <div>
             <p className="font-semibold text-ink">{goal.name}</p>
             {goal.targetDate && (
-              <p className={cn('text-xs mt-0.5', daysLeft !== null && daysLeft < 30 ? 'text-[rgb(220,161,84)] font-medium' : 'text-ink/40')}>
+              <p className={cn('text-xs mt-0.5', daysLeft !== null && daysLeft < 30 ? 'text-[rgb(var(--l-green))] font-medium' : 'text-ink/40')}>
                 {daysLeft !== null && daysLeft > 0 ? `${daysLeft} days to go` : daysLeft === 0 ? 'Today\'s the day' : 'Past your target date'}
               </p>
             )}
@@ -65,13 +65,13 @@ function GoalCard({ goal, onEdit, onDelete, onDeposit }: { goal: any; onEdit: ()
       </div>
 
       {goal.accountId && (
-        <p className="text-xs text-[rgb(232,120,90)] mb-3">Tracking automatically from a linked account</p>
+        <p className="text-xs text-[rgb(var(--l-green))] mb-3">Tracking automatically from a linked account</p>
       )}
 
       {goal.notes && <p className="text-xs text-ink/40 mb-3">{goal.notes}</p>}
 
       <button onClick={onDeposit}
-        className="w-full border border-[rgb(232,120,90)]/30 text-[rgb(232,120,90)] py-2.5 rounded-xl text-sm font-semibold hover:bg-[rgb(232,120,90)]/10 transition-colors">
+        className="w-full border border-[rgb(var(--l-green))]/30 text-[rgb(var(--l-green))] py-2.5 rounded-xl text-sm font-semibold hover:bg-[rgb(var(--l-green))]/10 transition-colors">
         + Add money towards this
       </button>
     </div>
@@ -163,7 +163,7 @@ export default function GoalsPage() {
       )}
 
       <button onClick={() => { setEditingId(null); setForm(defaultForm); setShowForm(s => !s) }}
-        className="flex items-center justify-center gap-2 w-full bg-[rgb(232,120,90)] text-white px-4 py-3 rounded-2xl text-sm font-semibold hover:bg-[rgb(212,100,72)] active:scale-[0.98] transition-all">
+        className="flex items-center justify-center gap-2 w-full bg-[rgb(var(--l-green))] text-white px-4 py-3 rounded-2xl text-sm font-semibold hover:bg-[rgb(var(--l-green))] active:scale-[0.98] transition-all">
         {showForm ? <X size={16} /> : <Plus size={16} />} {showForm ? 'Never mind' : 'Start a new goal'}
       </button>
 
@@ -204,7 +204,7 @@ export default function GoalsPage() {
             </div>
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={submit} className="flex-1 bg-[rgb(232,120,90)] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[rgb(212,100,72)]">
+            <button onClick={submit} className="flex-1 bg-[rgb(var(--l-green))] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[rgb(var(--l-green))]">
               {editingId ? 'Save changes' : 'Start saving'}
             </button>
             <button onClick={() => { setShowForm(false); setEditingId(null); setForm(defaultForm) }}
@@ -239,7 +239,7 @@ export default function GoalsPage() {
             </div>
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={logDeposit} className="flex-1 bg-[rgb(232,120,90)] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[rgb(212,100,72)]">Add it</button>
+            <button onClick={logDeposit} className="flex-1 bg-[rgb(var(--l-green))] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[rgb(var(--l-green))]">Add it</button>
             <button onClick={() => setDepositGoal(null)}
               className="px-5 py-2.5 rounded-xl text-sm text-ink/60 border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5">Cancel</button>
           </div>
