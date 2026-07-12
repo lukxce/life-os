@@ -81,7 +81,7 @@ export default function JournalPage() {
               <p className="text-sm font-medium text-gray-500">No reflection questions yet</p>
               <p className="text-xs mt-1 text-gray-400">Add questions in settings to get started.</p>
               <Link href="/journal/settings"
-                className="mt-4 inline-block px-5 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-semibold hover:bg-amber-600 transition-colors">
+                className="mt-4 inline-block px-5 py-2.5 bg-ldg-green text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-colors">
                 Add questions
               </Link>
             </div>
@@ -104,7 +104,7 @@ export default function JournalPage() {
               <button onClick={saveAnswers}
                 className={cn(
                   'w-full py-3 rounded-xl text-sm font-semibold transition-colors',
-                  saved ? 'bg-green-500 text-white' : 'bg-amber-500 text-white hover:bg-amber-600',
+                  saved ? 'bg-green-500 text-white' : 'bg-ldg-green text-white hover:opacity-90',
                 )}>
                 {saved ? '✓ Saved' : 'Save reflection'}
               </button>

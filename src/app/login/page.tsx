@@ -139,10 +139,10 @@ function LoginForm() {
         <button
           onClick={() => submit(pin)}
           disabled={pin.length < 4 || loading}
-          className="w-full h-14 rounded-2xl font-semibold text-base transition-all active:scale-95 disabled:opacity-30 bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-2"
+          className="w-full h-14 rounded-2xl font-semibold text-base transition-all active:scale-95 disabled:opacity-30 bg-ldg-green hover:opacity-90 text-white flex items-center justify-center gap-2"
         >
           {loading
-            ? <><div className="w-4 h-4 border-2 border-indigo-300 border-t-white rounded-full animate-spin" /> Checking…</>
+            ? <><div className="w-4 h-4 border-2 border-ldg-green/40 border-t-white rounded-full animate-spin" /> Checking…</>
             : 'Enter →'
           }
         </button>

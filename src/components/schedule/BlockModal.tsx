@@ -162,7 +162,7 @@ export function BlockModal({ initial, currentDay, onSave, onDelete, onCancel }: 
                 onClick={() => setForm((f) => ({ ...f, frequency: 'weekly' }))}
                 className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors ${
                   form.frequency === 'weekly'
-                    ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                    ? 'bg-ldg-green/10 border-ldg-green/30 text-ldg-green'
                     : 'border-gray-200 text-gray-500 hover:bg-gray-50'
                 }`}
               >
@@ -173,7 +173,7 @@ export function BlockModal({ initial, currentDay, onSave, onDelete, onCancel }: 
                 onClick={() => setForm((f) => ({ ...f, frequency: 'biweekly' }))}
                 className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors ${
                   form.frequency === 'biweekly'
-                    ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                    ? 'bg-ldg-green/10 border-ldg-green/30 text-ldg-green'
                     : 'border-gray-200 text-gray-500 hover:bg-gray-50'
                 }`}
               >

@@ -98,7 +98,7 @@ export function QuickAddSheet({ onClose, onCreated }: Props) {
                 className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border-2 border-black/5 dark:border-white/5 hover:border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
               >
                 <span className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
-                  <Dumbbell size={22} className="text-indigo-600 dark:text-indigo-400" />
+                  <Dumbbell size={22} className="text-ldg-green" />
                 </span>
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Habit</span>
               </button>

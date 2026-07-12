@@ -23,7 +23,7 @@ export function ReentryModal({ onClose }: Props) {
       <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl w-full max-w-sm p-6 shadow-xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Plane size={18} className="text-indigo-500" />
+            <Plane size={18} className="text-ldg-green" />
             <span className="font-semibold text-sm">Back from a trip</span>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400">

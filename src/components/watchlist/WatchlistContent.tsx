@@ -45,7 +45,7 @@ interface SearchResult {
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const STATUS_CFG = {
-  want_to:   { label: 'Want to',  bgItem: 'bg-indigo-500',  ring: 'ring-indigo-400',  badge: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
+  want_to:   { label: 'Want to',  bgItem: 'bg-ldg-green',  ring: 'ring-ldg-green/40',  badge: 'bg-ldg-green/10 text-ldg-green' },
   currently: { label: 'Watching', bgItem: 'bg-amber-500',   ring: 'ring-amber-400',   badge: 'bg-amber-100  text-amber-700  dark:bg-amber-900/40  dark:text-amber-300'  },
   finished:  { label: 'Finished', bgItem: 'bg-emerald-500', ring: 'ring-emerald-400', badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
   loved_it:  { label: 'Loved it', bgItem: 'bg-rose-500',    ring: 'ring-rose-400',    badge: 'bg-rose-100   text-rose-700   dark:bg-rose-900/40   dark:text-rose-300'   },
@@ -59,13 +59,13 @@ const STATUS_LABEL_BY_TYPE: Record<string, Record<string, string>> = {
 
 const STREAMING_COLORS: Record<string, string> = {
   Netflix:        'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-  'HBO Max':      'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-  Max:            'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-  'Disney+':      'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  'HBO Max':      'bg-ldg-ink/[0.06] text-ldg-ink/55',
+  Max:            'bg-ldg-ink/[0.06] text-ldg-ink/55',
+  'Disney+':      'bg-ldg-ink/[0.06] text-ldg-ink/55',
   'Apple TV+':    'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
   'Amazon Prime': 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
   'Prime Video':  'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
-  'Paramount+':   'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  'Paramount+':   'bg-ldg-ink/[0.06] text-ldg-ink/55',
 }
 function streamingColor(name: string) {
   return STREAMING_COLORS[name] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
@@ -473,7 +473,7 @@ function DetailSheet({ item, onClose, onUpdated, onDeleted }: {
                 {item.overview}
               </p>
               {item.overview.length > 180 && (
-                <button onClick={() => setExpanded(!expanded)} className="text-xs text-indigo-500 mt-0.5">
+                <button onClick={() => setExpanded(!expanded)} className="text-xs text-ldg-green mt-0.5">
                   {expanded ? 'Show less' : 'Show more'}
                 </button>
               )}

@@ -65,7 +65,7 @@ export default function JournalSettingsPage() {
           <button
             onClick={add}
             disabled={!newQ.trim() || saving}
-            className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 shrink-0"
+            className="px-4 py-2.5 bg-ldg-green hover:opacity-90 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 shrink-0"
           >
             <Plus size={16} />
           </button>

@@ -45,7 +45,7 @@ function statusFor(doc: AdminDocument): { label: string; color: string; bg: stri
   const days = daysUntil(doc.expiryDate)
   if (days === null) return { label: 'No expiry', color: 'text-gray-400', bg: 'bg-gray-50 dark:bg-gray-800', icon: <Clock size={14} className="text-gray-400" /> }
   if (days < 0)    return { label: `Expired ${Math.abs(days)}d ago`, color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/20', icon: <AlertTriangle size={14} className="text-red-500" /> }
-  if (days <= doc.reminderDays) return { label: `Expires in ${days}d`, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', icon: <AlertTriangle size={14} className="text-amber-500" /> }
+  if (days <= doc.reminderDays) return { label: `Expires in ${days}d`, color: 'text-ldg-urgent', bg: 'bg-ldg-urgent/[0.08]', icon: <AlertTriangle size={14} className="text-ldg-urgent" /> }
   return { label: `Expires in ${days}d`, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20', icon: <CheckCircle size={14} className="text-green-500" /> }
 }
 
@@ -108,7 +108,7 @@ function DocModal({ doc, onClose, onSave }: { doc?: AdminDocument; onClose: () =
           <button
             disabled={!form.name.trim()}
             onClick={() => { if (form.name.trim()) { onSave({ ...form, reminderDays: parseInt(form.reminderDays) || 30, expiryDate: form.expiryDate || null, notes: form.notes || null }); onClose() } }}
-            className="flex-1 py-3 rounded-xl bg-indigo-600 text-sm font-semibold text-white disabled:opacity-40">
+            className="flex-1 py-3 rounded-xl bg-ldg-green text-sm font-semibold text-white disabled:opacity-40">
             Save
           </button>
         </div>
@@ -170,7 +170,7 @@ export default function DocumentsPage() {
           <p className="text-sm text-gray-400 mt-0.5">Expiry dates & renewals · {urgent.length} need attention</p>
         </div>
         <button onClick={() => setModal({ mode: 'add' })}
-          className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold">
+          className="flex items-center gap-1.5 px-4 py-2 bg-ldg-green text-white rounded-xl text-sm font-semibold">
           <Plus size={16} /> Add
         </button>
       </div>
@@ -180,13 +180,13 @@ export default function DocumentsPage() {
           <div className="text-5xl mb-3">🗂️</div>
           <p className="text-sm font-medium text-gray-600 dark:text-gray-300">No documents yet</p>
           <p className="text-xs text-gray-400 mt-1">Track passport, insurance, car registration — anything with an expiry date.</p>
-          <button onClick={() => setModal({ mode: 'add' })} className="mt-4 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold">Add first document</button>
+          <button onClick={() => setModal({ mode: 'add' })} className="mt-4 px-5 py-2.5 bg-ldg-green text-white rounded-xl text-sm font-semibold">Add first document</button>
         </div>
       )}
 
       {urgent.length > 0 && (
         <section>
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-amber-500 mb-3">Needs attention</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-ldg-urgent mb-3">Needs attention</h2>
           <div className="space-y-2">
             {urgent.map(doc => {
               const status = statusFor(doc)
@@ -202,7 +202,7 @@ export default function DocumentsPage() {
                     {doc.notes && <p className="text-xs text-gray-400 mt-0.5 truncate">{doc.notes}</p>}
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <button onClick={() => setModal({ mode: 'edit', doc })} className="p-1.5 text-gray-400 hover:text-indigo-500"><Pencil size={14} /></button>
+                    <button onClick={() => setModal({ mode: 'edit', doc })} className="p-1.5 text-gray-400 hover:text-ldg-green"><Pencil size={14} /></button>
                     <button onClick={() => del(doc.id)} className="p-1.5 text-gray-400 hover:text-red-400"><Trash2 size={14} /></button>
                   </div>
                 </div>
@@ -231,7 +231,7 @@ export default function DocumentsPage() {
                     {doc.notes && <p className="text-xs text-gray-400 mt-0.5 truncate">{doc.notes}</p>}
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <button onClick={() => setModal({ mode: 'edit', doc })} className="p-1.5 text-gray-400 hover:text-indigo-500"><Pencil size={14} /></button>
+                    <button onClick={() => setModal({ mode: 'edit', doc })} className="p-1.5 text-gray-400 hover:text-ldg-green"><Pencil size={14} /></button>
                     <button onClick={() => del(doc.id)} className="p-1.5 text-gray-400 hover:text-red-400"><Trash2 size={14} /></button>
                   </div>
                 </div>

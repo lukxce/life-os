@@ -262,7 +262,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
               <button
                 onClick={() => photoInputRef.current?.click()}
                 disabled={uploadingPhoto}
-                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-black/10 dark:border-white/10 rounded-xl py-4 text-sm text-gray-400 hover:border-orange-400 hover:text-orange-400 transition-colors disabled:opacity-50">
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-black/10 dark:border-white/10 rounded-xl py-4 text-sm text-gray-400 hover:border-ldg-green hover:text-ldg-green transition-colors disabled:opacity-50">
                 {uploadingPhoto ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
                 {uploadingPhoto ? 'Uploading…' : 'Add a photo'}
               </button>
@@ -270,7 +270,7 @@ export function PlaceFormSheet({ place, onClose, onSaved }: Props) {
           </div>
 
           <button onClick={save} disabled={saving || !form.name.trim() || !form.latitude}
-            className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-2xl disabled:opacity-50 transition-colors">
+            className="w-full py-3 bg-ldg-green hover:opacity-90 text-white font-semibold rounded-2xl disabled:opacity-50 transition-colors">
             {saving ? 'Saving…' : place ? 'Save changes' : 'Add place'}
           </button>
         </div>

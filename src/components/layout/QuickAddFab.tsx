@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Plus, X, TrendingUp, ShoppingCart, ArrowLeftRight, ScanLine } from 'lucide-react'
 
 const actions = [
-  { label: 'Scan Receipt', icon: ScanLine,      href: '/scan',             color: 'bg-blue-500' },
+  { label: 'Scan Receipt', icon: ScanLine,      href: '/scan',             color: 'bg-ldg-green' },
   { label: 'Add Expense',  icon: ShoppingCart,  href: '/expenses/personal?open=1', color: 'bg-red-500' },
   { label: 'Add Income',   icon: TrendingUp,    href: '/income',            color: 'bg-green-500' },
   { label: 'Transfer',     icon: ArrowLeftRight, href: '/transfers',        color: 'bg-teal-500' },
@@ -41,7 +41,7 @@ export function QuickAddFab() {
         )
       })}
       <button onClick={() => setOpen(o => !o)}
-        className="w-14 h-14 bg-blue-600 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-blue-700 transition-colors">
+        className="w-14 h-14 bg-ldg-green text-white rounded-full shadow-xl flex items-center justify-center hover:opacity-90 transition-colors">
         {open ? <X size={22} /> : <Plus size={24} />}
       </button>
     </div>

@@ -49,7 +49,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     >
       {(pulling || refreshing) && (
         <div className="flex justify-center pt-2 pb-1" style={{ marginTop: pulling ? pullY - 40 : 0 }}>
-          <RefreshCw size={20} className={`text-blue-500 ${refreshing ? 'animate-spin' : ''}`}
+          <RefreshCw size={20} className={`text-ldg-green ${refreshing ? 'animate-spin' : ''}`}
             style={{ transform: pulling ? `rotate(${(pullY / threshold) * 360}deg)` : undefined }} />
         </div>
       )}

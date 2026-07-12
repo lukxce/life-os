@@ -71,7 +71,7 @@ function PreviewInner() {
           </p>
         </div>
         <Link href="/food"
-          className="text-xs font-semibold px-3 py-1.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors">
+          className="text-xs font-semibold px-3 py-1.5 bg-ldg-green text-white rounded-xl hover:opacity-90 transition-colors">
           Open map
         </Link>
       </div>

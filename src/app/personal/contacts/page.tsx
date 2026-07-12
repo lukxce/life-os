@@ -64,14 +64,14 @@ function ContactCard({ contact, onMarkContacted, onEdit, onDelete }: {
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{contact.name}</p>
             {birthday && birthday.days <= 14 && (
-              <span className="text-xs bg-pink-50 dark:bg-pink-900/30 text-pink-500 rounded-full px-2 py-0.5 shrink-0">
+              <span className="text-xs bg-ldg-ink/[0.06] text-ldg-ink/55 rounded-full px-2 py-0.5 shrink-0">
                 🎂 {birthday.days === 0 ? 'Today!' : `${birthday.days}d`}
               </span>
             )}
             {contact.linkedinUrl && (
               <a href={contact.linkedinUrl} target="_blank" rel="noopener noreferrer"
                 onClick={e => e.stopPropagation()}
-                className="text-blue-500 hover:text-blue-700 shrink-0" title="LinkedIn">
+                className="text-ldg-ink/55 hover:text-ldg-green shrink-0" title="LinkedIn">
                 <Linkedin size={13} />
               </a>
             )}
@@ -88,7 +88,7 @@ function ContactCard({ contact, onMarkContacted, onEdit, onDelete }: {
             title="Mark as contacted today">
             <Phone size={12} /> Done
           </button>
-          <button onClick={onEdit} className="p-1.5 rounded-xl text-gray-400 hover:text-indigo-500 transition-colors">
+          <button onClick={onEdit} className="p-1.5 rounded-xl text-gray-400 hover:text-ldg-green transition-colors">
             <Pencil size={14} />
           </button>
           <button onClick={onDelete} className="p-1.5 rounded-xl text-gray-400 hover:text-red-400 transition-colors">
@@ -133,7 +133,7 @@ function ContactModal({ contact, onClose, onSave }: {
           <div className="flex flex-wrap gap-2">
             {EMOJIS.map(e => (
               <button key={e} onClick={() => setEmoji(e)}
-                className={cn('w-9 h-9 rounded-xl text-lg flex items-center justify-center', emoji === e ? 'ring-2 ring-indigo-500 bg-indigo-50 dark:bg-indigo-900/30' : 'bg-gray-100 dark:bg-gray-800')}>
+                className={cn('w-9 h-9 rounded-xl text-lg flex items-center justify-center', emoji === e ? 'ring-2 ring-ldg-green bg-ldg-green/10' : 'bg-gray-100 dark:bg-gray-800')}>
                 {e}
               </button>
             ))}
@@ -184,7 +184,7 @@ function ContactModal({ contact, onClose, onSave }: {
           <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-400">Cancel</button>
           <button
             onClick={() => { if (name.trim()) { onSave({ name: name.trim(), emoji, color, birthday: birthday || null, reachOutFrequency: freq, note: note || null, linkedinUrl: linkedin || null }); onClose() } }}
-            className="flex-1 py-3 rounded-xl bg-indigo-600 text-sm font-semibold text-white">
+            className="flex-1 py-3 rounded-xl bg-ldg-green text-sm font-semibold text-white">
             Save
           </button>
         </div>
@@ -253,7 +253,7 @@ export default function ContactsPage() {
           <p className="text-sm text-gray-400 mt-0.5">VIP people · {overdue.length} need attention</p>
         </div>
         <button onClick={() => setModal({ mode: 'add' })}
-          className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold">
+          className="flex items-center gap-1.5 px-4 py-2 bg-ldg-green text-white rounded-xl text-sm font-semibold">
           <Plus size={16} /> Add
         </button>
       </div>
@@ -262,7 +262,7 @@ export default function ContactsPage() {
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input type="text" placeholder="Search…" value={searchText} onChange={e => setSearchText(e.target.value)}
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-black/10 dark:border-white/10 rounded-2xl pl-8 pr-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:text-white" />
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-black/10 dark:border-white/10 rounded-2xl pl-8 pr-3 py-2.5 text-sm outline-none focus:border-ldg-green dark:text-white" />
           {searchText && (
             <button onClick={() => setSearchText('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><X size={13} /></button>
           )}
@@ -274,7 +274,7 @@ export default function ContactsPage() {
           <div className="text-4xl mb-3">👥</div>
           <p className="text-sm font-medium text-gray-500">No contacts yet</p>
           <p className="text-xs mt-1 text-gray-400">Add the people who matter — get nudged when it's time to reach out.</p>
-          <button onClick={() => setModal({ mode: 'add' })} className="mt-4 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold">Add first contact</button>
+          <button onClick={() => setModal({ mode: 'add' })} className="mt-4 px-5 py-2.5 bg-ldg-green text-white rounded-xl text-sm font-semibold">Add first contact</button>
         </div>
       )}
 

@@ -120,7 +120,7 @@ export default function FoodListPage() {
               className={cn('flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl font-medium transition-colors border',
                 copied
                   ? 'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400'
-                  : 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400 hover:bg-orange-100')}>
+                  : 'bg-ldg-green/10 text-ldg-green border-ldg-green/30 hover:bg-ldg-green/20')}>
               {copied ? <Check size={11} /> : <Share2 size={11} />}
               {copied ? 'Copied!' : `Share ${filterCity} guide`}
             </button>

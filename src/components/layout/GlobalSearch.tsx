@@ -113,7 +113,7 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
             placeholder="Search habits, goals, expenses, places…"
             className="flex-1 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 outline-none"
           />
-          {loading && <Loader2 size={14} className="animate-spin text-blue-500 shrink-0" />}
+          {loading && <Loader2 size={14} className="animate-spin text-ldg-green shrink-0" />}
           <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5">
             <X size={16} />
           </button>
@@ -122,9 +122,9 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
         {/* Module pills */}
         <div className="flex gap-2 px-4 py-2 border-b border-black/5 dark:border-white/5 bg-gray-50 dark:bg-gray-800/50">
           {[
-            { label: '💰 Finance', color: 'text-blue-600 dark:text-blue-400' },
-            { label: '🌿 Life',    color: 'text-indigo-600 dark:text-indigo-400' },
-            { label: '🍽 Food',   color: 'text-orange-600 dark:text-orange-400' },
+            { label: '💰 Finance', color: 'text-ldg-green' },
+            { label: '🌿 Life',    color: 'text-ldg-green' },
+            { label: '🍽 Food',   color: 'text-ldg-green' },
           ].map(m => (
             <span key={m.label} className={cn('text-xs font-medium', m.color)}>{m.label}</span>
           ))}
@@ -176,11 +176,11 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
               {results.finance.subscriptions.length > 0 && (
                 <Section label="Subscriptions">
                   {results.finance.subscriptions.map((s: any) => (
-                    <ResultItem key={s.id} icon={<CreditCard size={13} className="text-blue-500" />}
+                    <ResultItem key={s.id} icon={<CreditCard size={13} className="text-ldg-green" />}
                       title={s.name}
                       sub={s.category ?? 'Subscription'}
                       right={`${s.billingAmount} ${s.billingCurrency}/mo`}
-                      rightColor="text-blue-600 dark:text-blue-400"
+                      rightColor="text-ldg-green"
                       onClick={() => go('/finance/subscriptions')} />
                   ))}
                 </Section>
@@ -203,7 +203,7 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
               {results.life.habits.length > 0 && (
                 <Section label="Habits">
                   {results.life.habits.map((h: any) => (
-                    <ResultItem key={h.id} icon={<Dumbbell size={13} className="text-indigo-500" />}
+                    <ResultItem key={h.id} icon={<Dumbbell size={13} className="text-ldg-green" />}
                       title={h.name}
                       sub={`${h.category} · ${h.frequency}`}
                       badge={!h.active ? 'Inactive' : h.paused ? 'Paused' : undefined}
@@ -266,7 +266,7 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
                       title={p.name}
                       sub={[p.city, p.cuisine].filter(Boolean).join(' · ')}
                       right={p.myRating != null ? `${p.myRating}/10` : undefined}
-                      rightColor="text-orange-600 dark:text-orange-400"
+                      rightColor="text-ldg-green"
                       onClick={() => go('/food/list')} />
                   ))}
                 </Section>

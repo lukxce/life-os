@@ -47,7 +47,7 @@ function AddCalendarModal({ onClose, onAdd }: { onClose: () => void; onAdd: (dat
           <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-canvas-alt dark:bg-surface text-sm font-medium text-ink/70">Cancel</button>
           <button
             onClick={() => { if (name.trim() && url.trim()) { onAdd({ name: name.trim(), url: url.trim(), color }); onClose() } }}
-            className="flex-1 py-3 rounded-xl bg-indigo-600 text-sm font-semibold text-white disabled:opacity-50"
+            className="flex-1 py-3 rounded-xl bg-ldg-green text-sm font-semibold text-white disabled:opacity-50"
             disabled={!name.trim() || !url.trim()}
           >Add</button>
         </div>
@@ -173,7 +173,7 @@ export default function ScheduleSettingsPage() {
               disabled={savingSettings}
               className={cn(
                 'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors',
-                settingsSaved ? 'bg-green-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50'
+                settingsSaved ? 'bg-green-500 text-white' : 'bg-ldg-green hover:opacity-90 text-white disabled:opacity-50'
               )}
             >
               {settingsSaved ? <><Check size={14} /> Saved</> : 'Save'}
@@ -185,7 +185,7 @@ export default function ScheduleSettingsPage() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">Connected calendars</h2>
-            <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-semibold">
+            <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-ldg-green text-white rounded-xl text-xs font-semibold">
               <Plus size={13} /> Add
             </button>
           </div>
@@ -196,7 +196,7 @@ export default function ScheduleSettingsPage() {
             <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 p-6 text-center">
               <p className="text-sm text-gray-500">No calendars connected yet</p>
               <p className="text-xs text-gray-400 mt-1">Connect Google Calendar or Outlook to see events alongside your schedule.</p>
-              <button onClick={() => setShowAdd(true)} className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold">Connect calendar</button>
+              <button onClick={() => setShowAdd(true)} className="mt-3 px-4 py-2 bg-ldg-green text-white rounded-xl text-sm font-semibold">Connect calendar</button>
             </div>
           ) : (
             <div className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 divide-y divide-black/5 dark:divide-white/5 overflow-hidden">
@@ -217,7 +217,7 @@ export default function ScheduleSettingsPage() {
                       <button
                         onClick={() => testCalendar(cal)}
                         disabled={refreshing === cal.id}
-                        className="p-1.5 rounded-xl text-gray-400 hover:text-indigo-500 transition-colors disabled:opacity-50"
+                        className="p-1.5 rounded-xl text-gray-400 hover:text-ldg-green transition-colors disabled:opacity-50"
                         title="Test connection"
                       >
                         <RefreshCw size={14} className={refreshing === cal.id ? 'animate-spin' : ''} />

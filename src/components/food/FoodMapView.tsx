@@ -193,7 +193,7 @@ export function FoodMapView({ places, onReload }: Props) {
 
       {/* FAB — always visible */}
       <button onClick={() => { setSelected(null); setEditing(null) }}
-        className="absolute bottom-24 md:bottom-6 right-4 md:right-6 z-10 w-14 h-14 bg-orange-500 text-white rounded-full shadow-xl shadow-orange-500/30 flex items-center justify-center hover:bg-orange-600 active:scale-95 transition-all">
+        className="absolute bottom-24 md:bottom-6 right-4 md:right-6 z-10 w-14 h-14 bg-ldg-green text-white rounded-full shadow-xl shadow-ldg-green/20 flex items-center justify-center hover:opacity-90 active:scale-95 transition-all">
         <Plus size={24} />
       </button>
 
