@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { cn, formatEUR, formatRSD } from '@/lib/utils'
 import { Mascot } from '@/components/ui/Mascot'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
-import { useHomeData, toLocalDateStr } from '../useHomeData'
+import { useHomeData, toLocalDateStr } from '@/hooks/useHomeData'
 import { Check, Camera, Receipt, CalendarDays, Droplets, Flame, FileText, Plus, X, Moon, Sun, ChevronDown } from 'lucide-react'
 
 // ── LEDGER v4 — cool neutrals, dark mode, fixed chrome, reachable actions ─────

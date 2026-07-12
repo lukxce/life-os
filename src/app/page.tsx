@@ -1,954 +1,405 @@
 'use client'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { useEffect, useState, useCallback } from 'react'
-import { toast } from 'sonner'
+import { useState } from 'react'
 import { cn, formatEUR, formatRSD } from '@/lib/utils'
-import { ThemeToggle } from '@/components/layout/ThemeToggle'
-import { GlobalSearch } from '@/components/layout/GlobalSearch'
-import { ModuleDock } from '@/components/layout/ModuleDock'
-import { Ambient } from '@/components/layout/AppShell'
-import { Mascot, MascotMood } from '@/components/ui/Mascot'
+import { Mascot } from '@/components/ui/Mascot'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { AppHeader, AppHeaderSpacer } from '@/components/ledger/AppHeader'
+import { QuickFab } from '@/components/ledger/QuickFab'
+import { QuickAction } from '@/components/ledger/QuickMenu'
+import { Card, Label, SolidBtn, GhostBtn } from '@/components/ledger/primitives'
+import { useHomeData, toLocalDateStr } from '@/hooks/useHomeData'
 import {
-  FileText, ChevronRight, Wallet, Sparkles, Flame,
-  Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
-  Users, Utensils, Dumbbell as WorkoutIcon, Check, X, Camera, Receipt, Plus, Droplets, Zap,
-  ListChecks, ChevronDown,
+  Check, ChevronDown, CalendarDays, Droplets, Flame, FileText,
+  Camera, Receipt,
 } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
   () => import('@/components/food/FoodMapPreview').then(m => m.FoodMapPreview),
-  { ssr: false, loading: () => <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-3xl animate-pulse" /> }
+  { ssr: false, loading: () => <div className="h-64 bg-ldg-ink/[0.04] rounded-2xl animate-pulse" /> }
 )
 
-interface DashboardData {
-  finance: { upcomingBills: { id: string; name: string; amount: number; currency: string; dayOfMonth: number }[] }
-  life: { habitsScheduledToday: number; habitsCompletedToday: number }
-}
-interface RightNowItem {
-  id: string; kind: 'meeting' | 'meal' | 'habit' | 'training'; title: string; detail: string; href: string
-  habits?: { id: string; name: string }[]
-  mealAsk?: { mealType: string; date: string }
-}
-interface RightNow {
-  top: RightNowItem | null; upcomingCalendar: RightNowItem[]; timeOfDay: string; mood: MascotMood
-  todayCalendarEvents: TodayCalendarRow[]
-}
-interface DayScore { date: string; score: number; completed: number; total: number }
-interface DayScores { days: DayScore[]; bestStreak: { name: string; icon: string | null; count: number } }
-interface AccountRow { id: string; name: string; currency: string; currentBalance: number; pinned: boolean }
-interface AgendaItem { id: string; time: string; minutes: number; title: string; color: string }
-interface TodayCalendarRow { id: string; time: string; minutes: number; title: string; color: string }
-interface DailyTaskRow { id: string; text: string; completed: boolean; priority: boolean }
-interface WaterLogRow { id: string; drink: string; volumeMl: number }
-interface CatchUp {
-  pendingHabits: { id: string; name: string }[]
-  unloggedMeals: { mealType: string; plannedName: string }[]
-  expensesToday: number
-  noExpenses: boolean
-}
-
-const KIND_ICON: Record<string, any> = { meeting: Users, meal: Utensils, habit: Sparkles, training: WorkoutIcon }
-const KIND_TINT: Record<string, string> = {
-  habit:    'bg-[rgb(167,120,160)]/[0.08] border-[rgb(167,120,160)]/20',
-  meal:     'bg-[rgb(220,161,84)]/[0.08] border-[rgb(220,161,84)]/20',
-  training: 'bg-[rgb(220,161,84)]/[0.08] border-[rgb(220,161,84)]/20',
-  meeting:  'bg-[rgb(217,138,148)]/[0.08] border-[rgb(217,138,148)]/20',
-  default:  'bg-surface/90 border-black/5 dark:border-white/5',
-}
-const KIND_ACCENT: Record<string, string> = {
-  habit: 'rgb(167,120,160)', meal: 'rgb(220,161,84)', training: 'rgb(220,161,84)', meeting: 'rgb(217,138,148)',
-}
-
-const QUICK_ACTIONS = [
-  { href: '/finance/scan', icon: Camera, label: 'Scan receipt', tint: 'bg-[rgb(232,120,90)]/10 text-[rgb(232,120,90)]' },
-  { href: '/finance/expenses/personal', icon: Receipt, label: 'Add expense', tint: 'bg-[rgb(220,161,84)]/10 text-[rgb(220,161,84)]' },
-  { href: '/schedule', icon: CalendarDays, label: 'My schedule', tint: 'bg-[rgb(167,120,160)]/10 text-[rgb(167,120,160)]' },
-]
-
-const MODULES = [
-  { href: '/finance',   icon: Wallet,       title: 'Finance',   gradient: 'from-[rgb(232,120,90)] to-[rgb(220,161,84)]' },
-  { href: '/life',      icon: Sparkles,     title: 'Habits',    gradient: 'from-[rgb(167,120,160)] to-[rgb(217,138,148)]' },
-  { href: '/fitness',   icon: Dumbbell,     title: 'Fitness',   gradient: 'from-[rgb(220,161,84)] to-[rgb(232,120,90)]' },
-  { href: '/schedule',  icon: CalendarDays, title: 'Schedule',  gradient: 'from-[rgb(217,138,148)] to-[rgb(167,120,160)]' },
-  { href: '/journal',   icon: BookOpen,     title: 'Journal',   gradient: 'from-[rgb(220,161,84)] to-[rgb(217,138,148)]' },
-  { href: '/food',      icon: MapPin,       title: 'Food Map',  gradient: 'from-[rgb(232,120,90)] to-[rgb(217,138,148)]' },
-  { href: '/personal',  icon: FolderLock,   title: 'Personal',  gradient: 'from-[rgb(167,120,160)] to-[rgb(220,161,84)]' },
-  { href: '/watchlist', icon: Clapperboard, title: 'Watchlist', gradient: 'from-[rgb(217,138,148)] to-[rgb(232,120,90)]' },
+// Home has no ModuleConfig (it isn't a module), so its quick actions are
+// defined locally — same shape as every module's own action list
+const HOME_ACTIONS: QuickAction[] = [
+  { label: 'Scan receipt', icon: Camera, href: '/finance/scan' },
+  { label: 'Add expense', icon: Receipt, href: '/finance/expenses/personal' },
+  { label: 'My schedule', icon: CalendarDays, href: '/schedule' },
 ]
 
 function greeting(h: number) {
-  if (h < 5) return 'Still up?'
+  if (h < 5) return 'Still up'
   if (h < 12) return 'Good morning'
   if (h < 18) return 'Good afternoon'
   if (h < 22) return 'Good evening'
   return 'Late one'
 }
-function timeOfDayGlow(h: number): string {
-  if (h < 6 || h >= 21) return '120 100 140'
-  if (h < 10) return '232 150 100'
-  if (h < 17) return '220 161 84'
-  return '217 120 130'
-}
-function toLocalDateStr(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-// fetch() only rejects on a network failure — an HTTP error response still
-// resolves fine and r.json() will happily parse its error body. Without this
-// check, a failed request sets state to something like {error: "..."} as if
-// it were real data, and the next .filter()/.map() on it throws a real
-// TypeError — this is what an "Application error: client-side exception"
-// on this page has actually been.
-async function safeJson<T>(res: Response): Promise<T> {
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
-  return res.json()
-}
-
-/** Real per-day completion states — the border ring fills 0→100% with the day's progress */
-function StreakStrip({ days }: { days: DayScore[] }) {
-  const today = toLocalDateStr(new Date())
-  return (
-    <div>
-      <div className="flex items-center gap-1.5 md:gap-3">
-        {days.map(d => {
-          const isToday = d.date === today
-          const label = new Date(d.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })
-          const nothingScheduled = d.total === 0
-          const full = d.total > 0 && d.completed === d.total
-          const pct = d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0
-          // Today isn't "missed" just because it's not done yet — the day isn't over
-          const showFraction = d.total > 0 && !full && (isToday || d.completed > 0)
-
-          let inner: React.ReactNode = null
-          if (nothingScheduled) inner = isToday ? <span className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-[rgb(var(--coral))]" /> : null
-          else if (full) inner = '🔥'
-          else if (showFraction) inner = <span className="text-[9px] md:text-xs font-bold text-ink">{d.completed}/{d.total}</span>
-          else inner = (
-            <>
-              <X size={13} strokeWidth={2.5} className="text-ink/25 md:hidden" />
-              <X size={17} strokeWidth={2.5} className="hidden md:block text-ink/25" />
-            </>
-          )
-
-          // The border IS the progress: a conic ring that fills 0→100% with
-          // completion, drawn around a flat surface-colored center. Today's
-          // ring is coral on a faint coral track (so "today" stays obvious
-          // even at 0%); past days are amber on the neutral track.
-          const ringFill = isToday ? 'rgb(var(--coral))' : 'rgb(220,161,84)'
-          const ringTrack = isToday ? 'rgb(var(--coral) / 0.18)' : 'rgb(var(--canvas-alt))'
-          return (
-            <div key={d.date} className="flex flex-col items-center gap-1 md:gap-1.5">
-              <span className={cn('text-[9px] md:text-xs font-bold uppercase', isToday ? 'text-[rgb(var(--coral))]' : 'text-ink/30')}>{label}</span>
-              <div
-                className="w-8 h-8 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all"
-                style={!nothingScheduled ? { background: `conic-gradient(${ringFill} ${pct}%, ${ringTrack} 0)` } : undefined}
-              >
-                <span className={cn('flex items-center justify-center text-sm md:text-base',
-                  !nothingScheduled && 'w-[26px] h-[26px] md:w-[36px] md:h-[36px] rounded-full bg-surface')}>
-                  {inner}
-                </span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      <div className="flex items-center gap-3 mt-2 px-0.5 text-[9px] font-medium text-ink/35">
-        <span>🔥 all done</span>
-        <span>ring fills as you complete</span>
-        <span className="flex items-center gap-0.5"><X size={9} strokeWidth={2.5} /> none done</span>
-      </div>
-    </div>
-  )
-}
 
 export default function HomePage() {
-  const [data, setData] = useState<DashboardData | null>(null)
-  const [rightNow, setRightNow] = useState<RightNow | null>(null)
-  const [dayScores, setDayScores] = useState<DayScores | null>(null)
-  const [agenda, setAgenda] = useState<AgendaItem[] | null>(null)
-  const [accounts, setAccounts] = useState<AccountRow[] | null>(null)
-  const [justDone, setJustDone] = useState<Set<string>>(new Set())
-  const [removed, setRemoved] = useState<Set<string>>(new Set())
-  const [mealAnswer, setMealAnswer] = useState('')
-  const [mealAnswered, setMealAnswered] = useState<Set<string>>(new Set())
-  const [quickOpen, setQuickOpen] = useState(false)
-  const [todayTasks, setTodayTasks] = useState<DailyTaskRow[] | null>(null)
-  const [tomorrowTasks, setTomorrowTasks] = useState<DailyTaskRow[] | null>(null)
-  const [taskStreak, setTaskStreak] = useState(0)
-  const [newTodayTask, setNewTodayTask] = useState('')
-  const [newTomorrowTask, setNewTomorrowTask] = useState('')
-  const [taskJustDone, setTaskJustDone] = useState<Set<string>>(new Set())
-  const [taskRemoved, setTaskRemoved] = useState<Set<string>>(new Set())
-  const [waterLogs, setWaterLogs] = useState<WaterLogRow[] | null>(null)
-  const [catchUp, setCatchUp] = useState<CatchUp | null>(null)
-  const [catchHabitsOpen, setCatchHabitsOpen] = useState(false)
-  const [catchDone, setCatchDone] = useState<Set<string>>(new Set())
-  const [catchMealType, setCatchMealType] = useState<string | null>(null)
-  const [catchMealText, setCatchMealText] = useState('')
-  const [loggingOtherDrink, setLoggingOtherDrink] = useState(false)
-  const [otherDrinkName, setOtherDrinkName] = useState('')
-  const [otherDrinkMl, setOtherDrinkMl] = useState('')
-  const [name, setName] = useState('')
-  const [displayNow] = useState(() => new Date())
-  const hour = displayNow.getHours()
-  const nowMin = hour * 60 + displayNow.getMinutes()
-  const dateStr = displayNow.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
-  const todayStr = toLocalDateStr(displayNow)
-  const tomorrowStr = toLocalDateStr(new Date(displayNow.getFullYear(), displayNow.getMonth(), displayNow.getDate() + 1))
+  const d = useHomeData()
+  const [newTask, setNewTask] = useState('')
+  const [newTomorrow, setNewTomorrow] = useState('')
+  const [mealText, setMealText] = useState('')
+  const [mealOpen, setMealOpen] = useState<string | null>(null)
+  const [outstandingOpen, setOutstandingOpen] = useState(false)
+  const now = new Date()
+  const today = toLocalDateStr(now)
 
-  const loadRightNow = useCallback(() => {
-    const n = new Date()
-    const p = new URLSearchParams({
-      h: String(n.getHours()), m: String(n.getMinutes()),
-      dow: String(n.getDay()), date: toLocalDateStr(n), ts: String(n.getTime()),
-    })
-    fetch(`/api/right-now?${p}`, { cache: 'no-store' }).then(safeJson<RightNow>).then((rn: RightNow) => {
-      setRightNow(rn)
-      // Today's agenda comes straight off this response — ICS calendars
-      // only, nothing hardcoded/recurring, nothing already passed
-      setAgenda(rn.todayCalendarEvents ?? [])
-    }).catch(() => {})
-  }, [])
-
-  const loadCatchUp = useCallback(() => {
-    const n = new Date()
-    const p = new URLSearchParams({
-      h: String(n.getHours()), m: String(n.getMinutes()), date: toLocalDateStr(n),
-    })
-    fetch(`/api/life/catch-up?${p}`, { cache: 'no-store' }).then(safeJson<CatchUp>).then(setCatchUp).catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    const n = new Date()
-    const p = new URLSearchParams({ day: String(n.getDate()) })
-    fetch(`/api/dashboard?${p}`, { cache: 'no-store' }).then(safeJson<DashboardData>).then(setData).catch(() => {})
-    fetch('/api/life/day-scores?days=7', { cache: 'no-store' }).then(safeJson<DayScores>).then(setDayScores).catch(() => {})
-    loadRightNow()
-    loadCatchUp()
-    setName(localStorage.getItem('userName') ?? '')
-
-    // Real pinned account balances
-    fetch('/api/finance/accounts', { cache: 'no-store' }).then(safeJson<AccountRow[]>).then(setAccounts).catch(() => {})
-
-    // Today/tomorrow tasks, completion streak, and today's water
-    fetch(`/api/life/tasks?date=${todayStr}`, { cache: 'no-store' }).then(safeJson<DailyTaskRow[]>).then(setTodayTasks).catch(() => {})
-    fetch(`/api/life/tasks?date=${tomorrowStr}`, { cache: 'no-store' }).then(safeJson<DailyTaskRow[]>).then(setTomorrowTasks).catch(() => {})
-    fetch(`/api/life/tasks/streak?date=${todayStr}`, { cache: 'no-store' }).then(safeJson<{ streak: number }>).then(d => setTaskStreak(d.streak ?? 0)).catch(() => {})
-    fetch(`/api/life/water?date=${todayStr}`, { cache: 'no-store' }).then(safeJson<WaterLogRow[]>).then(setWaterLogs).catch(() => {})
-
-    const interval = setInterval(loadRightNow, 5 * 60 * 1000)
-    return () => clearInterval(interval)
-  }, [loadRightNow, loadCatchUp, todayStr, tomorrowStr])
-
-  async function toggleHabit(habitId: string) {
-    setJustDone(prev => new Set(prev).add(habitId))
-    setTimeout(() => setRemoved(prev => new Set(prev).add(habitId)), 650)
-    try {
-      const res = await fetch('/api/life/logs', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ habitId, date: toLocalDateStr(new Date()) + 'T12:00:00.000Z', completed: true }),
-      })
-      if (!res.ok) throw new Error()
-      setTimeout(loadRightNow, 700)
-    } catch {
-      toast.error("Couldn't save that — try again")
-      setJustDone(prev => { const n = new Set(prev); n.delete(habitId); return n })
-    }
-  }
-
-  async function submitMeal(itemId: string, ask: { mealType: string; date: string }, description: string | null) {
-    setMealAnswered(prev => new Set(prev).add(itemId))
-    setMealAnswer('')
-    try {
-      const res = await fetch('/api/life/meal-log', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: ask.date, mealType: ask.mealType, description }),
-      })
-      if (!res.ok) throw new Error()
-      setTimeout(loadRightNow, 400)
-    } catch {
-      toast.error("Couldn't save that — try again")
-      setMealAnswered(prev => { const n = new Set(prev); n.delete(itemId); return n })
-    }
-  }
-
-  async function createTask(date: string, text: string): Promise<DailyTaskRow | null> {
-    try {
-      const res = await fetch('/api/life/tasks', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, text }),
-      })
-      if (!res.ok) throw new Error()
-      return await res.json()
-    } catch {
-      toast.error("Couldn't save that — try again")
-      return null
-    }
-  }
-
-  async function addTodayTask() {
-    const text = newTodayTask.trim()
-    if (!text) return
-    setNewTodayTask('')
-    const created = await createTask(todayStr, text)
-    if (created) setTodayTasks(prev => [...(prev ?? []), created])
-  }
-
-  async function addTomorrowTask() {
-    const text = newTomorrowTask.trim()
-    if (!text) return
-    setNewTomorrowTask('')
-    const created = await createTask(tomorrowStr, text)
-    if (created) setTomorrowTasks(prev => [...(prev ?? []), created])
-  }
-
-  // Completing a task doesn't cross it out and leave it there — it strikes
-  // through briefly then vanishes, same feel as the habit checklist. It
-  // just needs to have happened, not be re-seen every time you open Home.
-  async function toggleTask(id: string) {
-    setTaskJustDone(prev => new Set(prev).add(id))
-    setTimeout(() => setTaskRemoved(prev => new Set(prev).add(id)), 650)
-    try {
-      const res = await fetch('/api/life/tasks', {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, completed: true }),
-      })
-      if (!res.ok) throw new Error()
-    } catch {
-      toast.error("Couldn't save that — try again")
-      setTaskJustDone(prev => { const n = new Set(prev); n.delete(id); return n })
-    }
-  }
-
-  async function deleteTask(id: string) {
-    setTaskRemoved(prev => new Set(prev).add(id))
-    try {
-      const res = await fetch(`/api/life/tasks?id=${id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error()
-    } catch {
-      toast.error("Couldn't remove that — refresh and try again")
-      setTaskRemoved(prev => { const n = new Set(prev); n.delete(id); return n })
-    }
-  }
-
-  async function togglePriority(id: string, which: 'today' | 'tomorrow') {
-    const setter = which === 'today' ? setTodayTasks : setTomorrowTasks
-    let nextPriority = false
-    setter(prev => (prev ?? []).map(t => {
-      if (t.id !== id) return t
-      nextPriority = !t.priority
-      return { ...t, priority: nextPriority }
-    }))
-    try {
-      const res = await fetch('/api/life/tasks', {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, priority: nextPriority }),
-      })
-      if (!res.ok) throw new Error()
-    } catch {
-      toast.error("Couldn't save that — try again")
-      setter(prev => (prev ?? []).map(t => t.id === id ? { ...t, priority: !nextPriority } : t))
-    }
-  }
-
-  async function logWater(drink: string, volumeMl: number) {
-    try {
-      const res = await fetch('/api/life/water', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: todayStr, drink, volumeMl }),
-      })
-      if (!res.ok) throw new Error()
-      const created = await res.json()
-      setWaterLogs(prev => [...(prev ?? []), created])
-    } catch {
-      toast.error("Couldn't save that — try again")
-    }
-  }
-
-  async function markNoExpenses() {
-    setCatchUp(prev => prev ? { ...prev, noExpenses: true } : prev)
-    try {
-      const res = await fetch('/api/life/catch-up', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: todayStr, action: 'no-expenses' }),
-      })
-      if (!res.ok) throw new Error()
-    } catch {
-      toast.error("Couldn't save that — try again")
-      loadCatchUp()
-    }
-  }
-
-  async function catchUpHabit(habitId: string) {
-    setCatchDone(prev => new Set(prev).add(habitId))
-    try {
-      const res = await fetch('/api/life/logs', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ habitId, date: todayStr + 'T12:00:00.000Z', completed: true }),
-      })
-      if (!res.ok) throw new Error()
-      setTimeout(() => { loadCatchUp(); loadRightNow() }, 800)
-    } catch {
-      toast.error("Couldn't save that — try again")
-      setCatchDone(prev => { const n = new Set(prev); n.delete(habitId); return n })
-    }
-  }
-
-  async function catchUpMeal(mealType: string, description: string | null) {
-    setCatchUp(prev => prev ? { ...prev, unloggedMeals: prev.unloggedMeals.filter(m => m.mealType !== mealType) } : prev)
-    setCatchMealType(null)
-    setCatchMealText('')
-    try {
-      const res = await fetch('/api/life/meal-log', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: todayStr, mealType, description }),
-      })
-      if (!res.ok) throw new Error()
-      setTimeout(loadRightNow, 400)
-    } catch {
-      toast.error("Couldn't save that — try again")
-      loadCatchUp()
-    }
-  }
-
-  const glow = timeOfDayGlow(hour)
-  // Defensive: a top item with no real title isn't a top item — fall back cleanly
-  const hasTop = !!(rightNow?.top && rightNow.top.title && rightNow.top.title.trim())
-  const kind = hasTop ? rightNow!.top!.kind : 'default'
-  const KindIcon = hasTop ? KIND_ICON[kind] : null
-  const tint = KIND_TINT[kind] ?? KIND_TINT.default
-  const accent = KIND_ACCENT[kind] ?? 'var(--coral)'
-  const habitList = rightNow?.top?.habits?.filter(h => !removed.has(h.id)) ?? []
-  const allJustFinished = rightNow?.top?.kind === 'habit' && habitList.every(h => justDone.has(h.id)) && habitList.length > 0
-  const streak = dayScores?.bestStreak
-  const billsToday = data?.finance.upcomingBills ?? []
-  const pinnedAccounts = accounts?.filter(a => a.pinned) ?? []
-  const byPriorityFirst = (a: DailyTaskRow, b: DailyTaskRow) => Number(b.priority) - Number(a.priority)
-  const pendingTodayTasks = (todayTasks ?? []).filter(t => !t.completed && !taskRemoved.has(t.id)).sort(byPriorityFirst)
-  const visibleTomorrowTasks = (tomorrowTasks ?? []).filter(t => !taskRemoved.has(t.id)).sort(byPriorityFirst)
-  const openCatchHabits = (catchUp?.pendingHabits ?? []).filter(h => !catchDone.has(h.id))
-  const showExpensesRow = !!catchUp && catchUp.expensesToday === 0 && !catchUp.noExpenses
-  const catchUpCount = openCatchHabits.length + (catchUp?.unloggedMeals.length ?? 0) + (showExpensesRow ? 1 : 0)
-  // Only real water counts toward the hydration goal — a Pepsi Max is a
-  // real drink worth logging, but it isn't what "3L water" is tracking
-  const waterMl = (waterLogs ?? []).filter(w => w.drink === 'Water').reduce((a, w) => a + w.volumeMl, 0)
-  const waterGoalMl = 3000
-  const waterPct = Math.min(100, Math.round((waterMl / waterGoalMl) * 100))
+  const habitList = d.rightNow?.top?.habits?.filter(h => !d.justDone.has(h.id)) ?? []
+  const hasTop = !!(d.rightNow?.top && d.rightNow.top.title?.trim())
+  const pendingTasks = (d.todayTasks ?? []).filter(t => !t.completed && !d.taskJustDone.has(t.id))
+  const tomorrowList = d.tomorrowTasks ?? []
+  const pinned = (d.accounts ?? []).filter(a => a.pinned)
+  const waterMl = (d.waterLogs ?? []).filter(w => w.drink === 'Water').reduce((a, w) => a + w.volumeMl, 0)
+  // Outstanding excludes whatever the Now hero is already showing
+  const heroHabitIds = new Set((d.rightNow?.top?.habits ?? []).map(h => h.id))
+  const openCatchHabits = (d.catchUp?.pendingHabits ?? []).filter(h => !d.catchDone.has(h.id) && !heroHabitIds.has(h.id))
+  const showExpensesRow = !!d.catchUp && d.catchUp.expensesToday === 0 && !d.catchUp.noExpenses
+  const catchCount = openCatchHabits.length + (d.catchUp?.unloggedMeals.length ?? 0) + (showExpensesRow ? 1 : 0)
+  const outstandingSummary = [
+    showExpensesRow && 'expenses',
+    d.catchUp && d.catchUp.unloggedMeals.length > 0 && `${d.catchUp.unloggedMeals.length} meal${d.catchUp.unloggedMeals.length === 1 ? '' : 's'}`,
+    openCatchHabits.length > 0 && `${openCatchHabits.length} habit${openCatchHabits.length === 1 ? '' : 's'}`,
+  ].filter(Boolean).join(' · ')
+  const todayScore = d.dayScores?.days.find(x => x.date === today)
+  const billsToday = d.data?.finance.upcomingBills ?? []
 
   return (
-    <div className="relative flex min-h-screen bg-canvas dark:bg-canvas">
-      <Ambient glow={glow} />
-      <ModuleDock />
-      <div className="relative z-10 flex-1 min-w-0">
-        <header className="sticky top-0 z-30 bg-canvas/60 dark:bg-canvas/60 backdrop-blur-xl border-b border-black/5 dark:border-white/5 px-5 md:px-8 py-4 flex items-end justify-between">
-          <div>
-            <p className="text-xs font-semibold tracking-widest text-ink/40 uppercase">{dateStr}</p>
-            <h1 className="text-[28px] font-black text-ink leading-tight tracking-tight">
-              {greeting(hour)}{name ? `, ${name}` : ''}
-            </h1>
-          </div>
-          <div className="flex items-center gap-2 pb-1">
-            <div className="md:hidden"><GlobalSearch mobileIconOnly /></div>
-            <div className="hidden md:block"><GlobalSearch /></div>
-            <ThemeToggle />
-          </div>
-        </header>
+    <div className="min-h-screen bg-ldg-paper text-ldg-ink">
+      <AppHeader actions={HOME_ACTIONS} />
+      <AppHeaderSpacer />
 
-        <main className="page-in max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-5 pb-16">
+      <div className="max-w-xl mx-auto px-5 py-6 pb-28 space-y-4">
 
-          {/* ── Streak strip: the last week, real completion data ── */}
-          {dayScores && dayScores.days.length > 0 && (
-            <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm px-4 py-3.5 flex items-center justify-between overflow-x-auto"
-              style={{ scrollbarWidth: 'none' }}>
-              <StreakStrip days={dayScores.days} />
-              {streak && streak.count >= 2 && (
-                <span className="flex items-center gap-1 text-xs font-bold text-[rgb(220,161,84)] shrink-0 ml-3">
-                  <Flame size={13} /> {streak.count}
-                </span>
+        {/* Greeting */}
+        <div className="px-1 pb-1">
+          <h1 className="text-[1.6rem] font-bold tracking-tight">{greeting(now.getHours())}.</h1>
+          <p className="font-mono text-[12px] mt-0.5 text-ldg-ink/55">
+            {now.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+
+        {/* Now — hero card with the green blob */}
+        <Card className="p-5">
+          <div className="flex items-start gap-4">
+            <Mascot mood={d.rightNow?.mood ?? 'content'} size={52} className="shrink-0" />
+            <div className="flex-1 min-w-0">
+              <Label>Now</Label>
+              {!d.rightNow ? (
+                <div className="h-10 rounded-lg animate-pulse mt-1 bg-ldg-ink/[0.07]" />
+              ) : hasTop && (d.rightNow.top!.kind !== 'habit' || habitList.length > 0) ? (
+                <>
+                  <p className="text-[17px] font-semibold leading-snug mt-1">{d.rightNow.top!.title}</p>
+                  <p className="font-mono text-[12px] mt-0.5 text-ldg-ink/55">{d.rightNow.top!.detail}</p>
+                </>
+              ) : (
+                <p className="text-[17px] font-semibold leading-snug mt-1">Clear — nothing needs you this minute.</p>
               )}
+            </div>
+          </div>
+
+          {hasTop && d.rightNow!.top!.kind === 'habit' && habitList.length > 0 && (
+            <div className="mt-4">
+              {habitList.map(h => {
+                const done = d.justDone.has(h.id)
+                return (
+                  <button key={h.id} onClick={() => !done && d.toggleHabit(h.id)}
+                    className="flex items-center gap-3 w-full text-left py-2.5 border-t border-ldg-ink/[0.07]">
+                    <span className={cn('w-[18px] h-[18px] rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
+                      done ? 'border-ldg-green bg-ldg-green' : 'border-ldg-ink/25')}>
+                      {done && <Check size={11} className="text-white" strokeWidth={3.5} />}
+                    </span>
+                    <span className={cn('text-[14px]', done ? 'text-ldg-ink/55 line-through' : 'text-ldg-ink')}>{h.name}</span>
+                  </button>
+                )
+              })}
             </div>
           )}
 
-          {/* ── Right Now ── */}
-          <div className={cn('rounded-3xl border shadow-sm p-5 transition-colors duration-500', tint)}>
-            <div className="flex items-start gap-4">
-              <Mascot mood={habitList.length === 0 && rightNow?.top?.kind === 'habit' ? 'pleased' : (rightNow?.mood ?? 'content')} size={56} className="mascot-pop shrink-0" />
-              <div className="flex-1 min-w-0">
-                {!rightNow ? (
-                  <div className="h-12 bg-canvas-alt rounded-xl animate-pulse" />
-                ) : hasTop && (rightNow!.top!.kind !== 'habit' || habitList.length > 0) ? (
-                  <>
-                    <p className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: accent }}>
-                      {KindIcon && <KindIcon size={11} />} Right now
-                    </p>
-                    <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">{rightNow!.top!.title}</p>
-                    <p className="text-sm text-ink/50 mt-0.5">{rightNow!.top!.detail}</p>
-
-                    {rightNow!.top!.kind === 'habit' ? (
-                      <div className="mt-3 space-y-1.5">
-                        {habitList.map(h => {
-                          const done = justDone.has(h.id)
-                          return (
-                            <button key={h.id} onClick={() => !done && toggleHabit(h.id)}
-                              className={cn('flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-xl transition-all duration-500',
-                                done ? 'bg-emerald-500/10' : 'bg-surface/70 hover:bg-surface group')}>
-                              <span className={cn('w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
-                                done ? 'bg-emerald-500 border-emerald-500 scale-110' : 'border-ink/20 group-hover:border-[rgb(var(--coral))]')}>
-                                {done && <Check size={12} className="text-white" strokeWidth={3} />}
-                              </span>
-                              <span className={cn('text-sm transition-all', done ? 'text-ink/40 line-through' : 'text-ink/80 group-hover:text-ink')}>{h.name}</span>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    ) : rightNow!.top!.mealAsk && !mealAnswered.has(rightNow!.top!.id) ? (
-                      <div className="mt-3 space-y-2">
-                        <input
-                          value={mealAnswer}
-                          onChange={e => setMealAnswer(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' && mealAnswer.trim()) submitMeal(rightNow!.top!.id, rightNow!.top!.mealAsk!, mealAnswer.trim())
-                          }}
-                          placeholder="What did you actually eat?"
-                          className="w-full bg-surface/70 rounded-xl px-3 py-2 text-sm text-ink placeholder:text-ink/30 border border-black/5 dark:border-white/5 focus:outline-none focus:border-[rgb(var(--coral))]"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => mealAnswer.trim() && submitMeal(rightNow!.top!.id, rightNow!.top!.mealAsk!, mealAnswer.trim())}
-                            className="flex-1 text-xs font-bold rounded-lg py-2 text-white" style={{ background: accent }}>
-                            Log it
-                          </button>
-                          <button
-                            onClick={() => submitMeal(rightNow!.top!.id, rightNow!.top!.mealAsk!, null)}
-                            className="text-xs font-medium text-ink/40 hover:text-ink/70 px-3">
-                            Didn't eat / skip
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <Link href={rightNow!.top!.href}
-                        className="inline-flex items-center gap-1 text-xs font-bold hover:underline mt-2" style={{ color: accent }}>
-                        Take a look <ChevronRight size={12} />
-                      </Link>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35">Right now</p>
-                    <p className="text-xl font-black text-ink tracking-tight leading-tight mt-0.5">
-                      {allJustFinished ? "That's everything — nicely done." : "You're clear for a bit."}
-                    </p>
-                    <p className="text-sm text-ink/50 mt-0.5">
-                      {streak && streak.count >= 3
-                        ? `${streak.icon ?? '🔥'} ${streak.count} days running on ${streak.name} — keep it going.`
-                        : 'Nothing urgent right now.'}
-                    </p>
-                  </>
-                )}
-              </div>
+          {hasTop && d.rightNow!.top!.mealAsk && (
+            <div className="mt-4 flex gap-2">
+              <input value={mealText} onChange={e => setMealText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && mealText.trim()) { d.logMeal(d.rightNow!.top!.mealAsk!.mealType, mealText.trim()); setMealText('') } }}
+                placeholder="What did you actually eat?"
+                className="flex-1 min-w-0 rounded-lg px-3 py-2 text-[14px] bg-ldg-paper border border-ldg-ink/10 focus:outline-none" />
+              <SolidBtn onClick={() => { if (mealText.trim()) { d.logMeal(d.rightNow!.top!.mealAsk!.mealType, mealText.trim()); setMealText('') } }}>Log</SolidBtn>
             </div>
+          )}
 
-            {rightNow && (
-              <div className="mt-4 pt-4 border-t border-black/10 dark:border-white/10">
-                {rightNow.upcomingCalendar.length > 0 ? (
-                  <div className="flex gap-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                    {rightNow.upcomingCalendar.map(item => (
-                      <Link key={item.id} href={item.href} className="flex items-center gap-2 shrink-0 group">
-                        <span className="w-7 h-7 rounded-full bg-surface/70 flex items-center justify-center shrink-0">
-                          <Users size={13} className="text-ink/50" />
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium text-ink/80 truncate max-w-[140px] group-hover:text-ink">{item.title}</p>
-                          <p className="text-[10px] text-ink/35">{item.detail}</p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-ink/40 flex items-center gap-1.5">
-                    <CalendarDays size={12} /> Nothing else on your calendar today — enjoy the rest of it.
-                  </p>
-                )}
+          <div className="mt-4 pt-3 border-t border-ldg-ink/[0.07]">
+            {d.rightNow && d.rightNow.upcomingCalendar.length > 0 ? (
+              <div className="space-y-1">
+                {d.rightNow.upcomingCalendar.map(item => (
+                  <p key={item.id} className="font-mono text-[12px] text-ldg-ink/55">{item.detail} — {item.title}</p>
+                ))}
               </div>
+            ) : (
+              <p className="font-mono text-[12px] text-ldg-ink/55">calendar · no further events today</p>
             )}
           </div>
+        </Card>
 
-          {/* ── Catch up: everything missed so far today, actionable in place ── */}
-          {catchUp && catchUpCount > 0 && (
-            <div className="bg-[rgb(220,161,84)]/[0.08] rounded-3xl border border-[rgb(220,161,84)]/20 shadow-sm p-5">
-              <h2 className="text-[10px] font-bold uppercase tracking-widest text-[rgb(220,161,84)] flex items-center gap-1.5 mb-3">
-                <ListChecks size={12} /> Catch up · {catchUpCount}
-              </h2>
-              <div className="space-y-3">
-
-                {showExpensesRow && (
-                  <div className="flex items-center gap-2.5">
-                    <Receipt size={15} className="text-ink/40 shrink-0" />
-                    <p className="text-sm text-ink/80 flex-1">No expenses logged today</p>
-                    <Link href="/finance/expenses/personal"
-                      className="text-xs font-bold text-white bg-[rgb(232,120,90)] px-3 py-1.5 rounded-full shrink-0">
-                      Add
-                    </Link>
-                    <button onClick={markNoExpenses} className="text-xs font-medium text-ink/40 hover:text-ink/70 shrink-0">
-                      No spending today
-                    </button>
-                  </div>
-                )}
-
-                {catchUp.unloggedMeals.map(m => (
-                  <div key={m.mealType}>
-                    {catchMealType === m.mealType ? (
-                      <div className="space-y-2">
-                        <input
-                          autoFocus
-                          value={catchMealText}
-                          onChange={e => setCatchMealText(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter' && catchMealText.trim()) catchUpMeal(m.mealType, catchMealText.trim()) }}
-                          placeholder={`What did you have for ${m.mealType}?`}
-                          className="w-full bg-surface/70 rounded-xl px-3 py-2 text-sm text-ink placeholder:text-ink/30 border border-black/5 dark:border-white/5 focus:outline-none focus:border-[rgb(220,161,84)]"
-                        />
-                        <div className="flex gap-2">
-                          <button onClick={() => catchMealText.trim() && catchUpMeal(m.mealType, catchMealText.trim())}
-                            className="text-xs font-bold text-white bg-[rgb(220,161,84)] px-3 py-1.5 rounded-full">
-                            Log it
-                          </button>
-                          <button onClick={() => { setCatchMealType(null); setCatchMealText('') }}
-                            className="text-xs font-medium text-ink/40 hover:text-ink/70 px-2">
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2.5">
-                        <Utensils size={15} className="text-ink/40 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-ink/80 capitalize">{m.mealType} not logged</p>
-                          <p className="text-xs text-ink/40 truncate">{m.plannedName} was the plan</p>
-                        </div>
-                        <button onClick={() => { setCatchMealType(m.mealType); setCatchMealText('') }}
-                          className="text-xs font-bold text-white bg-[rgb(220,161,84)] px-3 py-1.5 rounded-full shrink-0">
-                          Log
-                        </button>
-                        <button onClick={() => catchUpMeal(m.mealType, null)}
-                          className="text-xs font-medium text-ink/40 hover:text-ink/70 shrink-0">
-                          Skipped it
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {openCatchHabits.length > 0 && (
-                  <div>
-                    <button onClick={() => setCatchHabitsOpen(o => !o)} className="flex items-center gap-2.5 w-full text-left">
-                      <Sparkles size={15} className="text-ink/40 shrink-0" />
-                      <p className="text-sm text-ink/80 flex-1">
-                        {openCatchHabits.length} habit{openCatchHabits.length === 1 ? '' : 's'} due by now, not done
-                      </p>
-                      <ChevronDown size={16} className={cn('text-ink/40 transition-transform shrink-0', catchHabitsOpen && 'rotate-180')} />
-                    </button>
-                    {catchHabitsOpen && (
-                      <div className="mt-2 space-y-1.5">
-                        {catchUp.pendingHabits.map(h => {
-                          const done = catchDone.has(h.id)
-                          return (
-                            <button key={h.id} onClick={() => !done && catchUpHabit(h.id)}
-                              className={cn('flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-xl transition-all duration-500',
-                                done ? 'bg-emerald-500/10' : 'bg-surface/70 hover:bg-surface group')}>
-                              <span className={cn('w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
-                                done ? 'bg-emerald-500 border-emerald-500 scale-110' : 'border-ink/20 group-hover:border-[rgb(220,161,84)]')}>
-                                {done && <Check size={12} className="text-white" strokeWidth={3} />}
-                              </span>
-                              <span className={cn('text-sm transition-all', done ? 'text-ink/40 line-through' : 'text-ink/80 group-hover:text-ink')}>{h.name}</span>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-              </div>
+        {/* The day in figures + the week */}
+        <Card className="p-5">
+          <Label>The day in figures</Label>
+          <div className="mt-3 grid grid-cols-3">
+            <div>
+              <p className="font-mono text-[26px] tabular-nums tracking-tight leading-none">
+                {todayScore ? <>{todayScore.completed}<span className="text-ldg-ink/55">/{todayScore.total}</span></> : '—'}
+              </p>
+              <p className="text-[11px] mt-1.5 text-ldg-ink/55">habits</p>
             </div>
-          )}
-
-          {/* ── Today's agenda: live ICS calendar events only, nothing hardcoded ── */}
-          {agenda === null ? (
-            <div className="h-20 bg-canvas-alt rounded-3xl animate-pulse" />
-          ) : agenda.length > 0 && (
-            <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
-              <div className="px-5 py-3 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
-                <h2 className="text-[10px] font-bold uppercase tracking-widest text-ink/40 flex items-center gap-1.5">
-                  <CalendarDays size={12} /> Today
-                </h2>
-                <Link href="/schedule" className="text-xs text-[rgb(var(--coral))] hover:underline">Full schedule →</Link>
-              </div>
-              <div className="divide-y divide-black/5 dark:divide-white/5">
-                {agenda.map(item => {
-                  const isNow = item.minutes >= 0 && nowMin >= item.minutes && nowMin <= item.minutes + 30
-                  return (
-                    <div key={item.id} className="flex items-center gap-3 px-5 py-2.5">
-                      <span className={cn('text-xs font-mono w-14 shrink-0', isNow ? 'font-bold text-[rgb(var(--coral))]' : 'text-ink/35')}>{item.time}</span>
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: item.color }} />
-                      <span className={cn('text-sm flex-1', isNow ? 'font-bold text-ink' : 'text-ink/70')}>{item.title}</span>
-                    </div>
-                  )
-                })}
-              </div>
+            <div>
+              <p className="font-mono text-[26px] tabular-nums tracking-tight leading-none">{pendingTasks.length}</p>
+              <p className="text-[11px] mt-1.5 text-ldg-ink/55">tasks open</p>
             </div>
-          )}
-
-          {/* ── To Do: today's tasks + planning tomorrow — quick add, no archive to manage ── */}
-          <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h2 className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Today's tasks</h2>
-                <p className="text-2xl font-black text-ink tracking-tight mt-0.5">
-                  {todayTasks ? pendingTodayTasks.length : '—'}<span className="text-sm font-medium text-ink/30"> left</span>
-                </p>
-              </div>
-              {taskStreak > 0 && (
-                <span className="flex items-center gap-1 text-xs font-bold text-[rgb(220,161,84)] bg-[rgb(220,161,84)]/10 px-2.5 py-1 rounded-full shrink-0">
-                  <Flame size={12} /> {taskStreak} day{taskStreak === 1 ? '' : 's'}
-                </span>
-              )}
+            <div>
+              <p className="font-mono text-[26px] tabular-nums tracking-tight leading-none">
+                {(waterMl / 1000).toFixed(1)}<span className="text-[15px] text-ldg-ink/55">/3L</span>
+              </p>
+              <p className="text-[11px] mt-1.5 text-ldg-ink/55">water</p>
             </div>
+          </div>
 
-            <div className="space-y-1.5 mb-3">
-              {pendingTodayTasks.map(t => {
-                const done = taskJustDone.has(t.id)
+          {d.dayScores && (
+            <div className="mt-5 grid grid-cols-7 border-t border-ldg-ink/[0.07]">
+              {d.dayScores.days.map(day => {
+                const isToday = day.date === today
+                const pct = day.total > 0 ? Math.round((day.completed / day.total) * 100) : 0
+                const label = new Date(day.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'narrow' })
                 return (
-                  <div key={t.id}
-                    className={cn('flex items-center gap-1 w-full rounded-xl transition-all duration-500 group',
-                      done ? 'bg-emerald-500/10' : t.priority ? 'bg-[rgb(var(--coral))]/10 border border-[rgb(var(--coral))]/25' : 'bg-canvas-alt hover:bg-canvas-alt/70')}>
-                    <button onClick={() => !done && toggleTask(t.id)} className="flex items-center gap-2.5 flex-1 min-w-0 text-left px-3 py-2">
-                      <span className={cn('w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
-                        done ? 'bg-emerald-500 border-emerald-500 scale-110' : 'border-ink/20 group-hover:border-[rgb(var(--coral))]')}>
-                        {done && <Check size={12} className="text-white" strokeWidth={3} />}
-                      </span>
-                      <span className={cn('text-sm flex-1 truncate transition-all', done ? 'text-ink/40 line-through' : 'text-ink/80 group-hover:text-ink')}>{t.text}</span>
-                    </button>
-                    {!done && (
-                      <button onClick={() => togglePriority(t.id, 'today')}
-                        title={t.priority ? 'Remove priority' : 'Mark as priority'}
-                        className={cn('shrink-0 mr-2 p-1 rounded-full transition-colors', t.priority ? 'text-[rgb(var(--coral))]' : 'text-ink/15 hover:text-ink/40')}>
-                        <Zap size={15} fill={t.priority ? 'currentColor' : 'none'} />
-                      </button>
-                    )}
+                  <div key={day.date} className={cn('pt-2.5 pb-1.5 text-center rounded-b-lg', isToday && 'bg-ldg-green/[0.07]')}>
+                    <p className={cn('text-[11px] font-bold uppercase', isToday ? 'text-ldg-green' : 'text-ldg-ink/55')}>{label}</p>
+                    <p className={cn('font-mono text-[13px] tabular-nums mt-1 font-semibold',
+                      day.total === 0 ? 'text-ldg-ink/10' : pct === 100 ? 'text-ldg-green' : 'text-ldg-ink')}>
+                      {day.total === 0 ? '·' : pct === 100 ? '✓' : `${day.completed}/${day.total}`}
+                    </p>
+                    <div className="mx-2.5 mt-1.5 h-[4px] rounded-full overflow-hidden bg-ldg-ink/[0.07]">
+                      <div className={cn('h-full rounded-full', pct === 100 ? 'bg-ldg-green' : 'bg-ldg-ink')} style={{ width: `${pct}%` }} />
+                    </div>
                   </div>
                 )
               })}
-              {todayTasks && pendingTodayTasks.length === 0 && (
-                <p className="text-sm text-ink/30 italic px-1 py-1">Nothing left for today.</p>
+            </div>
+          )}
+          {d.dayScores && d.dayScores.bestStreak.count >= 2 && (
+            <p className="font-mono text-[12px] mt-3 flex items-center gap-1.5 text-ldg-ink/55">
+              <Flame size={13} className="text-ldg-green" />
+              {d.dayScores.bestStreak.name} — <span className="text-ldg-green font-semibold">{d.dayScores.bestStreak.count} days</span>
+            </p>
+          )}
+        </Card>
+
+        {/* Outstanding — collapsed by default, no red: it's pending, not wrong */}
+        {d.catchUp && catchCount > 0 && (
+          <Card className="p-5">
+            <button onClick={() => setOutstandingOpen(o => !o)} className="flex items-center justify-between w-full text-left">
+              <div className="flex items-baseline gap-2">
+                <Label>Outstanding</Label>
+                <span className="font-mono text-[12px] font-semibold text-ldg-ink/55">{catchCount}</span>
+              </div>
+              <ChevronDown size={15} className={cn('text-ldg-ink/55 transition-transform', outstandingOpen && 'rotate-180')} />
+            </button>
+            {!outstandingOpen && <p className="font-mono text-[12px] mt-1.5 text-ldg-ink/55">{outstandingSummary}</p>}
+            <div className={cn('mt-1', !outstandingOpen && 'hidden')}>
+              {showExpensesRow && (
+                <div className="flex items-center gap-3 py-3 border-t border-ldg-ink/[0.07]">
+                  <p className="text-[14px] flex-1">Expenses — none recorded today</p>
+                  <Link href="/finance/expenses/personal" className="text-[13px] font-semibold text-white bg-ldg-green px-3.5 py-1.5 rounded-lg shrink-0">Add</Link>
+                  <GhostBtn onClick={d.markNoExpenses}>None today</GhostBtn>
+                </div>
               )}
-            </div>
-
-            <div className="flex gap-2">
-              <input value={newTodayTask} onChange={e => setNewTodayTask(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') addTodayTask() }}
-                placeholder="Add a task for today..."
-                className="flex-1 bg-canvas-alt rounded-xl px-3 py-2 text-sm text-ink placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--coral))]/30" />
-              <button onClick={addTodayTask} className="px-4 rounded-xl bg-[rgb(var(--coral))] text-white text-sm font-bold shrink-0">Add</button>
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[10px] font-bold uppercase tracking-widest text-ink/40">Plan tomorrow</h2>
-                <span className="text-xs text-ink/30">{visibleTomorrowTasks.length} planned</span>
-              </div>
-
-              <div className="space-y-1.5 mb-3">
-                {visibleTomorrowTasks.map(t => (
-                  <div key={t.id} className={cn('flex items-center gap-2.5 px-3 py-2 rounded-xl group',
-                    t.priority ? 'bg-[rgb(var(--coral))]/10 border border-[rgb(var(--coral))]/25' : 'bg-canvas-alt')}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-[rgb(167,120,160)] shrink-0" />
-                    <span className="text-sm text-ink/80 flex-1 truncate">{t.text}</span>
-                    <button onClick={() => togglePriority(t.id, 'tomorrow')}
-                      title={t.priority ? 'Remove priority' : 'Mark as priority'}
-                      className={cn('shrink-0 p-1 rounded-full transition-colors', t.priority ? 'text-[rgb(var(--coral))]' : 'text-ink/15 hover:text-ink/40')}>
-                      <Zap size={14} fill={t.priority ? 'currentColor' : 'none'} />
-                    </button>
-                    <button onClick={() => deleteTask(t.id)} className="opacity-0 group-hover:opacity-100 text-ink/30 hover:text-ink/60 shrink-0">
-                      <X size={13} />
-                    </button>
-                  </div>
-                ))}
-                {tomorrowTasks && visibleTomorrowTasks.length === 0 && (
-                  <p className="text-sm text-ink/30 italic px-1 py-1">Nothing planned for tomorrow yet.</p>
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                <input value={newTomorrowTask} onChange={e => setNewTomorrowTask(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') addTomorrowTask() }}
-                  placeholder="Add a task for tomorrow..."
-                  className="flex-1 bg-canvas-alt rounded-xl px-3 py-2 text-sm text-ink placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-[rgb(167,120,160)]/30" />
-                <button onClick={addTomorrowTask} className="px-4 rounded-xl bg-[rgb(167,120,160)] text-white text-sm font-bold shrink-0">Add</button>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Water: quick log, only real water counts toward the 3L goal ── */}
-          <div className="bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[10px] font-bold uppercase tracking-widest text-ink/40 flex items-center gap-1.5">
-                <Droplets size={12} /> Water
-              </h2>
-              <span className="text-xs text-ink/40">{(waterMl / 1000).toFixed(1)}L / {(waterGoalMl / 1000).toFixed(0)}L</span>
-            </div>
-            <div className="h-2 rounded-full bg-canvas-alt overflow-hidden mb-3">
-              <div className="h-full rounded-full bg-[rgb(167,120,160)] transition-all duration-500" style={{ width: `${waterPct}%` }} />
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              <button onClick={() => logWater('Water', 250)}
-                className="px-3 py-1.5 rounded-full bg-[rgb(167,120,160)]/10 text-[rgb(167,120,160)] text-xs font-bold">
-                + 250ml Water
-              </button>
-              <button onClick={() => logWater('Water', 500)}
-                className="px-3 py-1.5 rounded-full bg-[rgb(167,120,160)]/10 text-[rgb(167,120,160)] text-xs font-bold">
-                + 500ml Water
-              </button>
-              <button onClick={() => setLoggingOtherDrink(o => !o)}
-                className="px-3 py-1.5 rounded-full bg-canvas-alt text-ink/60 text-xs font-bold">
-                + Other drink
-              </button>
-            </div>
-            {loggingOtherDrink && (
-              <div className="mt-3 flex gap-2">
-                <input value={otherDrinkName} onChange={e => setOtherDrinkName(e.target.value)}
-                  placeholder="Drink (e.g. Pepsi Max)"
-                  className="flex-1 bg-canvas-alt rounded-xl px-3 py-2 text-sm text-ink placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-[rgb(167,120,160)]/30" />
-                <input value={otherDrinkMl} onChange={e => setOtherDrinkMl(e.target.value)} type="number" placeholder="ml"
-                  className="w-20 bg-canvas-alt rounded-xl px-3 py-2 text-sm text-ink placeholder:text-ink/30 focus:outline-none focus:ring-2 focus:ring-[rgb(167,120,160)]/30" />
-                <button onClick={() => {
-                  const ml = parseInt(otherDrinkMl)
-                  if (!otherDrinkName.trim() || !ml) return
-                  logWater(otherDrinkName.trim(), ml)
-                  setLoggingOtherDrink(false); setOtherDrinkName(''); setOtherDrinkMl('')
-                }} className="px-4 rounded-xl bg-ink text-canvas text-xs font-bold shrink-0">Add</button>
-              </div>
-            )}
-            <p className="text-[10px] text-ink/30 mt-2">Only water counts toward the 3L goal — other drinks are logged but don't add to the bar.</p>
-          </div>
-
-          {/* ── Money: the accounts you actually pinned, real balances ── */}
-          {pinnedAccounts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {pinnedAccounts.map(acc => (
-                <Link key={acc.id} href="/finance"
-                  className="bg-surface/90 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm p-4 hover:shadow-md active:scale-[0.98] transition-all">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-ink/35 truncate">{acc.name}</p>
-                  <p className="text-xl font-black text-ink tracking-tight mt-1">
-                    {acc.currency === 'EUR' ? formatEUR(acc.currentBalance) : formatRSD(acc.currentBalance)}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          ) : accounts && accounts.length > 0 && (
-            <Link href="/finance/accounts"
-              className="block bg-surface/90 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm p-4 text-sm text-ink/50 hover:text-ink transition-colors">
-              Pin the accounts you check daily to see them here →
-            </Link>
-          )}
-
-          {/* ── Quick actions: prominent inline cards on desktop, a reachable
-               floating (+) on mobile instead of a row you have to scroll up to ── */}
-          <div className="hidden lg:grid grid-cols-3 gap-3">
-            {QUICK_ACTIONS.map(q => (
-              <Link key={q.href} href={q.href}
-                className="flex items-center gap-3 bg-surface/90 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm p-4 hover:shadow-md active:scale-[0.98] transition-all">
-                <span className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', q.tint)}>
-                  <q.icon size={18} />
-                </span>
-                <span className="text-sm font-semibold text-ink">{q.label}</span>
-              </Link>
-            ))}
-          </div>
-
-          {/* ── Bills — only ever what's due today ── */}
-          {billsToday.length > 0 && (
-            <div className="bg-[rgb(var(--coral))]/10 rounded-3xl border border-[rgb(var(--coral))]/20 shadow-sm p-5">
-              <h2 className="text-[10px] font-bold uppercase tracking-widest text-[rgb(var(--coral))] mb-2 flex items-center gap-1.5">
-                <FileText size={12} /> Due today
-              </h2>
-              {billsToday.map(bill => (
-                <div key={bill.id} className="flex items-center justify-between">
-                  <span className="text-base font-semibold text-ink">{bill.name}</span>
-                  <span className="text-base font-black text-ink">{bill.amount.toLocaleString()} {bill.currency}</span>
+              {d.catchUp.unloggedMeals.map(m => (
+                <div key={m.mealType} className="py-3 border-t border-ldg-ink/[0.07]">
+                  {mealOpen === m.mealType ? (
+                    <div className="flex gap-2">
+                      <input autoFocus value={mealText} onChange={e => setMealText(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter' && mealText.trim()) { d.logMeal(m.mealType, mealText.trim()); setMealOpen(null); setMealText('') } }}
+                        placeholder={`What was ${m.mealType}?`}
+                        className="flex-1 min-w-0 rounded-lg px-3 py-2 text-[14px] bg-ldg-paper border border-ldg-ink/10 focus:outline-none" />
+                      <SolidBtn onClick={() => { if (mealText.trim()) { d.logMeal(m.mealType, mealText.trim()); setMealOpen(null); setMealText('') } }}>Log</SolidBtn>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[14px] capitalize">{m.mealType} — unlogged</p>
+                        <p className="font-mono text-[12px] truncate text-ldg-ink/55">{m.plannedName}</p>
+                      </div>
+                      <SolidBtn onClick={() => { setMealOpen(m.mealType); setMealText('') }}>Log</SolidBtn>
+                      <GhostBtn onClick={() => d.logMeal(m.mealType, null)}>Skipped</GhostBtn>
+                    </div>
+                  )}
                 </div>
               ))}
+              {openCatchHabits.slice(0, 6).map(h => {
+                const done = d.catchDone.has(h.id)
+                return (
+                  <button key={h.id} onClick={() => !done && d.catchUpHabit(h.id)}
+                    className="flex items-center gap-3 w-full text-left py-3 border-t border-ldg-ink/[0.07]">
+                    <span className={cn('w-[18px] h-[18px] rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
+                      done ? 'border-ldg-green bg-ldg-green' : 'border-ldg-ink/25')}>
+                      {done && <Check size={11} className="text-white" strokeWidth={3.5} />}
+                    </span>
+                    <span className={cn('text-[14px] flex-1', done ? 'text-ldg-ink/55 line-through' : 'text-ldg-ink')}>{h.name}</span>
+                  </button>
+                )
+              })}
             </div>
-          )}
-
-          {/* ── App grid — mobile only; desktop already has the dock ── */}
-          <div className="lg:hidden">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-ink/40 mb-3 px-1">Modules</h2>
-            <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:grid-cols-8 sm:gap-x-3">
-              {MODULES.map(m => (
-                <Link key={m.href} href={m.href} className="group flex flex-col items-center gap-1.5">
-                  <span className={`flex items-center justify-center w-[60px] h-[60px] rounded-[18px] bg-gradient-to-br ${m.gradient} shadow-md shadow-black/10 group-hover:scale-105 group-active:scale-95 transition-transform duration-300 ease-apple`}>
-                    <m.icon size={26} className="text-white" strokeWidth={1.8} />
-                  </span>
-                  <span className="text-[11px] font-medium text-ink/70">{m.title}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Design lab (temporary): two candidate languages on live data ── */}
-          <p className="text-center text-[11px] text-ink/35">
-            Design lab: <Link href="/design/nova" className="font-bold text-ink/60 hover:underline">Nova</Link>
-            {' · '}
-            <Link href="/design/ledger" className="font-bold text-ink/60 hover:underline">Ledger</Link>
-          </p>
-
-          {/* ── Food map ── */}
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-ink/40 mb-3 px-1">Food map</h2>
-            <div className="rounded-3xl overflow-hidden border border-black/5 dark:border-white/5 shadow-sm">
-              <ErrorBoundary fallback={
-                <div className="h-44 md:h-52 flex items-center justify-center text-sm text-ink/40 bg-surface/90">
-                  Food map couldn't load — check the Google Maps API key/restrictions.
-                </div>
-              }>
-                <FoodMapPreview />
-              </ErrorBoundary>
-            </div>
-          </div>
-
-        </main>
-      </div>
-
-      {/* ── Mobile-only floating quick actions — always reachable, no scrolling up ── */}
-      <div className="lg:hidden">
-        {quickOpen && (
-          <>
-            <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40" onClick={() => setQuickOpen(false)} />
-            <div className="fixed bottom-24 right-4 z-50 flex flex-col items-end gap-3">
-              {QUICK_ACTIONS.map((q, i) => (
-                <Link key={q.href} href={q.href} onClick={() => setQuickOpen(false)}
-                  className="flex items-center gap-3" style={{ animation: 'pageIn 0.18s ease both', animationDelay: `${i * 40}ms` }}>
-                  <span className="bg-surface text-ink text-xs font-semibold px-3 py-1.5 rounded-full shadow-md border border-black/5 dark:border-white/10 whitespace-nowrap">
-                    {q.label}
-                  </span>
-                  <span className={cn('w-12 h-12 rounded-full flex items-center justify-center shadow-lg', q.tint)}>
-                    <q.icon size={20} />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </>
+          </Card>
         )}
-        <button onClick={() => setQuickOpen(o => !o)} aria-label="Quick actions"
-          className={cn('fixed bottom-6 right-4 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-black/20 text-white transition-transform duration-200',
-            quickOpen ? 'bg-gray-800 dark:bg-white dark:text-gray-900 rotate-45' : 'bg-[rgb(var(--coral))]')}>
-          <Plus size={24} strokeWidth={2.5} />
-        </button>
+
+        {/* Bills due today — genuine money due, keeps the accent */}
+        {billsToday.length > 0 && (
+          <Card className="p-5" accent="urgent">
+            <Label>Due today</Label>
+            <div className="mt-1">
+              {billsToday.map(b => (
+                <div key={b.id} className="flex items-baseline justify-between py-2.5 border-t border-ldg-ink/[0.07]">
+                  <span className="text-[14px] flex items-center gap-2"><FileText size={13} className="text-ldg-ink/55" /> {b.name}</span>
+                  <span className="font-mono text-[14px] font-semibold tabular-nums">{b.amount.toLocaleString()} {b.currency}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Tasks — today + tomorrow */}
+        <Card className="p-5">
+          <div className="flex items-baseline justify-between">
+            <Label>Tasks</Label>
+            {d.taskStreak > 0 && (
+              <span className="font-mono text-[12px] flex items-center gap-1 text-ldg-green">
+                <Flame size={12} /> {d.taskStreak} day{d.taskStreak === 1 ? '' : 's'}
+              </span>
+            )}
+          </div>
+          <div className="mt-1">
+            {pendingTasks.map(t => {
+              const done = d.taskJustDone.has(t.id)
+              return (
+                <button key={t.id} onClick={() => !done && d.toggleTask(t.id)}
+                  className="flex items-center gap-3 w-full text-left py-2.5 border-t border-ldg-ink/[0.07]">
+                  <span className={cn('w-[18px] h-[18px] rounded-full border-2 shrink-0 flex items-center justify-center transition-all',
+                    done ? 'border-ldg-green bg-ldg-green' : t.priority ? 'border-ldg-urgent' : 'border-ldg-ink/25')}>
+                    {done && <Check size={11} className="text-white" strokeWidth={3.5} />}
+                  </span>
+                  <span className={cn('text-[14px] flex-1', done ? 'text-ldg-ink/55 line-through' : 'text-ldg-ink')}>{t.text}</span>
+                  {t.priority && !done && (
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wide text-ldg-urgent bg-ldg-urgent/[0.08]">priority</span>
+                  )}
+                </button>
+              )
+            })}
+            {d.todayTasks && pendingTasks.length === 0 && (
+              <p className="font-mono text-[12px] py-2.5 border-t border-ldg-ink/[0.07] text-ldg-ink/55">nothing open</p>
+            )}
+            <div className="flex gap-2 pt-3 border-t border-ldg-ink/[0.07]">
+              <input value={newTask} onChange={e => setNewTask(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { d.addTask(d.todayStr, newTask); setNewTask('') } }}
+                placeholder="Add a task for today"
+                className="flex-1 min-w-0 rounded-lg px-3 py-2 text-[14px] bg-ldg-paper border border-ldg-ink/10 focus:outline-none" />
+              <SolidBtn onClick={() => { d.addTask(d.todayStr, newTask); setNewTask('') }}>Add</SolidBtn>
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <div className="flex items-baseline justify-between">
+              <Label>Tomorrow</Label>
+              <span className="font-mono text-[12px] text-ldg-ink/55">{tomorrowList.length} planned</span>
+            </div>
+            <div className="mt-1">
+              {tomorrowList.map(t => (
+                <div key={t.id} className="flex items-center gap-3 py-2.5 border-t border-ldg-ink/[0.07]">
+                  <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', t.priority ? 'bg-ldg-urgent' : 'bg-ldg-ink/40')} />
+                  <span className="text-[14px] flex-1">{t.text}</span>
+                </div>
+              ))}
+              {tomorrowList.length === 0 && (
+                <p className="font-mono text-[12px] py-2.5 border-t border-ldg-ink/[0.07] text-ldg-ink/55">nothing planned yet</p>
+              )}
+              <div className="flex gap-2 pt-3 border-t border-ldg-ink/[0.07]">
+                <input value={newTomorrow} onChange={e => setNewTomorrow(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { d.addTask(d.tomorrowStr, newTomorrow); setNewTomorrow('') } }}
+                  placeholder="Plan something for tomorrow"
+                  className="flex-1 min-w-0 rounded-lg px-3 py-2 text-[14px] bg-ldg-paper border border-ldg-ink/10 focus:outline-none" />
+                <GhostBtn onClick={() => { d.addTask(d.tomorrowStr, newTomorrow); setNewTomorrow('') }}>Add</GhostBtn>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Water */}
+        <Card className="p-5">
+          <div className="flex items-baseline justify-between">
+            <Label>Water</Label>
+            <span className="font-mono text-[13px] tabular-nums font-semibold">{(waterMl / 1000).toFixed(1)}L <span className="text-ldg-ink/55 font-normal">/ 3L</span></span>
+          </div>
+          <div className="mt-3 h-[6px] rounded-full overflow-hidden bg-ldg-ink/[0.07]">
+            <div className="h-full rounded-full bg-ldg-green transition-all duration-500" style={{ width: `${Math.min(100, (waterMl / 3000) * 100)}%` }} />
+          </div>
+          <div className="mt-3.5 flex gap-2">
+            <GhostBtn onClick={() => d.logWater('Water', 250)}>+ 250ml</GhostBtn>
+            <GhostBtn onClick={() => d.logWater('Water', 500)}>+ 500ml</GhostBtn>
+          </div>
+          <p className="font-mono text-[11px] mt-2.5 flex items-center gap-1 text-ldg-ink/55">
+            <Droplets size={11} /> only water moves the bar
+          </p>
+        </Card>
+
+        {/* Accounts */}
+        {pinned.length > 0 && (
+          <Card className="p-5">
+            <Label>Accounts</Label>
+            <div className="mt-1">
+              {pinned.map(acc => (
+                <Link key={acc.id} href="/finance" className="flex items-baseline justify-between py-3 group border-t border-ldg-ink/[0.07]">
+                  <span className="text-[14px] group-hover:underline underline-offset-2">{acc.name}</span>
+                  <span className="font-mono text-[15px] font-semibold tabular-nums">
+                    {acc.currency === 'EUR' ? formatEUR(acc.currentBalance) : formatRSD(acc.currentBalance)}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Calendar */}
+        {(d.agenda?.length ?? 0) > 0 && (
+          <Card className="p-5">
+            <div className="flex items-baseline justify-between">
+              <Label>Calendar</Label>
+              <Link href="/schedule" className="font-mono text-[12px] underline underline-offset-2 text-ldg-ink/55">full schedule</Link>
+            </div>
+            <div className="mt-1">
+              {d.agenda!.map(item => (
+                <div key={item.id} className="flex items-baseline gap-4 py-2.5 border-t border-ldg-ink/[0.07]">
+                  <span className="font-mono text-[12px] tabular-nums w-12 shrink-0 text-ldg-ink/55">{item.time}</span>
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0 self-center" style={{ background: item.color }} />
+                  <span className="text-[14px]">{item.title}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Food map */}
+        <Card className="p-5" as="div">
+          <Label>Food map</Label>
+          <div className="mt-3 rounded-xl overflow-hidden">
+            <ErrorBoundary fallback={
+              <div className="h-44 flex items-center justify-center text-sm text-ldg-ink/40 bg-ldg-ink/[0.03]">
+                Food map couldn't load — check the Google Maps API key/restrictions.
+              </div>
+            }>
+              <FoodMapPreview />
+            </ErrorBoundary>
+          </div>
+        </Card>
+
       </div>
 
-      <GlobalSearch keyboardOnly />
+      <QuickFab actions={HOME_ACTIONS} />
     </div>
   )
 }

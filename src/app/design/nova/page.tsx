@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { cn, formatEUR, formatRSD } from '@/lib/utils'
 import { Mascot } from '@/components/ui/Mascot'
-import { useHomeData, toLocalDateStr } from '../useHomeData'
+import { useHomeData, toLocalDateStr } from '@/hooks/useHomeData'
 import {
   Flame, Check, X, CalendarDays, Droplets, Receipt, Utensils, Sparkles,
   ChevronRight, Camera, Wallet,

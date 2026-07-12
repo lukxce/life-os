@@ -27,6 +27,15 @@ module.exports = {
         amber2:     'rgb(var(--amber) / <alpha-value>)',
         rose:       'rgb(var(--rose) / <alpha-value>)',
         plum:       'rgb(var(--plum) / <alpha-value>)',
+        // Ledger — the decided app-wide language. "ldg-" not "l-": a single
+        // letter collides with Tailwind's own border-l-/rounded-l-
+        // directional shorthand (border-l-ink is ambiguous — left-border
+        // width, or border color "ink"?). ldg- can't collide with anything.
+        'ldg-paper':  'rgb(var(--l-paper) / <alpha-value>)',
+        'ldg-card':   'rgb(var(--l-card) / <alpha-value>)',
+        'ldg-ink':    'rgb(var(--l-ink) / <alpha-value>)',
+        'ldg-green':  'rgb(var(--l-green) / <alpha-value>)',
+        'ldg-urgent': 'rgb(var(--l-urgent) / <alpha-value>)',
       },
     },
   },

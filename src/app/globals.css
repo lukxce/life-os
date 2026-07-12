@@ -18,17 +18,33 @@
   --surface: 255 253 250;      /* card surface, warm-tinted white */
   --ink: 28 23 20;             /* warm near-black text */
 
-  --coral:  232 120 90;   /* signature accent */
+  --coral:  232 120 90;   /* signature accent — legacy, being phased out module by module */
   --amber:  220 161 84;
   --rose:   217 138 148;
   --plum:   167 120 160;
   --sage:   38 189 116;   /* mascot body + glow — vivid spring green, not muted */
+
+  /* ── Ledger tokens — the decided app-wide language (July 2026) ────────────
+     Cool neutrals, one saturated accent (green), used at rollout via l-*
+     Tailwind colors. Border/rule/faint text are alpha variants of l-ink,
+     not separate tokens — same pattern as the legacy --ink usage. */
+  --l-paper: 244 244 246;
+  --l-card:  255 255 255;
+  --l-ink:   27 27 30;
+  --l-green: 46 125 79;
+  --l-urgent: 192 68 44;  /* money genuinely due — never used for "pending" */
 }
 .dark {
   --canvas: 26 22 19;          /* warm charcoal, brown undertone — not navy */
   --canvas-alt: 32 27 24;
   --surface: 38 33 29;
   --ink: 240 235 229;
+
+  --l-paper: 20 20 22;
+  --l-card:  31 31 35;
+  --l-ink:   234 234 236;
+  --l-green: 67 163 111;
+  --l-urgent: 212 105 79;
 }
 
 html,
