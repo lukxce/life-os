@@ -164,20 +164,20 @@ export default function BillsPage() {
             <div>
               <label className="text-xs font-medium text-ldg-ink/55">Name</label>
               <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink" />
+                className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink" />
             </div>
             {(tab === 'loans' || form.isLoan) ? (
               <div>
                 <label className="text-xs font-medium text-ldg-ink/55">Lender</label>
                 <input type="text" value={form.lender} onChange={e => setForm(p => ({ ...p, lender: e.target.value }))}
                   placeholder="e.g. Erste Bank"
-                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink" />
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink" />
               </div>
             ) : (
               <div>
                 <label className="text-xs font-medium text-ldg-ink/55">Monthly Amount</label>
                 <NumberInput value={form.amount} onChange={v => setForm(p => ({ ...p, amount: v }))}
-                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink" />
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink" />
               </div>
             )}
 
@@ -186,13 +186,13 @@ export default function BillsPage() {
               <div>
                 <label className="text-xs font-medium text-ldg-ink/55">Monthly Amount</label>
                 <NumberInput value={form.amount} onChange={v => setForm(p => ({ ...p, amount: v }))}
-                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink" />
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink" />
               </div>
             )}
             <div>
               <label className="text-xs font-medium text-ldg-ink/55">Currency</label>
               <select value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}
-                className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink">
+                className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink">
                 <option>RSD</option><option>EUR</option>
               </select>
             </div>
@@ -201,19 +201,19 @@ export default function BillsPage() {
             <div>
               <label className="text-xs font-medium text-ldg-ink/55">Payment Day of Month</label>
               <input type="number" min="1" max="31" value={form.dayOfMonth} onChange={e => setForm(p => ({ ...p, dayOfMonth: e.target.value }))}
-                className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink" />
+                className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink" />
             </div>
             {(tab === 'loans' || form.isLoan) ? (
               <div>
                 <label className="text-xs font-medium text-ldg-ink/55">Loan End Date</label>
                 <input type="date" value={form.loanEndDate} onChange={e => setForm(p => ({ ...p, loanEndDate: e.target.value }))}
-                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink" />
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink" />
               </div>
             ) : (
               <div>
                 <label className="text-xs font-medium text-ldg-ink/55">Category</label>
                 <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
-                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink">
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink">
                   <option value="">None</option>
                   {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
@@ -225,7 +225,7 @@ export default function BillsPage() {
               <div>
                 <label className="text-xs font-medium text-ldg-ink/55">Category</label>
                 <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
-                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink">
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink">
                   <option value="">None</option>
                   {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
@@ -234,7 +234,7 @@ export default function BillsPage() {
             <div>
               <label className="text-xs font-medium text-ldg-ink/55">Account</label>
               <select value={form.accountId} onChange={e => setForm(p => ({ ...p, accountId: e.target.value }))}
-                className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink">
+                className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink">
                 <option value="">Select account</option>
                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
@@ -257,7 +257,7 @@ export default function BillsPage() {
               <div className="col-span-2">
                 <label className="text-xs font-medium text-ldg-ink/55">Subcategory</label>
                 <select value={form.subcategory} onChange={e => setForm(p => ({ ...p, subcategory: e.target.value }))}
-                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none text-ldg-ink">
+                  className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink">
                   <option value="">None</option>
                   {subcats.map((s: string) => <option key={s} value={s}>{s}</option>)}
                 </select>
@@ -276,7 +276,7 @@ export default function BillsPage() {
           <h3 className="font-semibold text-ldg-ink mb-3">Mark as paid — {payingBill.name}</h3>
           <div className="flex gap-3">
             <NumberInput value={payAmount || String(payingBill.amount)} onChange={setPayAmount} placeholder={String(payingBill.amount)}
-              className="flex-1 border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:outline-none" />
+              className="flex-1 border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none" />
             <button onClick={markPaid} className="bg-ldg-green text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90">Confirm</button>
             <button onClick={() => { setPayingBill(null); setPayAmount('') }} className="border border-ldg-ink/10 px-4 py-2 rounded-lg text-sm">Cancel</button>
           </div>
