@@ -25,15 +25,15 @@ const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 // ── Metric config ──────────────────────────────────────────────────────────────
 
 const WEEKLY_METRICS = [
-  { key: 'weight',    label: 'Weight',    unit: 'kg',  icon: '⚖️',  color: '#8b5cf6' },
-  { key: 'waist',     label: 'Waist',     unit: 'cm',  icon: '📏',  color: '#3b82f6' },
+  { key: 'weight',    label: 'Weight',    unit: 'kg',  icon: '⚖️',  color: '#2e7d4f' },
+  { key: 'waist',     label: 'Waist',     unit: 'cm',  icon: '📏',  color: '#54555c' },
 ] as const
 
 const MONTHLY_METRICS = [
-  { key: 'chest',     label: 'Chest',     unit: 'cm',  icon: '💪',  color: '#10b981' },
-  { key: 'bicep',     label: 'Bicep',     unit: 'cm',  icon: '💪',  color: '#f59e0b' },
-  { key: 'shoulders', label: 'Shoulders', unit: 'cm',  icon: '🏋️', color: '#ef4444' },
-  { key: 'thigh',     label: 'Thigh',     unit: 'cm',  icon: '🦵',  color: '#ec4899' },
+  { key: 'chest',     label: 'Chest',     unit: 'cm',  icon: '💪',  color: '#8fb8a0' },
+  { key: 'bicep',     label: 'Bicep',     unit: 'cm',  icon: '💪',  color: '#3d6650' },
+  { key: 'shoulders', label: 'Shoulders', unit: 'cm',  icon: '🏋️', color: '#84858c' },
+  { key: 'thigh',     label: 'Thigh',     unit: 'cm',  icon: '🦵',  color: '#6f9080' },
 ] as const
 
 const ALL_METRICS = [...WEEKLY_METRICS, ...MONTHLY_METRICS]
@@ -227,7 +227,7 @@ function WeeklyHabitRow({ item, onToggle, onValue }: {
   onValue: (value: number) => void
 }) {
   const { habit, completedThisWeek, thisWeekLog, recentLogs } = item
-  const accentColor = habit.color ?? '#6366f1'
+  const accentColor = habit.color ?? '#2e7d4f'
   const [inputVal, setInputVal] = useState(String(thisWeekLog?.value ?? ''))
   const [editing, setEditing] = useState(false)
   const isWeight = habit.unit === 'kg'

@@ -118,11 +118,11 @@ export default function AnalyticsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-sm font-medium truncate">{h.name}</span>
-                      <span className="text-sm font-bold ml-2 shrink-0" style={{ color: h.color ?? '#6366f1' }}>{h.completionRate}%</span>
+                      <span className="text-sm font-bold ml-2 shrink-0" style={{ color: h.color ?? '#2e7d4f' }}>{h.completionRate}%</span>
                     </div>
                     <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${h.completionRate}%`, background: h.color ?? '#6366f1' }} />
+                        style={{ width: `${h.completionRate}%`, background: h.color ?? '#2e7d4f' }} />
                     </div>
                     <p className="text-xs text-gray-400 mt-1">{h.completedDays} of {h.scheduledDays} days</p>
                   </div>
@@ -208,7 +208,7 @@ export default function AnalyticsPage() {
                     <Tooltip
                       labelFormatter={v => new Date(v + 'T00:00:00').toLocaleDateString('en-GB')}
                       formatter={(v: number) => [`${v}%`, 'Completion']} />
-                    <Line type="monotone" dataKey="completionRate" stroke="#6366f1" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="completionRate" stroke="#2e7d4f" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

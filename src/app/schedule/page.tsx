@@ -141,12 +141,12 @@ function ScheduleBlock_({ block, editMode, onEdit, onDelete, col = 0, colCount =
             {block.startTime}{!isShort && block.endTime ? ` – ${block.endTime}` : ''}
           </span>
           <span style={{ fontSize:12,fontWeight:700,color:colors.nameColor,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis' }}>{block.name}</span>
-          {block.sacred && <span style={{ fontSize:9,fontWeight:700,color:'#7C3AED',background:'#EDE9FE',border:'1px solid #C4B5FD',borderRadius:99,padding:'0px 5px',whiteSpace:'nowrap',flexShrink:0 }}>sacred</span>}
-          {block.frequency === 'biweekly' && <span style={{ fontSize:9,fontWeight:700,color:'#d97706',background:'#fef3c7',border:'1px solid #fde68a',borderRadius:99,padding:'0px 5px',whiteSpace:'nowrap',flexShrink:0 }}>2w</span>}
+          {block.sacred && <span style={{ fontSize:9,fontWeight:700,color:'#1f5c3a',background:'#eaf3ec',border:'1px solid #2e7d4f66',borderRadius:99,padding:'0px 5px',whiteSpace:'nowrap',flexShrink:0 }}>sacred</span>}
+          {block.frequency === 'biweekly' && <span style={{ fontSize:9,fontWeight:700,color:'#6B7280',background:'#F3F4F6',border:'1px solid #e5e7eb',borderRadius:99,padding:'0px 5px',whiteSpace:'nowrap',flexShrink:0 }}>2w</span>}
         </div>
         {editMode && (
           <div style={{ display:'flex',gap:4,flexShrink:0 }}>
-            <button onClick={() => onEdit(block)} style={{ background:'rgba(255,255,255,0.85)',border:'1px solid #e5e7eb',borderRadius:5,padding:'2px 5px',cursor:'pointer',display:'flex',alignItems:'center' }}><Pencil size={11} color="#6366f1" /></button>
+            <button onClick={() => onEdit(block)} style={{ background:'rgba(255,255,255,0.85)',border:'1px solid #e5e7eb',borderRadius:5,padding:'2px 5px',cursor:'pointer',display:'flex',alignItems:'center' }}><Pencil size={11} color="#2e7d4f" /></button>
             <button onClick={() => onDelete(block)} style={{ background:'rgba(255,255,255,0.85)',border:'1px solid #e5e7eb',borderRadius:5,padding:'2px 5px',cursor:'pointer',display:'flex',alignItems:'center' }}><X size={11} color="#ef4444" /></button>
           </div>
         )}
@@ -158,7 +158,7 @@ function ScheduleBlock_({ block, editMode, onEdit, onDelete, col = 0, colCount =
 
 function ICSBlock({ ev, col = 0, colCount = 1 }: { ev: ICSEvent; col?: number; colCount?: number }) {
   const [tip, setTip] = useState(false)
-  const color = ev.calendarColor ?? '#6366f1'
+  const color = ev.calendarColor ?? '#2e7d4f'
   const start = new Date(ev.start)
   const end = new Date(ev.end)
   const startMin = start.getHours() * 60 + start.getMinutes()
@@ -185,7 +185,7 @@ function ICSBlock({ ev, col = 0, colCount = 1 }: { ev: ICSEvent; col?: number; c
           <div style={{ fontSize:12,fontWeight:700,lineHeight:1.4,marginBottom:ev.location?4:0 }}>{ev.summary}</div>
           <div style={{ fontSize:11,color:'#9ca3af' }}>{timeStr} – {endStr}</div>
           {ev.location && <div style={{ fontSize:11,color:'#9ca3af',marginTop:3 }}>📍 {ev.location}</div>}
-          {ev.url && <div style={{ fontSize:11,color:'#60a5fa',marginTop:4 }}>🔗 Click to join</div>}
+          {ev.url && <div style={{ fontSize:11,color:'#2e7d4f',marginTop:4 }}>🔗 Click to join</div>}
         </div>
       )}
     </>
@@ -428,11 +428,11 @@ export default function SchedulePage() {
               </button>
             )}
             <button onClick={() => setShowSharePanel(v => !v)}
-              style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 12px',borderRadius:10,border:showSharePanel?'1.5px solid #6366f1':'1.5px solid #e5e7eb',background:showSharePanel?'#EEF2FF':'#fff',color:showSharePanel?'#4F46E5':'#374151',fontWeight:600,fontSize:13,cursor:'pointer' }}>
+              style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 12px',borderRadius:10,border:showSharePanel?'1.5px solid #2e7d4f':'1.5px solid #e5e7eb',background:showSharePanel?'#eaf3ec':'#fff',color:showSharePanel?'#1f5c3a':'#374151',fontWeight:600,fontSize:13,cursor:'pointer' }}>
               <Share2 size={14} /> Share
             </button>
             <button onClick={() => setEditMode(v => !v)}
-              style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:10,border:editMode?'1.5px solid #6366f1':'1.5px solid #e5e7eb',background:editMode?'#EEF2FF':'#fff',color:editMode?'#4F46E5':'#374151',fontWeight:600,fontSize:13,cursor:'pointer' }}>
+              style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:10,border:editMode?'1.5px solid #2e7d4f':'1.5px solid #e5e7eb',background:editMode?'#eaf3ec':'#fff',color:editMode?'#1f5c3a':'#374151',fontWeight:600,fontSize:13,cursor:'pointer' }}>
               <Pencil size={14} /> {editMode ? 'Done' : 'Edit'}
             </button>
           </div>
@@ -451,7 +451,7 @@ export default function SchedulePage() {
                   <p style={{ fontSize:11,color:'#9CA3AF',margin:0 }}>Shows only &ldquo;Busy&rdquo; — no event titles or details</p>
                 </div>
                 <button onClick={() => copyLink('busy')}
-                  style={{ display:'flex',alignItems:'center',gap:5,padding:'6px 12px',borderRadius:8,border:copied==='busy'?'1.5px solid #10b981':'1.5px solid #6366f1',background:copied==='busy'?'#ECFDF5':'#EEF2FF',color:copied==='busy'?'#059669':'#4F46E5',fontWeight:600,fontSize:12,cursor:'pointer',flexShrink:0 }}>
+                  style={{ display:'flex',alignItems:'center',gap:5,padding:'6px 12px',borderRadius:8,border:copied==='busy'?'1.5px solid #2e7d4f':'1.5px solid #2e7d4f',background:'#eaf3ec',color:'#1f5c3a',fontWeight:600,fontSize:12,cursor:'pointer',flexShrink:0 }}>
                   {copied === 'busy' ? <><Check size={12} /> Copied</> : <><Share2 size={12} /> Copy</>}
                 </button>
               </div>
@@ -473,7 +473,7 @@ export default function SchedulePage() {
                   <p style={{ fontSize:11,color:'#9CA3AF',margin:0 }}>Shows full event titles and calendar</p>
                 </div>
                 <button onClick={() => copyLink('public')}
-                  style={{ display:'flex',alignItems:'center',gap:5,padding:'6px 12px',borderRadius:8,border:copied==='public'?'1.5px solid #10b981':'1.5px solid #6366f1',background:copied==='public'?'#ECFDF5':'#EEF2FF',color:copied==='public'?'#059669':'#4F46E5',fontWeight:600,fontSize:12,cursor:'pointer',flexShrink:0 }}>
+                  style={{ display:'flex',alignItems:'center',gap:5,padding:'6px 12px',borderRadius:8,border:copied==='public'?'1.5px solid #2e7d4f':'1.5px solid #2e7d4f',background:'#eaf3ec',color:'#1f5c3a',fontWeight:600,fontSize:12,cursor:'pointer',flexShrink:0 }}>
                   {copied === 'public' ? <><Check size={12} /> Copied</> : <><Share2 size={12} /> Copy</>}
                 </button>
               </div>
@@ -499,7 +499,7 @@ export default function SchedulePage() {
             <span style={{ fontSize:14,fontWeight:600,color:'#111827',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis' }}>{weekRangeLabel(selectedMonday)}</span>
             {!isCurrentWeek && (
               <button onClick={() => setSelectedMonday(getMondayOfWeek(new Date()))}
-                style={{ fontSize:11,fontWeight:600,color:'#6366f1',background:'#EEF2FF',border:'none',borderRadius:99,padding:'2px 8px',cursor:'pointer',flexShrink:0 }}>
+                style={{ fontSize:11,fontWeight:600,color:'#1f5c3a',background:'#eaf3ec',border:'none',borderRadius:99,padding:'2px 8px',cursor:'pointer',flexShrink:0 }}>
                 Today
               </button>
             )}
@@ -523,10 +523,10 @@ export default function SchedulePage() {
             const dateNum = getDateForDayKey(d.key, selectedMonday).getDate()
             return (
               <button key={d.key} onClick={() => setActiveDay(d.key)}
-                style={{ padding:'6px 14px',borderRadius:99,border:isActive?'1.5px solid #6366f1':'1.5px solid #e5e7eb',background:isActive?'#6366f1':'#fff',color:isActive?'#fff':'#374151',fontWeight:600,fontSize:13,cursor:'pointer',position:'relative',flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:1 }}>
+                style={{ padding:'6px 14px',borderRadius:99,border:isActive?'1.5px solid #2e7d4f':'1.5px solid #e5e7eb',background:isActive?'#2e7d4f':'#fff',color:isActive?'#fff':'#374151',fontWeight:600,fontSize:13,cursor:'pointer',position:'relative',flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:1 }}>
                 <span>{d.short}</span>
                 <span style={{ fontSize:10,opacity:0.7 }}>{dateNum}</span>
-                {isToday && <span style={{ position:'absolute',top:2,right:4,width:5,height:5,borderRadius:'50%',background:isActive?'rgba(255,255,255,0.7)':'#6366f1' }} />}
+                {isToday && <span style={{ position:'absolute',top:2,right:4,width:5,height:5,borderRadius:'50%',background:isActive?'rgba(255,255,255,0.7)':'#2e7d4f' }} />}
               </button>
             )
           })}
@@ -593,7 +593,7 @@ export default function SchedulePage() {
         {allDayEventsToday.length > 0 && (
           <div style={{ background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,padding:'10px 16px',marginBottom:12,display:'flex',flexWrap:'wrap',gap:6 }}>
             {allDayEventsToday.map(ev => {
-              const color = ev.calendarColor ?? '#6366f1'
+              const color = ev.calendarColor ?? '#2e7d4f'
               return (
                 <span key={ev.uid} style={{ fontSize:12,fontWeight:600,color,background:color+'15',borderRadius:99,padding:'4px 12px',whiteSpace:'nowrap' }}>
                   {ev.summary}
@@ -661,7 +661,7 @@ export default function SchedulePage() {
           {editMode && (!isMobile || mobileCalendarId === null) && (
             <div style={{ marginTop:16, paddingLeft:48 }}>
               <button onClick={() => setModal({ mode:'add' })}
-                style={{ display:'flex',alignItems:'center',gap:6,padding:'8px 16px',borderRadius:10,border:'1.5px dashed #6366f1',background:'#EEF2FF',color:'#4F46E5',fontWeight:600,fontSize:13,cursor:'pointer' }}>
+                style={{ display:'flex',alignItems:'center',gap:6,padding:'8px 16px',borderRadius:10,border:'1.5px dashed #2e7d4f',background:'#eaf3ec',color:'#1f5c3a',fontWeight:600,fontSize:13,cursor:'pointer' }}>
                 <Plus size={14} /> Add block
               </button>
             </div>

@@ -80,7 +80,7 @@ export function FoodMapView({ places, onReload }: Props) {
                   'rounded-full border-2 border-white shadow-md cursor-pointer transition-transform hover:scale-125',
                   selected?.id === place.id ? 'w-6 h-6 scale-125' : 'w-4 h-4'
                 )}
-                style={{ background: cfg?.color ?? '#6366f1' }}
+                style={{ background: cfg?.color ?? '#2e7d4f' }}
               />
             </AdvancedMarker>
           )
@@ -137,7 +137,7 @@ export function FoodMapView({ places, onReload }: Props) {
       {selected && editing === undefined && (
         <div className="absolute bottom-0 left-0 right-0 z-20 md:bottom-6 md:left-6 md:right-auto md:w-80">
           <div className="bg-surface/90 dark:bg-surface/70 rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden">
-            <div className="h-1 w-full" style={{ background: CATEGORY_CONFIG[selected.category as keyof typeof CATEGORY_CONFIG]?.color ?? '#6366f1' }} />
+            <div className="h-1 w-full" style={{ background: CATEGORY_CONFIG[selected.category as keyof typeof CATEGORY_CONFIG]?.color ?? '#2e7d4f' }} />
             <div className="p-5 pb-28 md:pb-5">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0">

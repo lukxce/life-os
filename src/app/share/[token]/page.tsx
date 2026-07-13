@@ -61,7 +61,7 @@ function isVirtual(location?: string) {
 }
 
 function EventBlock({ ev, isBusy }: { ev: ICSEvent; isBusy: boolean }) {
-  const color = ev.calendarColor ?? '#6366f1'
+  const color = ev.calendarColor ?? '#2e7d4f'
   const start = new Date(ev.start)
   const end = new Date(ev.end)
   const startMin = start.getHours() * 60 + start.getMinutes()
@@ -143,7 +143,7 @@ export default function SharePage() {
   if (!data) return (
     <div style={{ minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#F9FAFB' }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-      <div style={{ width:32,height:32,border:'3px solid #e5e7eb',borderTopColor:'#6366f1',borderRadius:'50%',animation:'spin 0.7s linear infinite' }} />
+      <div style={{ width:32,height:32,border:'3px solid #e5e7eb',borderTopColor:'#2e7d4f',borderRadius:'50%',animation:'spin 0.7s linear infinite' }} />
     </div>
   )
 
@@ -181,7 +181,7 @@ export default function SharePage() {
               href={data.meetingLink}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ marginTop:16,display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'13px 20px',borderRadius:12,background:'#6366f1',color:'#fff',fontWeight:700,fontSize:15,textDecoration:'none',width:'100%',boxSizing:'border-box' }}
+              style={{ marginTop:16,display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'13px 20px',borderRadius:12,background:'#2e7d4f',color:'#fff',fontWeight:700,fontSize:15,textDecoration:'none',width:'100%',boxSizing:'border-box' }}
             >
               <ExternalLink size={15} />
               Request a meeting
@@ -197,7 +197,7 @@ export default function SharePage() {
           <div style={{ flex:1,textAlign:'center',display:'flex',alignItems:'center',justifyContent:'center',gap:8 }}>
             <span style={{ fontSize:14,fontWeight:600,color:'#111827' }}>{weekRangeLabel(selectedMonday)}</span>
             {!isCurrentWeek && (
-              <button onClick={() => setSelectedMonday(getMondayOfWeek(new Date()))} style={{ fontSize:11,fontWeight:600,color:'#6366f1',background:'#EEF2FF',border:'none',borderRadius:99,padding:'2px 8px',cursor:'pointer' }}>Today</button>
+              <button onClick={() => setSelectedMonday(getMondayOfWeek(new Date()))} style={{ fontSize:11,fontWeight:600,color:'#1f5c3a',background:'#eaf3ec',border:'none',borderRadius:99,padding:'2px 8px',cursor:'pointer' }}>Today</button>
             )}
           </div>
           <label style={{ display:'flex',alignItems:'center',justifyContent:'center',padding:'7px 10px',borderRadius:10,border:'1.5px solid #e5e7eb',background:'#fff',cursor:'pointer',position:'relative' }}>
@@ -218,10 +218,10 @@ export default function SharePage() {
             const dateNum = getDateForDayKey(d.key, selectedMonday).getDate()
             return (
               <button key={d.key} onClick={() => setActiveDay(d.key)}
-                style={{ padding:'6px 14px',borderRadius:99,border:isActive?'1.5px solid #6366f1':'1.5px solid #e5e7eb',background:isActive?'#6366f1':'#fff',color:isActive?'#fff':'#374151',fontWeight:600,fontSize:13,cursor:'pointer',position:'relative',flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:1 }}>
+                style={{ padding:'6px 14px',borderRadius:99,border:isActive?'1.5px solid #2e7d4f':'1.5px solid #e5e7eb',background:isActive?'#2e7d4f':'#fff',color:isActive?'#fff':'#374151',fontWeight:600,fontSize:13,cursor:'pointer',position:'relative',flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:1 }}>
                 <span>{d.short}</span>
                 <span style={{ fontSize:10,opacity:0.7 }}>{dateNum}</span>
-                {isToday && <span style={{ position:'absolute',top:2,right:4,width:5,height:5,borderRadius:'50%',background:isActive?'rgba(255,255,255,0.7)':'#6366f1' }} />}
+                {isToday && <span style={{ position:'absolute',top:2,right:4,width:5,height:5,borderRadius:'50%',background:isActive?'rgba(255,255,255,0.7)':'#2e7d4f' }} />}
               </button>
             )
           })}
@@ -231,7 +231,7 @@ export default function SharePage() {
         {allDayEvents.length > 0 && (
           <div style={{ background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,padding:'10px 16px',marginBottom:12,display:'flex',flexWrap:'wrap',gap:6 }}>
             {allDayEvents.map(ev => {
-              const color = ev.calendarColor ?? '#6366f1'
+              const color = ev.calendarColor ?? '#2e7d4f'
               return (
                 <span key={ev.uid} style={{ fontSize:12,fontWeight:600,color,background:color+'15',borderRadius:99,padding:'3px 10px' }}>
                   {data.isBusy ? '● Busy all day' : ev.summary}

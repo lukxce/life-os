@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport = {
-  themeColor: '#6366f1',
+  themeColor: '#2e7d4f',
   width: 'device-width',
   initialScale: 1,
   // Do not lock maximumScale — iPad users should be able to pinch-zoom

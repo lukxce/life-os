@@ -260,7 +260,7 @@ function ScanInner() {
                 <ZoomOut size={16} color="rgba(255,255,255,0.6)" />
                 <input type="range" min={zoomMin} max={zoomMax} step={0.1} value={zoom}
                   onChange={e => applyZoom(Number(e.target.value))}
-                  style={{ flex: 1, accentColor: '#818cf8' }} />
+                  style={{ flex: 1, accentColor: '#2e7d4f' }} />
                 <ZoomIn size={16} color="rgba(255,255,255,0.6)" />
                 <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, width: 32, textAlign: 'right' }}>
                   {zoom.toFixed(1)}×

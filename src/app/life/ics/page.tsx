@@ -35,7 +35,7 @@ function formatDuration(start: string, end: string, allDay: boolean): string {
 
 function EventCard({ ev }: { ev: ICSEvent }) {
   const [open, setOpen] = useState(false)
-  const color = ev.calendarColor ?? '#6366f1'
+  const color = ev.calendarColor ?? '#2e7d4f'
   return (
     <div
       className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/5 dark:border-white/5 overflow-hidden cursor-pointer hover:shadow-sm transition-shadow"
