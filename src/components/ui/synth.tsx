@@ -4,13 +4,12 @@ import { cn } from '@/lib/utils'
 // ── Whoop-style data synthesis primitives ─────────────────────────────────────
 // Graded colors: the score itself carries meaning at a glance.
 
-// Graded but never alarming — the lowest bracket is warm terracotta, not a
-// stop-sign red. This is a deliberate brand choice: momentum, not guilt.
+// Ledger v4 palette (spec §3): green at/above 80, neutral ink in the
+// middle, urgent only below 40 — momentum over guilt, one accent color.
 export function grade(pct: number) {
-  if (pct >= 100) return { stroke: '#34d399', text: 'text-emerald-500', chip: 'bg-emerald-500/15 text-emerald-500' }
-  if (pct >= 70)  return { stroke: '#4ade80', text: 'text-green-500',   chip: 'bg-green-500/15 text-green-500' }
-  if (pct >= 40)  return { stroke: 'rgb(var(--amber))', text: 'text-amber-600', chip: 'bg-amber-500/15 text-amber-600' }
-  return              { stroke: 'rgb(var(--coral))', text: 'text-[rgb(var(--coral))]', chip: 'bg-[rgb(var(--coral))]/15 text-[rgb(var(--coral))]' }
+  if (pct >= 80) return { stroke: '#2e7d4f', text: 'text-ldg-green', chip: 'bg-ldg-green/10 text-ldg-green' }
+  if (pct >= 40) return { stroke: 'rgba(27,27,30,0.55)', text: 'text-ldg-ink/55', chip: 'bg-ldg-ink/[0.06] text-ldg-ink/55' }
+  return             { stroke: 'rgb(var(--l-urgent))', text: 'text-ldg-urgent', chip: 'bg-ldg-urgent/[0.08] text-ldg-urgent' }
 }
 
 /** Big graded progress ring with the value front and center */

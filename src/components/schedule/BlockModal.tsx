@@ -81,7 +81,7 @@ export function BlockModal({ initial, currentDay, onSave, onDelete, onCancel }: 
             <select
               value={form.day}
               onChange={(e) => setForm((f) => ({ ...f, day: e.target.value }))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ldg-green/30 bg-white"
             >
               {DAYS.map((d) => (
                 <option key={d.key} value={d.key}>{d.label}</option>
@@ -99,7 +99,7 @@ export function BlockModal({ initial, currentDay, onSave, onDelete, onCancel }: 
                 value={form.startTime}
                 onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
                 required
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ldg-green/30"
               />
             </div>
             <div>
@@ -109,7 +109,7 @@ export function BlockModal({ initial, currentDay, onSave, onDelete, onCancel }: 
                 placeholder="10:00"
                 value={form.endTime}
                 onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ldg-green/30"
               />
             </div>
           </div>
@@ -123,7 +123,7 @@ export function BlockModal({ initial, currentDay, onSave, onDelete, onCancel }: 
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               required
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ldg-green/30"
             />
           </div>
 
@@ -135,7 +135,7 @@ export function BlockModal({ initial, currentDay, onSave, onDelete, onCancel }: 
               value={form.note}
               onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
               rows={3}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ldg-green/30 resize-none"
             />
           </div>
 
@@ -145,7 +145,7 @@ export function BlockModal({ initial, currentDay, onSave, onDelete, onCancel }: 
             <select
               value={form.category}
               onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ldg-green/30 bg-white"
             >
               {CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
@@ -181,8 +181,8 @@ export function BlockModal({ initial, currentDay, onSave, onDelete, onCancel }: 
               </button>
             </div>
             {form.frequency === 'biweekly' && (
-              <p className="text-xs text-amber-600 mt-1.5">
-                ⚡ Will appear on alternating weeks starting from the current week.
+              <p className="text-xs text-ldg-ink/55 mt-1.5">
+                Will appear on alternating weeks starting from the current week.
               </p>
             )}
           </div>
@@ -219,7 +219,7 @@ export function BlockModal({ initial, currentDay, onSave, onDelete, onCancel }: 
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-ldg-green hover:opacity-90 transition-colors"
             >
               Save
             </button>

@@ -58,7 +58,7 @@ export function ReentryModal({ onClose }: Props) {
             <div className="text-4xl mb-3">🏠</div>
             <p className="font-semibold text-gray-800 dark:text-gray-200">Back in the groove.</p>
             <p className="text-sm text-gray-400 mt-1">Home mode is on. Keep the streak going.</p>
-            <button onClick={onClose} className="mt-4 w-full py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors">
+            <button onClick={onClose} className="mt-4 w-full py-2.5 rounded-xl bg-ldg-green text-white font-semibold text-sm hover:opacity-90 transition-colors">
               Let's go
             </button>
           </div>

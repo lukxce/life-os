@@ -189,11 +189,11 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
               {results.finance.bills.length > 0 && (
                 <Section label="Bills">
                   {results.finance.bills.map((b: any) => (
-                    <ResultItem key={b.id} icon={<FileText size={13} className="text-teal-500" />}
+                    <ResultItem key={b.id} icon={<FileText size={13} className="text-ldg-ink/55" />}
                       title={b.name}
                       sub={`Due day ${b.dayOfMonth}${b.category ? ` · ${b.category}` : ''}`}
                       right={`${b.amount.toLocaleString()} ${b.currency}`}
-                      rightColor="text-teal-600 dark:text-teal-400"
+                      rightColor="text-ldg-ink/55"
                       onClick={() => go('/finance/bills')} />
                   ))}
                 </Section>
@@ -215,11 +215,11 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
               {results.life.goals.length > 0 && (
                 <Section label="Goals">
                   {results.life.goals.map((g: any) => (
-                    <ResultItem key={g.id} icon={<Target size={13} className="text-violet-500" />}
+                    <ResultItem key={g.id} icon={<Target size={13} className="text-ldg-ink/55" />}
                       title={`${g.emoji ?? ''} ${g.name}`.trim()}
                       sub={g.type.replace('_', ' ')}
                       badge={g.completed ? 'Done' : undefined}
-                      badgeColor={g.completed ? 'bg-green-100 text-green-700' : undefined}
+                      badgeColor={g.completed ? 'bg-ldg-green/10 text-ldg-green' : undefined}
                       onClick={() => go('/life/goals')} />
                   ))}
                 </Section>
@@ -228,7 +228,7 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
               {results.life.contacts.length > 0 && (
                 <Section label="People">
                   {results.life.contacts.map((c: any) => (
-                    <ResultItem key={c.id} icon={<Users size={13} className="text-pink-500" />}
+                    <ResultItem key={c.id} icon={<Users size={13} className="text-ldg-ink/55" />}
                       title={`${c.emoji ?? ''} ${c.name}`.trim()}
                       sub={`Reach out ${c.reachOutFrequency}`}
                       onClick={() => go('/people')} />
@@ -240,7 +240,7 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
               {(results.life.watchlist ?? []).length > 0 && (
                 <Section label="Watchlist">
                   {results.life.watchlist.map((w: any) => (
-                    <ResultItem key={w.id} icon={<Clapperboard size={13} className="text-violet-500" />}
+                    <ResultItem key={w.id} icon={<Clapperboard size={13} className="text-ldg-ink/55" />}
                       title={w.title}
                       sub={[
                         w.type === 'book' ? w.author : (w.type === 'tv' ? 'TV' : 'Movie'),
@@ -248,7 +248,7 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
                         w.status.replace('_', ' '),
                       ].filter(Boolean).join(' · ')}
                       right={w.myRating != null ? `★ ${w.myRating}/10` : undefined}
-                      rightColor="text-amber-600 dark:text-amber-400"
+                      rightColor="text-ldg-ink/55"
                       onClick={() => go('/watchlist')} />
                   ))}
                 </Section>
@@ -311,7 +311,7 @@ function ResultItem({
         {sub && <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{sub}</p>}
       </div>
       {badge && (
-        <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0', badgeColor ?? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400')}>
+        <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0', badgeColor ?? 'bg-ldg-ink/[0.06] text-ldg-ink/55')}>
           {badge}
         </span>
       )}

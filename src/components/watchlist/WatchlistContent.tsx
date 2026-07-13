@@ -45,10 +45,10 @@ interface SearchResult {
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const STATUS_CFG = {
-  want_to:   { label: 'Want to',  bgItem: 'bg-ldg-green',  ring: 'ring-ldg-green/40',  badge: 'bg-ldg-green/10 text-ldg-green' },
-  currently: { label: 'Watching', bgItem: 'bg-amber-500',   ring: 'ring-amber-400',   badge: 'bg-amber-100  text-amber-700  dark:bg-amber-900/40  dark:text-amber-300'  },
-  finished:  { label: 'Finished', bgItem: 'bg-emerald-500', ring: 'ring-emerald-400', badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
-  loved_it:  { label: 'Loved it', bgItem: 'bg-rose-500',    ring: 'ring-rose-400',    badge: 'bg-rose-100   text-rose-700   dark:bg-rose-900/40   dark:text-rose-300'   },
+  want_to:   { label: 'Want to',  bgItem: 'bg-ldg-ink/25',  ring: 'ring-ldg-ink/25',  badge: 'bg-ldg-ink/[0.06] text-ldg-ink/55' },
+  currently: { label: 'Watching', bgItem: 'bg-ldg-ink/40',  ring: 'ring-ldg-ink/40',  badge: 'bg-ldg-ink/[0.06] text-ldg-ink/70'  },
+  finished:  { label: 'Finished', bgItem: 'bg-ldg-green',   ring: 'ring-ldg-green/40', badge: 'bg-ldg-green/10 text-ldg-green' },
+  loved_it:  { label: 'Loved it', bgItem: 'bg-ldg-green',   ring: 'ring-ldg-green/40', badge: 'bg-ldg-green/10 text-ldg-green' },
 }
 
 const STATUS_LABEL_BY_TYPE: Record<string, Record<string, string>> = {
@@ -57,18 +57,8 @@ const STATUS_LABEL_BY_TYPE: Record<string, Record<string, string>> = {
   book:  { want_to: 'Want to Read',  currently: 'Reading',  finished: 'Finished', loved_it: 'Loved It ❤️' },
 }
 
-const STREAMING_COLORS: Record<string, string> = {
-  Netflix:        'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-  'HBO Max':      'bg-ldg-ink/[0.06] text-ldg-ink/55',
-  Max:            'bg-ldg-ink/[0.06] text-ldg-ink/55',
-  'Disney+':      'bg-ldg-ink/[0.06] text-ldg-ink/55',
-  'Apple TV+':    'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  'Amazon Prime': 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
-  'Prime Video':  'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
-  'Paramount+':   'bg-ldg-ink/[0.06] text-ldg-ink/55',
-}
-function streamingColor(name: string) {
-  return STREAMING_COLORS[name] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+function streamingColor(_name: string) {
+  return 'bg-ldg-ink/[0.06] text-ldg-ink/55'
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -91,8 +81,8 @@ function RatingPicker({ value, onChange }: { value: number | null; onChange: (v:
           className={cn(
             'w-8 h-8 rounded-lg text-sm font-semibold transition-all',
             value === n
-              ? 'bg-amber-400 text-white shadow-sm'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-amber-100 dark:hover:bg-amber-900/30',
+              ? 'bg-ldg-green text-white shadow-sm'
+              : 'bg-ldg-ink/[0.06] text-ldg-ink/55 hover:bg-ldg-green/10',
           )}>
           {n}
         </button>
@@ -124,7 +114,7 @@ function StatusPicker({ value, itemType, onChange }: { value: string; itemType: 
 }
 
 function ItemCard({ item, onClick }: { item: WatchlistItem; onClick: () => void }) {
-  const PLACEHOLDER_COLORS = ['#6366f1','#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899']
+  const PLACEHOLDER_COLORS = ['#2e7d4f','#8fb8a0','#54555c','#a6a7ae','#3d6650','#c9cad0','#6f9080']
   const color = PLACEHOLDER_COLORS[item.title.charCodeAt(0) % PLACEHOLDER_COLORS.length]
   const cfg = STATUS_CFG[item.status]
 
@@ -140,7 +130,7 @@ function ItemCard({ item, onClick }: { item: WatchlistItem; onClick: () => void 
         </div>
         {item.myRating != null && (
           <div className="absolute bottom-1.5 left-1.5 flex items-center gap-0.5 bg-black/70 rounded-md px-1.5 py-0.5">
-            <Star size={8} fill="#fbbf24" color="#fbbf24" />
+            <Star size={8} fill="#2e7d4f" color="#2e7d4f" />
             <span className="text-[10px] text-white font-bold">{item.myRating}/10</span>
           </div>
         )}
@@ -153,7 +143,7 @@ function ItemCard({ item, onClick }: { item: WatchlistItem; onClick: () => void 
         </p>
         {item.tmdbRating != null && (
           <p className="text-[10px] text-gray-400 flex items-center gap-0.5">
-            <Star size={8} fill="#fbbf24" color="#fbbf24" />
+            <Star size={8} fill="#2e7d4f" color="#2e7d4f" />
             {item.tmdbRating}
           </p>
         )}
@@ -258,7 +248,7 @@ function AddSheet({ defaultTab, onClose, onAdded }: {
             {(['media', 'book'] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}
                 className={cn('flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors',
-                  tab === t ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400')}>
+                  tab === t ? 'bg-ldg-green text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400')}>
                 {t === 'media' ? <Tv size={14} /> : <BookOpen size={14} />}
                 {t === 'media' ? 'Movies & TV' : 'Books'}
               </button>
@@ -304,10 +294,10 @@ function AddSheet({ defaultTab, onClose, onAdded }: {
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Notes</p>
               <textarea value={notes} onChange={e => setNotes(e.target.value)}
                 placeholder="Your thoughts, recommendations, quotes…" rows={3}
-                className="w-full px-3 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-surface dark:bg-surface text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                className="w-full px-3 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-surface dark:bg-surface text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-ldg-green/30" />
             </div>
             <button onClick={save} disabled={saving}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors disabled:opacity-60">
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-ldg-green hover:opacity-90 text-white font-semibold transition-colors disabled:opacity-60">
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
               Add to List
             </button>
@@ -319,7 +309,7 @@ function AddSheet({ defaultTab, onClose, onAdded }: {
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
                   placeholder={tab === 'book' ? 'Search books, authors…' : 'Search movies and TV shows…'}
-                  className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-ldg-green/30" />
                 {query && (
                   <button onClick={() => setQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2">
                     <X size={14} className="text-gray-400" />
@@ -417,7 +407,7 @@ function DetailSheet({ item, onClose, onUpdated, onDeleted }: {
     } finally { setDeleting(false) }
   }
 
-  const PLACEHOLDER_COLORS = ['#6366f1','#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899']
+  const PLACEHOLDER_COLORS = ['#2e7d4f','#8fb8a0','#54555c','#a6a7ae','#3d6650','#c9cad0','#6f9080']
   const color = PLACEHOLDER_COLORS[item.title.charCodeAt(0) % PLACEHOLDER_COLORS.length]
   const labels = STATUS_LABEL_BY_TYPE[item.type] ?? STATUS_LABEL_BY_TYPE.movie
 
@@ -450,7 +440,7 @@ function DetailSheet({ item, onClose, onUpdated, onDeleted }: {
               </p>
               {item.tmdbRating != null && (
                 <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-0.5">
-                  <Star size={10} fill="#fbbf24" color="#fbbf24" />
+                  <Star size={10} fill="#2e7d4f" color="#2e7d4f" />
                   {item.tmdbRating} / 10 TMDB
                 </p>
               )}
@@ -488,7 +478,7 @@ function DetailSheet({ item, onClose, onUpdated, onDeleted }: {
             <div>
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                 My Rating
-                {myRating != null && <span className="ml-2 text-amber-500 font-bold">{myRating}/10</span>}
+                {myRating != null && <span className="ml-2 text-ldg-green font-bold">{myRating}/10</span>}
               </p>
               <RatingPicker value={myRating} onChange={setMyRating} />
             </div>
@@ -496,11 +486,11 @@ function DetailSheet({ item, onClose, onUpdated, onDeleted }: {
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Notes</p>
               <textarea value={notes} onChange={e => setNotes(e.target.value)}
                 placeholder="Your thoughts, quotes, recommendations…" rows={3}
-                className="w-full px-3 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-surface dark:bg-surface text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                className="w-full px-3 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-surface dark:bg-surface text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-ldg-green/30" />
             </div>
             {dirty && (
               <button onClick={save} disabled={saving}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors disabled:opacity-60">
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-ldg-green hover:opacity-90 text-white font-semibold transition-colors disabled:opacity-60">
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 Save Changes
               </button>
@@ -601,7 +591,7 @@ export function WatchlistContent({ forceType }: WatchlistContentProps) {
           </p>
         </div>
         <button onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors">
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-ldg-green hover:opacity-90 text-white text-sm font-semibold shadow-sm transition-colors">
           <Plus size={16} />
           Add
         </button>
@@ -635,7 +625,7 @@ export function WatchlistContent({ forceType }: WatchlistContentProps) {
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Filter your list…"
-            className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-ldg-green/30" />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2">
               <X size={14} className="text-gray-400" />

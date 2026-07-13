@@ -42,13 +42,13 @@ function GoalForm({ onClose, onCreated }: Props) {
       </div>
 
       <input autoFocus type="text" placeholder="What do you want to achieve?"
-        className="w-full border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm bg-gray-50 dark:bg-gray-800 outline-none focus:border-indigo-400"
+        className="w-full border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-sm bg-gray-50 dark:bg-gray-800 outline-none focus:border-ldg-green"
         value={name} onChange={e => setName(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') save() }} />
 
       <div className="flex gap-1.5">
         {GOAL_TYPES.map(t => (
-          <button key={t.key} onClick={() => setType(t.key)} className={cn('flex-1 py-2 text-xs font-semibold rounded-xl border transition-colors', type === t.key ? 'bg-indigo-600 text-white border-indigo-600' : 'border-black/10 dark:border-white/10 text-gray-600 dark:text-gray-400')}>
+          <button key={t.key} onClick={() => setType(t.key)} className={cn('flex-1 py-2 text-xs font-semibold rounded-xl border transition-colors', type === t.key ? 'bg-ldg-green text-white border-ldg-green' : 'border-black/10 dark:border-white/10 text-gray-600 dark:text-gray-400')}>
             {t.emoji} {t.label}
           </button>
         ))}
@@ -57,7 +57,7 @@ function GoalForm({ onClose, onCreated }: Props) {
       <div className="flex items-center gap-3">
         <div className="flex gap-1.5 flex-wrap">
           {['🎯','🚀','💡','🏆','🌱','🌍'].map(e => (
-            <button key={e} onClick={() => setEmoji(e)} className={cn('w-9 h-9 rounded-xl text-lg flex items-center justify-center', emoji === e ? 'ring-2 ring-indigo-500 bg-indigo-50' : 'bg-gray-100 dark:bg-gray-800')}>
+            <button key={e} onClick={() => setEmoji(e)} className={cn('w-9 h-9 rounded-xl text-lg flex items-center justify-center', emoji === e ? 'ring-2 ring-ldg-green bg-ldg-green/10' : 'bg-gray-100 dark:bg-gray-800')}>
               {e}
             </button>
           ))}
@@ -69,7 +69,7 @@ function GoalForm({ onClose, onCreated }: Props) {
         </div>
       </div>
 
-      <button onClick={save} disabled={saving || !name.trim()} className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-2xl disabled:opacity-50">
+      <button onClick={save} disabled={saving || !name.trim()} className="w-full py-3 bg-ldg-green text-white font-semibold rounded-2xl disabled:opacity-50">
         {saving ? 'Saving…' : 'Add goal'}
       </button>
     </div>
@@ -95,19 +95,19 @@ export function QuickAddSheet({ onClose, onCreated }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setMode('habit')}
-                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border-2 border-black/5 dark:border-white/5 hover:border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border-2 border-black/5 dark:border-white/5 hover:border-ldg-green/40 hover:bg-ldg-green/10 transition-all"
               >
-                <span className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
+                <span className="w-12 h-12 rounded-2xl bg-ldg-green/10 flex items-center justify-center">
                   <Dumbbell size={22} className="text-ldg-green" />
                 </span>
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Habit</span>
               </button>
               <button
                 onClick={() => setMode('goal')}
-                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border-2 border-black/5 dark:border-white/5 hover:border-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all"
+                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border-2 border-black/5 dark:border-white/5 hover:border-ldg-green/40 hover:bg-ldg-green/10 transition-all"
               >
-                <span className="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
-                  <Target size={22} className="text-violet-600 dark:text-violet-400" />
+                <span className="w-12 h-12 rounded-2xl bg-ldg-green/10 flex items-center justify-center">
+                  <Target size={22} className="text-ldg-green" />
                 </span>
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Goal</span>
               </button>

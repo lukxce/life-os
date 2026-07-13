@@ -148,7 +148,7 @@ export default function ScheduleSettingsPage() {
               <input
                 type="text"
                 placeholder="e.g. Dubai, UAE"
-                className="w-full text-sm bg-canvas-alt dark:bg-surface rounded-xl px-4 py-2.5 outline-none border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 dark:text-white"
+                className="w-full text-sm bg-canvas-alt dark:bg-surface rounded-xl px-4 py-2.5 outline-none border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-ldg-green/30 dark:text-white"
                 value={location}
                 onChange={e => setLocation(e.target.value)}
               />
@@ -161,7 +161,7 @@ export default function ScheduleSettingsPage() {
               <input
                 type="url"
                 placeholder="e.g. https://calendly.com/yourname"
-                className="w-full text-sm bg-canvas-alt dark:bg-surface rounded-xl px-4 py-2.5 outline-none border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 dark:text-white"
+                className="w-full text-sm bg-canvas-alt dark:bg-surface rounded-xl px-4 py-2.5 outline-none border border-black/10 dark:border-white/10 focus:ring-2 focus:ring-ldg-green/30 dark:text-white"
                 value={meetingLink}
                 onChange={e => setMeetingLink(e.target.value)}
               />
