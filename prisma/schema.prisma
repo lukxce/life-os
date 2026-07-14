@@ -284,6 +284,21 @@ model BodyMetric {
   @@index([metric, date])
 }
 
+// Auto-imported from Apple Health via the iOS Shortcut / Health Auto Export
+// integration — kept separate from BodyMetric (manual body measurements)
+// since these are daily-aggregated, externally-sourced readings.
+model HealthMetric {
+  id        String   @id @default(cuid())
+  date      DateTime // local midnight, the day this reading is for
+  metric    String   // "steps" | "sleepHours" | "restingHR" | "activeEnergy" | "hrv" | "weight"
+  value     Float
+  source    String   @default("healthkit")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([date, metric])
+  @@index([metric, date])
+}
+
 model DailyTask {
   id          String    @id @default(cuid())
   userId      String    @default("default")

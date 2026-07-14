@@ -6,6 +6,7 @@ const PUBLIC_PREFIXES = [
   '/share',              // shared calendar links (top-level route)
   '/life/share',         // legacy share redirect
   '/api/life/public',    // public calendar ICS API (token-gated itself)
+  '/api/health/ingest',  // Apple Health import endpoint (token-gated itself)
   '/login',              // login page itself
   '/api/auth',           // login/logout API
   '/_next',
