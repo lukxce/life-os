@@ -5,6 +5,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Card, Label, CHART_COLORS } from '@/components/ledger/primitives'
+import { SignalsCard } from '@/components/finance/SignalsCard'
 import { ArrowUp, ArrowDown, ArrowLeftRight } from 'lucide-react'
 
 type DashboardData = {
@@ -87,6 +88,8 @@ export default function Dashboard() {
           <div className="h-36 flex items-center text-ldg-ink/40 animate-pulse">Loading…</div>
         )}
       </Card>
+
+      <SignalsCard />
 
       {/* ── Period pills ── */}
       <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
