@@ -6,6 +6,15 @@ import { X, Zap, ZapOff, ZoomIn, ZoomOut, Check, Camera } from 'lucide-react'
 function isSufUrl(s: string) { return s.includes('suf.purs.gov.rs') }
 function pfrToUrl(pfr: string) { return `https://suf.purs.gov.rs/v/?vl=${btoa(pfr.trim())}` }
 
+// Fiscal receipt QR codes are small and often photographed at an angle —
+// TRY_HARDER trades a bit of decode speed for meaningfully better hit rate.
+async function makeQRReader() {
+  const { BrowserQRCodeReader } = await import('@zxing/browser')
+  const { DecodeHintType } = await import('@zxing/library')
+  const hints = new Map([[DecodeHintType.TRY_HARDER, true]])
+  return new BrowserQRCodeReader(hints)
+}
+
 // Downscale + JPEG-compress a photo so the upload stays small
 async function compressImage(file: File, maxDim = 1600, quality = 0.85): Promise<{ base64: string; mediaType: string }> {
   const bitmap = await createImageBitmap(file)
@@ -83,8 +92,8 @@ function ScanInner() {
     try {
       const objectUrl = URL.createObjectURL(file)
       try {
-        const { BrowserQRCodeReader } = await import('@zxing/browser')
-        const result = await new BrowserQRCodeReader().decodeFromImageUrl(objectUrl)
+        const reader = await makeQRReader()
+        const result = await reader.decodeFromImageUrl(objectUrl)
         const text = result.getText()
         URL.revokeObjectURL(objectUrl)
         if (text) {
@@ -151,8 +160,7 @@ function ScanInner() {
   const startScanner = async () => {
     setError(''); setQrFound(false); setScanning(true)
     try {
-      const { BrowserQRCodeReader } = await import('@zxing/browser')
-      const reader = new BrowserQRCodeReader()
+      const reader = await makeQRReader()
 
       const controls = await reader.decodeFromConstraints(
         {
