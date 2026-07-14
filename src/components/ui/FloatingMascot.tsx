@@ -7,11 +7,14 @@ import { cn } from '@/lib/utils'
 import { Mascot, MascotMood } from './Mascot'
 import { Check, Clock, X } from 'lucide-react'
 
+const MOODS = ['😞', '😕', '😐', '🙂', '😄']
+
 interface Nudge {
   id: string; module: string; score: number; message: string; href: string
   habits?: { id: string; name: string }[]
   meals?: { mealType: string; plannedName: string }[]
   action?: 'no-expenses'
+  moodPick?: boolean
 }
 
 function moduleForPath(path: string): string {
@@ -45,6 +48,7 @@ export function FloatingMascot() {
   const [justDone, setJustDone] = useState<Set<string>>(new Set())
   const [mealOpen, setMealOpen] = useState<string | null>(null)
   const [mealText, setMealText] = useState('')
+  const [moodPicked, setMoodPicked] = useState<string | null>(null)
   const [, setTick] = useState(0) // re-render after snooze/dismiss (localStorage isn't reactive)
   const pathname = usePathname()
 
@@ -95,6 +99,21 @@ export function FloatingMascot() {
       loadNudges()
     } catch {
       toast.error("Couldn't save that — try again")
+    }
+  }
+
+  async function pickMood(mood: string) {
+    setMoodPicked(mood)
+    try {
+      const res = await fetch('/api/life/day-log', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: todayStr(), mood }),
+      })
+      if (!res.ok) throw new Error()
+      setTimeout(loadNudges, 800)
+    } catch {
+      toast.error("Couldn't save that — try again")
+      setMoodPicked(null)
     }
   }
 
@@ -178,6 +197,25 @@ export function FloatingMascot() {
                 </div>
               )}
 
+              {/* Inline mood tap (evening review) */}
+              {top.moodPick && (
+                <div className="mt-2.5">
+                  <div className="flex gap-1.5">
+                    {MOODS.map(m => (
+                      <button key={m} onClick={() => !moodPicked && pickMood(m)}
+                        className={cn('flex-1 aspect-square rounded-lg text-lg flex items-center justify-center transition-all border',
+                          moodPicked === m ? 'bg-emerald-500/10 border-emerald-500/40 scale-105' : 'border-black/5 dark:border-white/10 hover:bg-canvas-alt')}>
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                  <Link href="/life/day-log" onClick={() => setOpen(false)}
+                    className="text-[11px] font-bold text-[rgb(var(--l-green))] hover:underline mt-2 inline-block">
+                    Add a note too →
+                  </Link>
+                </div>
+              )}
+
               {/* Inline no-expenses answer */}
               {top.action === 'no-expenses' && (
                 <div className="flex gap-2 mt-2.5">
@@ -189,7 +227,7 @@ export function FloatingMascot() {
               )}
 
               {/* Link fallback for nudges without inline actions */}
-              {!top.habits && !top.meals && !top.action && (
+              {!top.habits && !top.meals && !top.action && !top.moodPick && (
                 <Link href={top.href} onClick={() => setOpen(false)}
                   className="text-xs font-bold text-[rgb(var(--coral))] hover:underline mt-1.5 inline-block">
                   Take care of it →

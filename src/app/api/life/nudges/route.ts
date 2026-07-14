@@ -19,6 +19,7 @@ export interface Nudge {
   habits?: { id: string; name: string }[] // inline-checkable
   meals?: { mealType: string; plannedName: string }[] // inline-loggable
   action?: 'no-expenses' // inline-answerable
+  moodPick?: boolean // inline mood tap (evening review)
 }
 
 const FREQ_DAYS: Record<string, number> = { weekly: 7, monthly: 30, quarterly: 90, yearly: 365 }
@@ -64,10 +65,10 @@ export async function GET(req: NextRequest) {
 
   const nudges: Nudge[] = []
 
-  const [habits, mealPlan, mealLogsToday, bills, expenseCount, noExpCfg, lastWeight, contacts] = await Promise.all([
+  const [habits, mealPlan, mealLogsToday, bills, expenseCount, noExpCfg, lastWeight, contacts, todayLog] = await Promise.all([
     prisma.habit.findMany({
       where: { active: true, paused: false, category: { not: 'Weekly Check-in' } },
-      include: { logs: { where: { date: { gte: streakLookback }, completed: true }, select: { date: true } } },
+      include: { logs: { where: { date: { gte: streakLookback } }, select: { date: true, completed: true } } },
     }),
     prisma.mealPlanSlot.findMany({ where: { dayOfWeek: dow } }),
     prisma.mealLog.findMany({ where: { date: today } }),
@@ -76,12 +77,13 @@ export async function GET(req: NextRequest) {
     prisma.appConfig.findUnique({ where: { key: `no-expenses:${localDate}` } }),
     prisma.bodyMetric.findFirst({ where: { metric: 'weight' }, orderBy: { date: 'desc' } }),
     prisma.contact.findMany(),
+    prisma.dailyLog.findUnique({ where: { date: today } }),
   ])
 
   // ── Habits: pending in an open window; streaks at risk get top billing ────
   const todayKey = dayKey(today)
   const withState = habits.map(h => {
-    const logDays = new Set(h.logs.map(l => dayKey(new Date(l.date))))
+    const logDays = new Set(h.logs.filter(l => l.completed).map(l => dayKey(new Date(l.date))))
     return {
       habit: h,
       doneToday: logDays.has(todayKey),
@@ -192,6 +194,83 @@ export async function GET(req: NextRequest) {
       message: `Been a while since you caught up with ${overdueContact.name}.`,
       href: '/personal/contacts',
     })
+  }
+
+  // ── Pattern: a habit that quietly slipped this week vs last ───────────────
+  const weekEnd = new Date(today)
+  const weekStart = new Date(today); weekStart.setUTCDate(weekStart.getUTCDate() - 6)
+  const lastWeekEnd = new Date(today); lastWeekEnd.setUTCDate(lastWeekEnd.getUTCDate() - 7)
+  const lastWeekStart = new Date(today); lastWeekStart.setUTCDate(lastWeekStart.getUTCDate() - 13)
+
+  function windowRate(habit: typeof habits[number], logDays: Set<string>, start: Date, end: Date) {
+    let scheduled = 0, completed = 0
+    const cursor = new Date(start)
+    while (cursor <= end) {
+      if (new Date(habit.createdAt) <= cursor && isScheduledDay(habit, cursor)) {
+        scheduled++
+        if (logDays.has(dayKey(cursor))) completed++
+      }
+      cursor.setUTCDate(cursor.getUTCDate() + 1)
+    }
+    return scheduled > 0 ? completed / scheduled : null
+  }
+
+  let slipped: { name: string; thisWeekPct: number; lastWeekPct: number } | null = null
+  for (const s of withState) {
+    const logDays = new Set(s.habit.logs.filter(l => l.completed).map(l => dayKey(new Date(l.date))))
+    const thisWeek = windowRate(s.habit, logDays, weekStart, weekEnd)
+    const lastWeek = windowRate(s.habit, logDays, lastWeekStart, lastWeekEnd)
+    if (thisWeek === null || lastWeek === null) continue
+    if (lastWeek - thisWeek >= 0.4 && lastWeek >= 0.6) {
+      if (!slipped || (lastWeek - thisWeek) > (slipped.lastWeekPct - slipped.thisWeekPct)) {
+        slipped = { name: s.habit.name, thisWeekPct: Math.round(thisWeek * 100), lastWeekPct: Math.round(lastWeek * 100) }
+      }
+    }
+  }
+  if (slipped) {
+    nudges.push({
+      id: `pattern-${slipped.name}`,
+      module: 'life',
+      score: 35,
+      message: `"${slipped.name}" was at ${slipped.lastWeekPct}% last week, only ${slipped.thisWeekPct}% this week — everything okay?`,
+      href: '/life/analytics',
+    })
+  }
+
+  // ── Evening review: a quick mood tap before the day closes out ────────────
+  if (hour >= 20 && !todayLog) {
+    nudges.push({
+      id: 'evening-review',
+      module: 'life',
+      score: 25,
+      message: 'How was today, in one tap?',
+      href: '/life/day-log',
+      moodPick: true,
+    })
+  }
+
+  // ── Morning brief: what's actually worth knowing before the day starts ────
+  if (hour < 10) {
+    const habitsDueCount = dueToday.length
+    const topBillDays = bills
+      .map(b => {
+        const due = new Date(today.getFullYear(), today.getMonth(), b.dayOfMonth)
+        if (due < today) due.setMonth(due.getMonth() + 1)
+        return Math.ceil((due.getTime() - today.getTime()) / 86400000)
+      })
+      .filter(d => d <= 3)
+    const parts: string[] = []
+    if (habitsDueCount > 0) parts.push(`${habitsDueCount} habit${habitsDueCount === 1 ? '' : 's'} today`)
+    if (topBillDays.length > 0) parts.push(`a bill due in ${Math.min(...topBillDays)}d`)
+    if (parts.length > 0) {
+      nudges.push({
+        id: `morning-brief-${localDate}`,
+        module: 'home',
+        score: 15,
+        message: `Good morning — ${parts.join(', ')}.`,
+        href: '/',
+      })
+    }
   }
 
   nudges.sort((a, b) => b.score - a.score)

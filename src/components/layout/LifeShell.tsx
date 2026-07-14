@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppShell, ModuleConfig } from './AppShell'
 import { QuickAddSheet } from './QuickAddSheet'
-import { CalendarDays, CalendarCheck, Target, BarChart2, History, ListChecks, Plus, Sparkles } from 'lucide-react'
+import { CalendarDays, CalendarCheck, Target, BarChart2, History, ListChecks, Plus, Sparkles, NotebookPen } from 'lucide-react'
 
 const baseConfig: Omit<ModuleConfig, 'fab'> = {
   name: 'Habits',
@@ -16,8 +16,9 @@ const baseConfig: Omit<ModuleConfig, 'fab'> = {
   contentClassName: 'max-w-2xl md:max-w-3xl',
   groups: [
     { title: 'Daily', items: [
-      { href: '/life',        label: 'Today',  icon: CalendarDays },
-      { href: '/life/weekly', label: 'Weekly', icon: CalendarCheck },
+      { href: '/life',          label: 'Today',   icon: CalendarDays },
+      { href: '/life/weekly',   label: 'Weekly',  icon: CalendarCheck },
+      { href: '/life/day-log',  label: 'Day Log', icon: NotebookPen },
     ]},
     { title: 'Track', items: [
       { href: '/life/goals', label: 'Goals', icon: Target },
