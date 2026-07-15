@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { ChevronLeft, Check, X } from 'lucide-react'
 
 interface MealSlot { id: string; dayOfWeek: number; mealType: string; name: string; calories: number; protein: number }
-interface MealLogRow { id: string; date: string; mealType: string; description: string | null }
+interface MealLogRow { id: string; date: string; mealType: string; description: string | null; calories: number | null; protein: number | null }
 
 const MEAL_ORDER = ['breakfast', 'snack', 'dinner']
 const MEAL_META: Record<string, { emoji: string; label: string }> = {
@@ -12,7 +12,7 @@ const MEAL_META: Record<string, { emoji: string; label: string }> = {
   snack:     { emoji: '🥤', label: 'Snack' },
   dinner:    { emoji: '🍽️', label: 'Dinner' },
 }
-const DAYS_BACK = 14
+const DAYS_BACK = 90
 
 function toLocalDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -59,7 +59,7 @@ export default function MealHistoryPage() {
         </Link>
         <div>
           <h1 className="text-lg font-bold text-gray-900 dark:text-white">Meal History</h1>
-          <p className="text-xs text-gray-400">Planned vs. what you actually logged — last {DAYS_BACK} days</p>
+          <p className="text-xs text-gray-400">Planned vs. what you actually ate (AI est.) — last {DAYS_BACK} days</p>
         </div>
       </div>
 
@@ -73,12 +73,19 @@ export default function MealHistoryPage() {
 
           const isToday = date === toLocalDate(new Date())
           const label = new Date(date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })
+          const dayCal = dayLogs.reduce((a, l) => a + (l.calories ?? 0), 0)
+          const dayProt = dayLogs.reduce((a, l) => a + (l.protein ?? 0), 0)
 
           return (
             <div key={date} className="bg-surface/90 dark:bg-surface/70 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-black/5 dark:border-white/5 flex items-center gap-2">
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">{label}</span>
-                {isToday && <span className="text-[10px] font-bold text-[rgb(var(--l-green))] bg-[rgb(var(--l-green))]/10 px-2 py-0.5 rounded-full">Today</span>}
+              <div className="px-4 py-2.5 border-b border-black/5 dark:border-white/5 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{label}</span>
+                  {isToday && <span className="text-[10px] font-bold text-[rgb(var(--l-green))] bg-[rgb(var(--l-green))]/10 px-2 py-0.5 rounded-full">Today</span>}
+                </div>
+                {dayCal > 0 && (
+                  <span className="text-[11px] font-mono text-gray-500 dark:text-gray-400">{dayCal} kcal{dayProt > 0 ? ` · ${dayProt}g` : ''}</span>
+                )}
               </div>
               <div className="divide-y divide-black/5 dark:divide-white/5">
                 {MEAL_ORDER.map(mt => {
@@ -98,9 +105,14 @@ export default function MealHistoryPage() {
                         {mealLogs.length > 0 ? mealLogs.map(l => (
                           <div key={l.id} className="flex items-start gap-1.5">
                             {l.description ? <Check size={13} className="text-emerald-500 shrink-0 mt-0.5" /> : <X size={13} className="text-gray-300 shrink-0 mt-0.5" />}
-                            <p className="text-sm text-gray-700 dark:text-gray-200 leading-snug">
-                              {l.description ?? <em className="not-italic text-gray-400">Skipped</em>}
-                            </p>
+                            <div className="min-w-0">
+                              <p className="text-sm text-gray-700 dark:text-gray-200 leading-snug">
+                                {l.description ?? <em className="not-italic text-gray-400">Skipped</em>}
+                              </p>
+                              {l.calories != null && (
+                                <p className="text-[11px] font-mono text-[rgb(var(--l-green))]">{l.calories} kcal{l.protein != null ? ` · ${l.protein}g protein` : ''}</p>
+                              )}
+                            </div>
                           </div>
                         )) : (
                           <p className="text-sm text-gray-300 dark:text-gray-600 italic">Not logged</p>

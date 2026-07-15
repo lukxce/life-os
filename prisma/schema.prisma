@@ -326,6 +326,8 @@ model MealLog {
   date        DateTime // UTC midnight of the day the meal was eaten
   mealType    String   // "breakfast" | "snack" | "dinner"
   description String?  // what was actually eaten — null/empty means skipped, not unanswered
+  calories    Int?     // AI-estimated from description at log time; null if skipped or estimate failed
+  protein     Int?     // grams, same estimation pass as calories
   createdAt   DateTime @default(now())
   // Append-only: logging the same mealType twice records a second real meal
   // (e.g. a second snack), it doesn't overwrite the first

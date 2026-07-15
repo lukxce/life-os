@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 interface MealSlot { id: string; dayOfWeek: number; mealType: string; name: string; calories: number; protein: number }
 interface WorkoutLog { id: string; date: string; type: string; duration: number | null }
 interface BodyRow   { id: string; date: string; metric: string; value: number }
-interface MealLogRow { id: string; mealType: string; description: string | null; createdAt: string }
+interface MealLogRow { id: string; mealType: string; description: string | null; calories: number | null; protein: number | null; createdAt: string }
 
 const KCAL_TARGET = 2100
 const PROTEIN_TARGET = 150
@@ -94,8 +94,11 @@ export default function FitnessTodayPage() {
   }
 
   const todayMeals = meals.filter(m => m.dayOfWeek === todayDow)
-  const totalCal   = todayMeals.reduce((a, m) => a + m.calories, 0)
-  const totalProt  = todayMeals.reduce((a, m) => a + m.protein, 0)
+  const plannedCal  = todayMeals.reduce((a, m) => a + m.calories, 0)
+  // Real intake — AI-estimated at log time from what was actually typed,
+  // not the plan's target. Skipped meals (no description) contribute 0.
+  const totalCal   = mealLogs.reduce((a, l) => a + (l.calories ?? 0), 0)
+  const totalProt  = mealLogs.reduce((a, l) => a + (l.protein ?? 0), 0)
 
   // Day is "done" when the planned workout type is logged
   const expectedType: Record<number, string | null> = { 1: 'pt', 2: 'cardio_bike', 3: 'pt', 4: null, 5: 'pt', 6: 'cardio_bike', 7: null }
@@ -204,7 +207,12 @@ export default function FitnessTodayPage() {
                         <div key={log.id} className="flex items-start gap-2.5 mt-2 bg-ldg-green/[0.07] border border-ldg-green/20 rounded-xl px-3 py-2 group">
                           <Check size={14} className="text-ldg-green shrink-0 mt-0.5" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-ldg-green">You ate</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-[10px] font-bold uppercase tracking-wide text-ldg-green">You ate</p>
+                              {log.calories != null && (
+                                <span className="font-mono text-[10px] text-ldg-green">{log.calories} kcal{log.protein != null ? ` · ${log.protein}g` : ''}</span>
+                              )}
+                            </div>
                             <p className="text-[14px] text-ldg-ink leading-snug">
                               {log.description ? log.description : <em className="not-italic text-ldg-ink/55">Skipped</em>}
                             </p>
@@ -248,7 +256,7 @@ export default function FitnessTodayPage() {
           </div>
         )}
         <div className="px-5 py-2.5 bg-ldg-paper flex items-center justify-between border-t border-ldg-ink/[0.07]">
-          <span className="font-mono text-[11px] text-ldg-ink/55">Total</span>
+          <span className="font-mono text-[11px] text-ldg-ink/55">Eaten (AI est.) · plan {plannedCal.toLocaleString()}</span>
           <div className="flex items-center gap-4">
             <span className="font-mono text-[12px] font-bold text-ldg-ink">{totalCal} kcal</span>
             <span className="font-mono text-[12px] font-bold text-ldg-ink/55">{totalProt}g protein</span>
