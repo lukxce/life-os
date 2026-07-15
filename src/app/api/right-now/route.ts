@@ -43,17 +43,33 @@ function timeOfDayBucket(nowMin: number): string {
 // exactly once per request; both the near-term hero pool and the full-day
 // agenda derive from this same call so Home never has to hit external
 // calendar URLs a second time itself.
+//
+// In-memory cache per calendar URL, same pattern as getLiveRate()/
+// getCryptoPrices() in lib/utils.ts and lib/crypto.ts. This used to be a
+// live no-store fetch on EVERY page load — every Home visit waited on a
+// live round trip to Google/Outlook per calendar (up to the full 5s timeout
+// each) before the Now card could render. A personal schedule doesn't need
+// sub-30s freshness, and an explicit cache is deterministic here (Next's
+// fetch Data Cache is unreliable to lean on inside a `force-dynamic` route).
+const ICS_CACHE_MS = 30_000
+const icsCache = new Map<string, { events: (ReturnType<typeof parseICS>[number] & { color: string })[]; at: number }>()
+
 async function fetchAllIcsEvents() {
   const calendars = await prisma.iCSCalendar.findMany()
   const results = await Promise.allSettled(
     calendars.map(async cal => {
+      const cached = icsCache.get(cal.url)
+      if (cached && Date.now() - cached.at < ICS_CACHE_MS) return cached.events
+
       const res = await fetch(cal.url, {
         headers: { 'User-Agent': 'LifeOS/1.0' },
         signal: AbortSignal.timeout(5000),
         cache: 'no-store',
       })
-      if (!res.ok) return []
-      return parseICS(await res.text()).map(ev => ({ ...ev, color: cal.color }))
+      if (!res.ok) return cached?.events ?? []
+      const events = parseICS(await res.text()).map(ev => ({ ...ev, color: cal.color }))
+      icsCache.set(cal.url, { events, at: Date.now() })
+      return events
     })
   )
   const events: (ReturnType<typeof parseICS>[number] & { color: string })[] = []
