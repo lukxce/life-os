@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { isScheduledDay, utcMidnight } from '@/lib/utils'
-import { parseICS } from '@/lib/ics'
+import { parseICS, type ICSEvent } from '@/lib/ics'
 
 // ── Real, first-party data only. No invented urgency, no fake countdowns. ──
 // "Now" is always the CLIENT's local clock, passed in as query params — the
@@ -44,35 +44,67 @@ function timeOfDayBucket(nowMin: number): string {
 // agenda derive from this same call so Home never has to hit external
 // calendar URLs a second time itself.
 //
-// In-memory cache per calendar URL, same pattern as getLiveRate()/
-// getCryptoPrices() in lib/utils.ts and lib/crypto.ts. This used to be a
-// live no-store fetch on EVERY page load — every Home visit waited on a
-// live round trip to Google/Outlook per calendar (up to the full 5s timeout
-// each) before the Now card could render. A personal schedule doesn't need
-// sub-30s freshness, and an explicit cache is deterministic here (Next's
-// fetch Data Cache is unreliable to lean on inside a `force-dynamic` route).
-const ICS_CACHE_MS = 30_000
-const icsCache = new Map<string, { events: (ReturnType<typeof parseICS>[number] & { color: string })[]; at: number }>()
+// Cache lives in the ICSCalendar row itself (cachedEvents/cachedAt), not an
+// in-memory Map — a personal app gets sparse traffic, so nearly every
+// request hits a fresh serverless instance and an in-memory cache almost
+// never has anything in it. Persisting to the DB survives cold starts.
+// Stale-while-revalidate: if we have anything under 6h old, answer with it
+// immediately and refresh in the background; only a calendar with NO usable
+// cache yet blocks this request on a live fetch.
+const ICS_FRESH_MS = 60_000
+const ICS_STALE_MS = 6 * 60 * 60 * 1000
+
+async function refreshCalendar(cal: { id: string; url: string }): Promise<ICSEvent[]> {
+  const res = await fetch(cal.url, {
+    headers: { 'User-Agent': 'LifeOS/1.0' },
+    signal: AbortSignal.timeout(5000),
+    cache: 'no-store',
+  })
+  if (!res.ok) throw new Error(`Upstream ${res.status}`)
+  const events = parseICS(await res.text())
+  await prisma.iCSCalendar.update({
+    where: { id: cal.id },
+    data: { cachedEvents: JSON.parse(JSON.stringify(events)), cachedAt: new Date() },
+  }).catch(() => {})
+  return events
+}
 
 async function fetchAllIcsEvents() {
   const calendars = await prisma.iCSCalendar.findMany()
   const results = await Promise.allSettled(
     calendars.map(async cal => {
-      const cached = icsCache.get(cal.url)
-      if (cached && Date.now() - cached.at < ICS_CACHE_MS) return cached.events
+      const cachedEvents = (cal.cachedEvents as unknown as ICSEvent[] | null) ?? null
+      const age = cal.cachedAt ? Date.now() - new Date(cal.cachedAt).getTime() : Infinity
 
-      const res = await fetch(cal.url, {
-        headers: { 'User-Agent': 'LifeOS/1.0' },
-        signal: AbortSignal.timeout(5000),
-        cache: 'no-store',
-      })
-      if (!res.ok) return cached?.events ?? []
-      const events = parseICS(await res.text()).map(ev => ({ ...ev, color: cal.color }))
-      icsCache.set(cal.url, { events, at: Date.now() })
-      return events
+      if (cachedEvents && age < ICS_FRESH_MS) {
+        return cachedEvents.map(ev => ({ ...ev, color: cal.color }))
+      }
+      if (cachedEvents && age < ICS_STALE_MS) {
+        // A bare fire-and-forget refresh isn't reliable on Vercel — the
+        // function can freeze the instant the response is sent, silently
+        // dropping an unawaited background task. Race it against a short
+        // budget instead: fast calendars give this request fresh data (and
+        // the DB write happens for real since we awaited it to win the
+        // race); slow ones fall back to the still-usable stale cache rather
+        // than making the user wait on them.
+        const fresh = await Promise.race([
+          refreshCalendar(cal).catch(() => null),
+          new Promise<null>(resolve => setTimeout(() => resolve(null), 2500)),
+        ])
+        const use = fresh ?? cachedEvents
+        return use.map(ev => ({ ...ev, color: cal.color }))
+      }
+      // No usable cache at all (new calendar, or nothing's succeeded in 6h)
+      // — this one request has to actually wait on the live fetch.
+      try {
+        const events = await refreshCalendar(cal)
+        return events.map(ev => ({ ...ev, color: cal.color }))
+      } catch {
+        return cachedEvents?.map(ev => ({ ...ev, color: cal.color })) ?? []
+      }
     })
   )
-  const events: (ReturnType<typeof parseICS>[number] & { color: string })[] = []
+  const events: (ICSEvent & { color: string })[] = []
   for (const r of results) if (r.status === 'fulfilled') events.push(...r.value)
 
   // Same event synced onto two subscribed calendars (e.g. accepted on both a

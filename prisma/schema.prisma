@@ -469,11 +469,13 @@ model JournalEntry {
 }
 
 model ICSCalendar {
-  id    String @id @default(cuid())
-  name  String
-  url   String
-  color String @default("#6366f1")
-  order Int    @default(0)
+  id           String    @id @default(cuid())
+  name         String
+  url          String
+  color        String    @default("#6366f1")
+  order        Int       @default(0)
+  cachedEvents Json?     // last successfully parsed ICS events (no color baked in — attached at read time)
+  cachedAt     DateTime? // when cachedEvents was last refreshed from a live fetch
 }
 
 model MerchantNickname {
