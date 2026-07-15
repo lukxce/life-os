@@ -420,78 +420,18 @@ export function parseICS(text: string): ICSEvent[] {
   const windowStart = new Date(now); windowStart.setFullYear(windowStart.getFullYear() - 1)
   const windowEnd   = new Date(now); windowEnd.setFullYear(windowEnd.getFullYear() + 1)
 
-  const events: ICSEvent[] = []
+  // ── Collect raw VEVENT blocks first (don't build events yet) ──────────────
+  // We need every block visible before expanding any RRULE, because a
+  // recurring master and its RECURRENCE-ID overrides can appear in either
+  // order in the feed, and the master must know about overrides to skip
+  // that occurrence rather than emitting it twice.
+  const blocks: Record<string, string>[] = []
   let inEvent = false
   let raw: Record<string, string> = {}
 
   for (const line of lines) {
     if (line === 'BEGIN:VEVENT') { inEvent = true; raw = {}; continue }
-    if (line === 'END:VEVENT') {
-      inEvent = false
-
-      const startKey = Object.keys(raw).find(k => k.startsWith('DTSTART'))
-      const endKey   = Object.keys(raw).find(k => k.startsWith('DTEND'))
-      if (!startKey) continue
-
-      const { date: startDate, allDay } = parseICSDate(startKey, raw[startKey], vtimezoneOffsets)
-      const endDate = endKey
-        ? parseICSDate(endKey, raw[endKey], vtimezoneOffsets).date
-        : startDate
-      const durationMs = endDate.getTime() - startDate.getTime()
-
-      const descriptionRaw = raw['DESCRIPTION']?.replace(/\\n/g, '\n').replace(/\\,/g, ',')
-      const baseEvent = {
-        uid:         raw['UID'] || `${Date.now()}-${Math.random()}`,
-        summary:     (raw['SUMMARY']     || '(No title)').replace(/\\n/g, ' ').replace(/\\,/g, ','),
-        location:    raw['LOCATION']?.replace(/\\n/g, ', ').replace(/\\,/g, ',')  || undefined,
-        description: descriptionRaw || undefined,
-        url:         extractMeetingUrl(descriptionRaw, raw['URL']),
-        allDay,
-      }
-
-      // ── Recurring event: expand RRULE ──────────────────────────────────────
-      const rrule = raw['RRULE']
-      if (rrule) {
-        // Collect EXDATE entries (may carry TZID params → different raw keys)
-        const exdateSet = new Set<number>()
-        for (const [k, v] of Object.entries(raw)) {
-          if (!k.startsWith('EXDATE')) continue
-          for (const val of v.split(',')) {
-            const trimmed = val.trim()
-            if (!trimmed) continue
-            try {
-              const { date } = parseICSDate(
-                k.replace(/^EXDATE/, 'DTSTART'),
-                trimmed,
-                vtimezoneOffsets,
-              )
-              exdateSet.add(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
-            } catch { /* skip unparseable EXDATE */ }
-          }
-        }
-
-        const occurrences = expandRrule(startDate, rrule, exdateSet, windowStart, windowEnd)
-        for (const occ of occurrences) {
-          const occEnd = new Date(occ.getTime() + durationMs)
-          events.push({
-            ...baseEvent,
-            uid:   baseEvent.uid + '-' + occ.toISOString(),
-            start: occ.toISOString(),
-            end:   occEnd.toISOString(),
-          })
-        }
-      } else {
-        // ── Single (non-recurring) event ────────────────────────────────────
-        events.push({
-          ...baseEvent,
-          start: startDate.toISOString(),
-          end:   endDate.toISOString(),
-        })
-      }
-
-      continue
-    }
-
+    if (line === 'END:VEVENT') { inEvent = false; blocks.push(raw); continue }
     if (!inEvent) continue
     const colon = line.indexOf(':')
     if (colon < 1) continue
@@ -506,5 +446,104 @@ export function parseICS(text: string): ICSEvent[] {
     }
   }
 
-  return events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+  // ── Google/Outlook calendars emit a modified recurring instance as a
+  // separate VEVENT block sharing the master's UID (with RECURRENCE-ID set
+  // to the original occurrence date) *in addition to* the master's RRULE
+  // still covering that date. Without this, the master's expansion and the
+  // override both produce an event for the same day — the "meeting shown
+  // twice" bug. Treat each override's date as an implicit EXDATE on its master.
+  const overridesByUid = new Map<string, Set<number>>()
+  for (const block of blocks) {
+    const recurKey = Object.keys(block).find(k => k.startsWith('RECURRENCE-ID'))
+    const uid = block['UID']
+    if (!recurKey || !uid) continue
+    try {
+      const { date } = parseICSDate(recurKey, block[recurKey], vtimezoneOffsets)
+      const dayKey = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+      if (!overridesByUid.has(uid)) overridesByUid.set(uid, new Set())
+      overridesByUid.get(uid)!.add(dayKey)
+    } catch { /* skip unparseable RECURRENCE-ID */ }
+  }
+
+  const events: ICSEvent[] = []
+
+  for (const raw of blocks) {
+    const startKey = Object.keys(raw).find(k => k.startsWith('DTSTART'))
+    const endKey   = Object.keys(raw).find(k => k.startsWith('DTEND'))
+    if (!startKey) continue
+
+    const { date: startDate, allDay } = parseICSDate(startKey, raw[startKey], vtimezoneOffsets)
+    const endDate = endKey
+      ? parseICSDate(endKey, raw[endKey], vtimezoneOffsets).date
+      : startDate
+    const durationMs = endDate.getTime() - startDate.getTime()
+
+    const descriptionRaw = raw['DESCRIPTION']?.replace(/\\n/g, '\n').replace(/\\,/g, ',')
+    const baseEvent = {
+      uid:         raw['UID'] || `${Date.now()}-${Math.random()}`,
+      summary:     (raw['SUMMARY']     || '(No title)').replace(/\\n/g, ' ').replace(/\\,/g, ','),
+      location:    raw['LOCATION']?.replace(/\\n/g, ', ').replace(/\\,/g, ',')  || undefined,
+      description: descriptionRaw || undefined,
+      url:         extractMeetingUrl(descriptionRaw, raw['URL']),
+      allDay,
+    }
+
+    // ── Recurring event: expand RRULE ──────────────────────────────────────
+    const rrule = raw['RRULE']
+    if (rrule) {
+      // Collect EXDATE entries (may carry TZID params → different raw keys)
+      const exdateSet = new Set<number>()
+      for (const [k, v] of Object.entries(raw)) {
+        if (!k.startsWith('EXDATE')) continue
+        for (const val of v.split(',')) {
+          const trimmed = val.trim()
+          if (!trimmed) continue
+          try {
+            const { date } = parseICSDate(
+              k.replace(/^EXDATE/, 'DTSTART'),
+              trimmed,
+              vtimezoneOffsets,
+            )
+            exdateSet.add(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+          } catch { /* skip unparseable EXDATE */ }
+        }
+      }
+      // Dates covered by a separate RECURRENCE-ID override block also get
+      // skipped here — the override itself is emitted below as its own event.
+      for (const dayKey of Array.from(overridesByUid.get(baseEvent.uid) ?? [])) exdateSet.add(dayKey)
+
+      const occurrences = expandRrule(startDate, rrule, exdateSet, windowStart, windowEnd)
+      for (const occ of occurrences) {
+        const occEnd = new Date(occ.getTime() + durationMs)
+        events.push({
+          ...baseEvent,
+          uid:   baseEvent.uid + '-' + occ.toISOString(),
+          start: occ.toISOString(),
+          end:   occEnd.toISOString(),
+        })
+      }
+    } else {
+      // ── Single (non-recurring) event, or a RECURRENCE-ID override ──────────
+      events.push({
+        ...baseEvent,
+        start: startDate.toISOString(),
+        end:   endDate.toISOString(),
+      })
+    }
+  }
+
+  // ── Final safety net: de-dupe identical (title, start, end) pairs. Covers
+  // the RECURRENCE-ID case above, plus the same event appearing verbatim
+  // across two subscribed calendars (e.g. a meeting on both a personal and
+  // work calendar) — a real duplicate is never useful to show twice.
+  const seen = new Set<string>()
+  const deduped: ICSEvent[] = []
+  for (const ev of events) {
+    const key = `${ev.summary}|${ev.start}|${ev.end}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    deduped.push(ev)
+  }
+
+  return deduped.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
 }

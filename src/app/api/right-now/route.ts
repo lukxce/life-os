@@ -58,7 +58,18 @@ async function fetchAllIcsEvents() {
   )
   const events: (ReturnType<typeof parseICS>[number] & { color: string })[] = []
   for (const r of results) if (r.status === 'fulfilled') events.push(...r.value)
-  return events
+
+  // Same event synced onto two subscribed calendars (e.g. accepted on both a
+  // personal and work calendar) shouldn't show twice — keep the first.
+  const seen = new Set<string>()
+  const deduped: typeof events = []
+  for (const ev of events) {
+    const key = `${ev.summary}|${ev.start}|${ev.end}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    deduped.push(ev)
+  }
+  return deduped
 }
 type IcsEventWithColor = Awaited<ReturnType<typeof fetchAllIcsEvents>>[number]
 
