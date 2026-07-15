@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { ScoreRing, Delta } from '@/components/ui/synth'
 import { Card, Label, SolidBtn } from '@/components/ledger/primitives'
+import { MealPhotoButton } from '@/components/ui/MealPhotoButton'
 import { cn } from '@/lib/utils'
 
 interface MealSlot { id: string; dayOfWeek: number; mealType: string; name: string; calories: number; protein: number }
@@ -67,13 +68,13 @@ export default function FitnessTodayPage() {
 
   useEffect(() => { load() }, [load])
 
-  async function logMeal(mealType: string, description: string | null) {
+  async function logMeal(mealType: string, description: string | null, precomputed?: { calories: number | null; protein: number | null }) {
     setLoggingType(null)
     setLogText('')
     try {
       const res = await fetch('/api/life/meal-log', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: todayStr, mealType, description }),
+        body: JSON.stringify({ date: todayStr, mealType, description, ...(precomputed ?? {}) }),
       })
       if (!res.ok) throw new Error()
       const created = await res.json()
@@ -226,14 +227,19 @@ export default function FitnessTodayPage() {
 
                       {isLogging ? (
                         <div className="mt-2 space-y-1.5">
-                          <input
-                            autoFocus
-                            value={logText}
-                            onChange={e => setLogText(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter' && logText.trim()) logMeal(mt, logText.trim()) }}
-                            placeholder="What did you eat?"
-                            className="w-full rounded-lg px-3 py-2 text-[14px] bg-ldg-paper border border-ldg-ink/10 focus:outline-none text-ldg-ink"
-                          />
+                          <div className="flex gap-1.5">
+                            <input
+                              autoFocus
+                              value={logText}
+                              onChange={e => setLogText(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter' && logText.trim()) logMeal(mt, logText.trim()) }}
+                              placeholder="What did you eat?"
+                              className="flex-1 min-w-0 rounded-lg px-3 py-2 text-[14px] bg-ldg-paper border border-ldg-ink/10 focus:outline-none text-ldg-ink"
+                            />
+                            <MealPhotoButton
+                              onResult={(description, calories, protein) => logMeal(mt, description, { calories, protein })}
+                              onError={msg => toast.error(msg)} />
+                          </div>
                           <div className="flex gap-2">
                             <SolidBtn onClick={() => logText.trim() && logMeal(mt, logText.trim())}>Save</SolidBtn>
                             <button onClick={() => { setLoggingType(null); setLogText('') }}

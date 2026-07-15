@@ -10,7 +10,7 @@ type Signals = {
   budgetsNearLimit: { category: string; pct: number; spent: number; limit: number; currency: string }[]
   renewalsSoon: { id: string; name: string; amount: number; currency: string; daysUntil: number }[]
   warrantiesExpiringSoon: { id: string; name: string; daysLeft: number }[]
-  pace: { dayPct: number; spentPct: number; status: 'ahead' | 'onTrack' | 'behind' } | null
+  pace: { dayPct: number; spentPct: number; status: 'ahead' | 'onTrack' | 'behind'; projectedRSD: number | null; avgMonthlyRSD: number } | null
 }
 
 function dueLabel(days: number) {
@@ -65,14 +65,15 @@ export function SignalsCard() {
     })
   }
   if (data.pace && data.pace.status !== 'onTrack') {
+    const proj = data.pace.projectedRSD
     rows.push({
       key: 'pace',
       icon: <TrendingUp size={14} />,
       urgent: data.pace.status === 'ahead',
       href: '/finance/insights',
       text: data.pace.status === 'ahead'
-        ? <>Spending pace is <strong className="font-semibold">ahead</strong> of the month — <span className="font-mono">{data.pace.spentPct}%</span> of your usual monthly spend at day <span className="font-mono">{data.pace.dayPct}%</span></>
-        : <>Spending pace is <strong className="font-semibold">behind</strong> the month — only <span className="font-mono">{data.pace.spentPct}%</span> of your usual monthly spend so far</>,
+        ? <>Spending pace is <strong className="font-semibold">ahead</strong> of the month{proj != null && <> — projected <span className="font-mono">{proj.toLocaleString()} RSD</span> by month end, vs your usual <span className="font-mono">{data.pace.avgMonthlyRSD.toLocaleString()} RSD</span></>}</>
+        : <>Spending pace is <strong className="font-semibold">behind</strong> the month{proj != null && <> — projected <span className="font-mono">{proj.toLocaleString()} RSD</span> by month end, below your usual <span className="font-mono">{data.pace.avgMonthlyRSD.toLocaleString()} RSD</span></>}</>,
     })
   }
 

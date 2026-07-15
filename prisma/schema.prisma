@@ -310,6 +310,13 @@ model DailyLog {
   updatedAt DateTime @updatedAt
 }
 
+model WeeklyDigest {
+  id        String   @id @default(cuid())
+  weekStart DateTime @unique // UTC midnight of the Monday the digest covers
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+}
+
 model WaterLog {
   id        String   @id @default(cuid())
   userId    String   @default("default")

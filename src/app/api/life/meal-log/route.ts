@@ -62,11 +62,20 @@ async function estimateNutrition(description: string): Promise<{ calories: numbe
 // real meal (e.g. a second snack) rather than overwriting the first
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { date, mealType, description } = body
+  const { date, mealType, description, calories: providedCalories, protein: providedProtein } = body
   if (!date || !mealType) return NextResponse.json({ error: 'Missing date or mealType' }, { status: 400 })
 
   const trimmed: string | null = description?.trim() || null
-  const { calories, protein } = trimmed ? await estimateNutrition(trimmed) : { calories: null, protein: null }
+  // A caller (e.g. the photo-logging flow, which already ran its own vision
+  // estimate) can pass calories/protein directly — skip the redundant,
+  // less-accurate text-based re-estimate when that happens.
+  const hasProvided = typeof providedCalories === 'number' || typeof providedProtein === 'number'
+  const { calories, protein } = hasProvided
+    ? {
+        calories: typeof providedCalories === 'number' ? Math.round(providedCalories) : null,
+        protein:  typeof providedProtein  === 'number' ? Math.round(providedProtein)  : null,
+      }
+    : trimmed ? await estimateNutrition(trimmed) : { calories: null, protein: null }
 
   const log = await prisma.mealLog.create({
     data: { date: utcMidnight(date), mealType, description: trimmed, calories, protein },

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { X, Zap, ZapOff, ZoomIn, ZoomOut, Check, Camera } from 'lucide-react'
+import { compressImage } from '@/lib/image'
 
 function isSufUrl(s: string) { return s.includes('suf.purs.gov.rs') }
 function pfrToUrl(pfr: string) { return `https://suf.purs.gov.rs/v/?vl=${btoa(pfr.trim())}` }
@@ -13,18 +14,6 @@ async function makeQRReader() {
   const { DecodeHintType } = await import('@zxing/library')
   const hints = new Map([[DecodeHintType.TRY_HARDER, true]])
   return new BrowserQRCodeReader(hints)
-}
-
-// Downscale + JPEG-compress a photo so the upload stays small
-async function compressImage(file: File, maxDim = 1600, quality = 0.85): Promise<{ base64: string; mediaType: string }> {
-  const bitmap = await createImageBitmap(file)
-  const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height))
-  const canvas = document.createElement('canvas')
-  canvas.width  = Math.round(bitmap.width * scale)
-  canvas.height = Math.round(bitmap.height * scale)
-  canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-  const dataUrl = canvas.toDataURL('image/jpeg', quality)
-  return { base64: dataUrl.split(',')[1], mediaType: 'image/jpeg' }
 }
 
 type Parsed = {

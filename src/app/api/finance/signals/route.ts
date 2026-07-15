@@ -95,6 +95,11 @@ export async function GET() {
         status: (totalSpentRSD / avgMonthlyRSD) - dayPct > 0.15 ? 'ahead' as const
           : dayPct - (totalSpentRSD / avgMonthlyRSD) > 0.15 ? 'behind' as const
           : 'onTrack' as const,
+        // Simple linear projection: spend-so-far scaled up by how much of the
+        // month is left. Too noisy in the first couple of days (day 1 alone
+        // could extrapolate to anything), so it's null until dayPct >= 10%.
+        projectedRSD: dayPct >= 0.1 ? Math.round(totalSpentRSD / dayPct) : null,
+        avgMonthlyRSD: Math.round(avgMonthlyRSD),
       }
     : null
 

@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { Mascot, MascotMood } from './Mascot'
 import { Check, Clock, X, Send } from 'lucide-react'
 import { useCommandBox, describeCommandAction } from '@/hooks/useCommandBox'
+import { MealPhotoButton } from './MealPhotoButton'
 
 const MOODS = ['😞', '😕', '😐', '🙂', '😄']
 
@@ -93,13 +94,13 @@ export function FloatingMascot() {
     }
   }
 
-  async function logMeal(mealType: string, description: string | null) {
+  async function logMeal(mealType: string, description: string | null, precomputed?: { calories: number | null; protein: number | null }) {
     setMealOpen(null)
     setMealText('')
     try {
       const res = await fetch('/api/life/meal-log', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: todayStr(), mealType, description }),
+        body: JSON.stringify({ date: todayStr(), mealType, description, ...(precomputed ?? {}) }),
       })
       if (!res.ok) throw new Error()
       loadNudges()
@@ -227,6 +228,10 @@ export function FloatingMascot() {
                             onKeyDown={e => { if (e.key === 'Enter' && mealText.trim()) logMeal(m.mealType, mealText.trim()) }}
                             placeholder={`What was ${m.mealType}?`}
                             className="flex-1 min-w-0 bg-canvas-alt rounded-lg px-2.5 py-1.5 text-xs text-ink placeholder:text-ink/30 focus:outline-none" />
+                          <MealPhotoButton
+                            onResult={(description, calories, protein) => logMeal(m.mealType, description, { calories, protein })}
+                            onError={msg => toast.error(msg)}
+                            className="flex items-center justify-center w-7 h-7 shrink-0 rounded-lg bg-canvas-alt text-ink/55 disabled:opacity-40" />
                           <button onClick={() => mealText.trim() && logMeal(m.mealType, mealText.trim())}
                             className="text-[10px] font-bold text-white bg-[rgb(var(--l-green))] px-2.5 rounded-lg shrink-0">Log</button>
                         </div>

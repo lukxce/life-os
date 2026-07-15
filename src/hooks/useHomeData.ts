@@ -140,12 +140,12 @@ export function useHomeData() {
     }
   }
 
-  async function logMeal(mealType: string, description: string | null) {
+  async function logMeal(mealType: string, description: string | null, precomputed?: { calories: number | null; protein: number | null }) {
     setCatchUp(prev => prev ? { ...prev, unloggedMeals: prev.unloggedMeals.filter(m => m.mealType !== mealType) } : prev)
     try {
       const res = await fetch('/api/life/meal-log', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: todayStr, mealType, description }),
+        body: JSON.stringify({ date: todayStr, mealType, description, ...(precomputed ?? {}) }),
       })
       if (!res.ok) throw new Error()
       setTimeout(loadRightNow, 400)

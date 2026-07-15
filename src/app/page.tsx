@@ -2,9 +2,12 @@
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { cn, formatEUR, formatRSD } from '@/lib/utils'
 import { Mascot } from '@/components/ui/Mascot'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { MealPhotoButton } from '@/components/ui/MealPhotoButton'
+import { WeeklyDigestCard } from '@/components/ui/WeeklyDigestCard'
 import { AppHeader, AppHeaderSpacer } from '@/components/ledger/AppHeader'
 import { QuickFab } from '@/components/ledger/QuickFab'
 import { QuickAction } from '@/components/ledger/QuickMenu'
@@ -128,6 +131,9 @@ export default function HomePage() {
                 onKeyDown={e => { if (e.key === 'Enter' && mealText.trim()) { d.logMeal(d.rightNow!.top!.mealAsk!.mealType, mealText.trim()); setMealText('') } }}
                 placeholder="What did you actually eat?"
                 className="flex-1 min-w-0 rounded-lg px-3 py-2 text-[14px] bg-ldg-paper border border-ldg-ink/10 focus:outline-none" />
+              <MealPhotoButton
+                onResult={(description, calories, protein) => d.logMeal(d.rightNow!.top!.mealAsk!.mealType, description, { calories, protein })}
+                onError={msg => toast.error(msg)} />
               <SolidBtn onClick={() => { if (mealText.trim()) { d.logMeal(d.rightNow!.top!.mealAsk!.mealType, mealText.trim()); setMealText('') } }}>Log</SolidBtn>
             </div>
           )}
@@ -181,6 +187,8 @@ export default function HomePage() {
             )}
           </div>
         </Card>
+
+        <WeeklyDigestCard />
 
         {/* The day in figures + the week */}
         <Card className="p-5">
@@ -260,6 +268,9 @@ export default function HomePage() {
                         onKeyDown={e => { if (e.key === 'Enter' && mealText.trim()) { d.logMeal(m.mealType, mealText.trim()); setMealOpen(null); setMealText('') } }}
                         placeholder={`What was ${m.mealType}?`}
                         className="flex-1 min-w-0 rounded-lg px-3 py-2 text-[14px] bg-ldg-paper border border-ldg-ink/10 focus:outline-none" />
+                      <MealPhotoButton
+                        onResult={(description, calories, protein) => { d.logMeal(m.mealType, description, { calories, protein }); setMealOpen(null); setMealText('') }}
+                        onError={msg => toast.error(msg)} />
                       <SolidBtn onClick={() => { if (mealText.trim()) { d.logMeal(m.mealType, mealText.trim()); setMealOpen(null); setMealText('') } }}>Log</SolidBtn>
                     </div>
                   ) : (
