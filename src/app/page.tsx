@@ -10,9 +10,10 @@ import { QuickFab } from '@/components/ledger/QuickFab'
 import { QuickAction } from '@/components/ledger/QuickMenu'
 import { Card, Label, SolidBtn, GhostBtn } from '@/components/ledger/primitives'
 import { useHomeData, toLocalDateStr } from '@/hooks/useHomeData'
+import { useCommandBox, describeCommandAction } from '@/hooks/useCommandBox'
 import {
   Check, ChevronDown, CalendarDays, Droplets, Flame, FileText,
-  Camera, Receipt,
+  Camera, Receipt, Send,
 } from 'lucide-react'
 
 const FoodMapPreview = dynamic(
@@ -43,6 +44,10 @@ export default function HomePage() {
   const [mealText, setMealText] = useState('')
   const [mealOpen, setMealOpen] = useState<string | null>(null)
   const [outstandingOpen, setOutstandingOpen] = useState(false)
+  const {
+    commandText, setCommandText, commandLoading, commandActions, commandSaved,
+    submitCommand, saveCommandAction,
+  } = useCommandBox(d.refreshAll)
   const now = new Date()
   const today = toLocalDateStr(now)
 
@@ -126,6 +131,43 @@ export default function HomePage() {
               <SolidBtn onClick={() => { if (mealText.trim()) { d.logMeal(d.rightNow!.top!.mealAsk!.mealType, mealText.trim()); setMealText('') } }}>Log</SolidBtn>
             </div>
           )}
+
+          {/* Universal quick-log box — tell it anything, it figures out where it goes */}
+          <div className="mt-4 pt-3 border-t border-ldg-ink/[0.07]">
+            <div className="flex gap-2">
+              <input value={commandText} onChange={e => setCommandText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') submitCommand() }}
+                placeholder="Tell me anything…" disabled={commandLoading}
+                className="flex-1 min-w-0 rounded-lg px-3 py-2 text-[14px] bg-ldg-paper border border-ldg-ink/10 focus:outline-none disabled:opacity-60" />
+              <button onClick={submitCommand} disabled={commandLoading || !commandText.trim()}
+                className="flex items-center justify-center w-9 h-9 shrink-0 rounded-lg bg-ldg-green text-white disabled:opacity-40">
+                {commandLoading ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Send size={14} />}
+              </button>
+            </div>
+            {commandActions && (
+              <div className="mt-2 space-y-1.5">
+                {commandActions.length === 0 && (
+                  <p className="text-[12px] text-ldg-ink/40">Didn't catch anything there.</p>
+                )}
+                {commandActions.map((a, i) => {
+                  const saved = commandSaved.has(i)
+                  const canSave = a.type !== 'unclear' && !(a.type === 'expense' && !a.accountId)
+                  return (
+                    <div key={i} className={cn('flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px]',
+                      a.type === 'unclear' ? 'bg-ldg-ink/[0.04] text-ldg-ink/45' : saved ? 'bg-ldg-green/10 text-ldg-green' : 'bg-ldg-ink/[0.04] text-ldg-ink/80')}>
+                      <span className="flex-1 min-w-0 truncate">{describeCommandAction(a)}</span>
+                      {saved ? (
+                        <Check size={13} className="shrink-0 text-ldg-green" />
+                      ) : canSave ? (
+                        <button onClick={() => saveCommandAction(a, i)}
+                          className="text-[11px] font-bold text-ldg-green shrink-0">Save</button>
+                      ) : null}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
 
           <div className="mt-4 pt-3 border-t border-ldg-ink/[0.07]">
             {d.rightNow && d.rightNow.upcomingCalendar.length > 0 ? (

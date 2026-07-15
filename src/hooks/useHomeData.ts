@@ -85,16 +85,30 @@ export function useHomeData() {
     fetch(`/api/life/tasks/streak?date=${todayStr}`, { cache: 'no-store' }).then(safeJson<{ streak: number }>).then(d => setTaskStreak(d.streak ?? 0)).catch(() => {})
   }, [todayStr, tomorrowStr])
 
+  const loadWater = useCallback(() => {
+    fetch(`/api/life/water?date=${todayStr}`, { cache: 'no-store' }).then(safeJson<WaterLogRow[]>).then(setWaterLogs).catch(() => {})
+  }, [todayStr])
+
+  // Re-fetches everything a "tell me anything" command could have touched
+  // (expense, meal, water, habit, task, weight, mood) — simpler than tracking
+  // which action type maps to which loader, and cheap enough to run on demand.
+  const refreshAll = useCallback(() => {
+    loadRightNow()
+    loadCatchUp()
+    loadTasks()
+    loadWater()
+  }, [loadRightNow, loadCatchUp, loadTasks, loadWater])
+
   useEffect(() => {
     const n = new Date()
     fetch(`/api/dashboard?day=${n.getDate()}`, { cache: 'no-store' }).then(safeJson<DashboardData>).then(setData).catch(() => {})
     fetch('/api/life/day-scores?days=7', { cache: 'no-store' }).then(safeJson<DayScores>).then(setDayScores).catch(() => {})
     fetch('/api/finance/accounts', { cache: 'no-store' }).then(safeJson<AccountRow[]>).then(setAccounts).catch(() => {})
-    fetch(`/api/life/water?date=${todayStr}`, { cache: 'no-store' }).then(safeJson<WaterLogRow[]>).then(setWaterLogs).catch(() => {})
+    loadWater()
     loadRightNow()
     loadCatchUp()
     loadTasks()
-  }, [loadRightNow, loadCatchUp, loadTasks, todayStr])
+  }, [loadRightNow, loadCatchUp, loadTasks, loadWater])
 
   async function toggleHabit(habitId: string) {
     setJustDone(prev => new Set(prev).add(habitId))
@@ -203,6 +217,6 @@ export function useHomeData() {
   return {
     data, rightNow, dayScores, agenda, accounts, catchUp, todayTasks, tomorrowTasks, taskStreak, waterLogs,
     justDone, taskJustDone, catchDone, todayStr, tomorrowStr,
-    toggleHabit, catchUpHabit, logMeal, markNoExpenses, addTask, toggleTask, logWater,
+    toggleHabit, catchUpHabit, logMeal, markNoExpenses, addTask, toggleTask, logWater, refreshAll,
   }
 }
