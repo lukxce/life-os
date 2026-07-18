@@ -30,7 +30,9 @@ function ScanInner() {
   const params = useSearchParams()
 
   const videoRef        = useRef<HTMLVideoElement>(null)
-  const zxingRef        = useRef<{ stop: () => void } | null>(null)
+  const viewfinderRef   = useRef<HTMLDivElement>(null)
+  const streamRef       = useRef<MediaStream | null>(null)
+  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const trackRef        = useRef<MediaStreamTrack | null>(null)
   const photoInputRef   = useRef<HTMLInputElement>(null)
 
@@ -57,6 +59,13 @@ function ScanInner() {
         body: JSON.stringify({ sufUrl }),
       })
       const data = await res.json()
+      if (!res.ok) {
+        setError(data.error === 'Invalid SUF URL'
+          ? 'That QR code was misread — try again, hold steadier, or use Photo instead.'
+          : 'Failed to reach server.')
+        setLoading(false)
+        return
+      }
       setParsed({
         merchantName: data.merchantName ?? null,
         merchantPib:  data.merchantPib  ?? null,
@@ -139,46 +148,93 @@ function ScanInner() {
   }
 
   const stopScanner = useCallback(() => {
-    zxingRef.current?.stop()
-    zxingRef.current = null
+    if (scanIntervalRef.current != null) { clearInterval(scanIntervalRef.current); scanIntervalRef.current = null }
+    streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current = null
+    if (videoRef.current) videoRef.current.srcObject = null
     trackRef.current = null
     setScanning(false); setQrFound(false)
     setTorchOn(false); setTorchSupported(false); setZoomSupported(false); setZoom(1)
   }, [])
 
+  // Fiscal receipt QR codes are dense (500-800+ bytes of signed binary data,
+  // base64'd) — decoding the *whole* video frame at 1080p wastes most of the
+  // camera's resolution on background that isn't the code. Instead: request
+  // the highest resolution the camera offers, then on each tick crop a still
+  // frame down to just the on-screen viewfinder square (mapped from CSS
+  // coordinates into native video pixels, accounting for object-fit: cover)
+  // and decode only that region. This gives the decoder several times the
+  // effective pixel density on the code itself, which is what a dense QR
+  // needs to resolve reliably from a live handheld camera.
   const startScanner = async () => {
     setError(''); setQrFound(false); setScanning(true)
     try {
       const reader = await makeQRReader()
-
-      const controls = await reader.decodeFromConstraints(
-        {
-          video: {
-            facingMode: { ideal: 'environment' },
-            width:  { ideal: 1920 },
-            height: { ideal: 1080 },
-          },
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+          width:  { ideal: 3840 },
+          height: { ideal: 2160 },
         },
-        videoRef.current!,
-        (result, err, ctrl) => {
-          if (result) {
-            const text = result.getText()
-            setQrFound(true)
-            ctrl.stop()
-            zxingRef.current = null
-            trackRef.current = null
-            setScanning(false)
-            handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
-          }
-        }
-      )
+      })
+      streamRef.current = stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play()
+      }
 
-      zxingRef.current = controls
-
-      // Grab track for torch/zoom after ZXing has set srcObject
-      const stream = videoRef.current?.srcObject as MediaStream | null
-      const track  = stream?.getVideoTracks()[0]
+      const track = stream.getVideoTracks()[0]
       if (track) applyTrackCaps(track)
+
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })
+
+      scanIntervalRef.current = setInterval(() => {
+        const video = videoRef.current
+        if (!video || !ctx || video.readyState < 2) return
+        const vw = video.videoWidth, vh = video.videoHeight
+        if (!vw || !vh) return
+
+        const viewportW = window.innerWidth, viewportH = window.innerHeight
+        // object-fit: cover scales the native frame up by the larger ratio,
+        // then centers and clips the overflow — invert that to map the
+        // on-screen viewfinder box back into native video pixel space.
+        const scale = Math.max(viewportW / vw, viewportH / vh)
+        const offsetX = (vw * scale - viewportW) / 2
+        const offsetY = (vh * scale - viewportH) / 2
+
+        const vfRect = viewfinderRef.current?.getBoundingClientRect()
+        let sx: number, sy: number, sw: number, sh: number
+        if (vfRect) {
+          const pad = 1.15 // small margin of forgiveness around the guide box
+          const boxW = vfRect.width * pad, boxH = vfRect.height * pad
+          const cx = vfRect.left + vfRect.width / 2, cy = vfRect.top + vfRect.height / 2
+          sx = (cx - boxW / 2 + offsetX) / scale
+          sy = (cy - boxH / 2 + offsetY) / scale
+          sw = boxW / scale
+          sh = boxH / scale
+        } else {
+          const size = Math.min(vw, vh) * 0.55
+          sx = (vw - size) / 2; sy = (vh - size) / 2; sw = size; sh = size
+        }
+        sx = Math.max(0, sx); sy = Math.max(0, sy)
+        sw = Math.min(sw, vw - sx); sh = Math.min(sh, vh - sy)
+        if (sw <= 0 || sh <= 0) return
+
+        canvas.width = sw
+        canvas.height = sh
+        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh)
+
+        try {
+          const result = reader.decodeFromCanvas(canvas)
+          const text = result.getText()
+          setQrFound(true)
+          stopScanner()
+          handleSufUrl(text.startsWith('http') ? text : pfrToUrl(text))
+        } catch {
+          // no code in this frame yet — normal, keep polling
+        }
+      }, 350)
 
     } catch (e: any) {
       setScanning(false)
@@ -222,7 +278,7 @@ function ScanInner() {
 
           {/* Viewfinder */}
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ position: 'relative', width: 260, height: 260,
+            <div ref={viewfinderRef} style={{ position: 'relative', width: 260, height: 260,
                           boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }}>
               {[{t:0,b:'auto',l:0,r:'auto'},{t:0,b:'auto',l:'auto',r:0},
                 {t:'auto',b:0,l:0,r:'auto'},{t:'auto',b:0,l:'auto',r:0}].map((p, i) => (
