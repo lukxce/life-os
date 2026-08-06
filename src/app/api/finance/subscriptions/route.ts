@@ -27,7 +27,13 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const body = await req.json()
-  const { id, ...data } = body
+  const { id, ...rest } = body
+  const data: Record<string, unknown> = { ...rest }
+  if ('category' in data) data.category = data.category || null
+  if ('subcategory' in data) data.subcategory = data.subcategory || null
+  if ('accountId' in data) data.accountId = data.accountId || null
+  if ('notes' in data) data.notes = data.notes || null
+
   const sub = await prisma.subscription.update({ where: { id }, data })
   return NextResponse.json(sub)
 }
