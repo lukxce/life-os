@@ -40,42 +40,46 @@ export async function POST() {
         create: { userId: old.userId, name: 'Groceries', type: old.type, subcategories: GROCERIES_SUBCATEGORIES },
       })
 
+      // Batched updateMany (2 queries) instead of one update() per row —
+      // looping individual updates inside a transaction blew past Prisma's
+      // default 5s interactive-transaction timeout once there were more
+      // than a handful of historical entries (P2028).
       const entries = await tx.expenseEntry.findMany({
         where: { category: 'Food & Groceries', type: old.type },
         select: { id: true, subcategory: true },
       })
-      for (const e of entries) {
-        const target = isGroceries(e.subcategory) ? 'Groceries' : 'Food'
-        await tx.expenseEntry.update({ where: { id: e.id }, data: { category: target } })
-        target === 'Groceries' ? expensesToGroceries++ : expensesToFood++
-      }
+      const groceryIds = entries.filter(e => isGroceries(e.subcategory)).map(e => e.id)
+      const foodIds = entries.filter(e => !isGroceries(e.subcategory)).map(e => e.id)
+      if (groceryIds.length) await tx.expenseEntry.updateMany({ where: { id: { in: groceryIds } }, data: { category: 'Groceries' } })
+      if (foodIds.length) await tx.expenseEntry.updateMany({ where: { id: { in: foodIds } }, data: { category: 'Food' } })
+      expensesToGroceries += groceryIds.length
+      expensesToFood += foodIds.length
 
-      const bills = await tx.bill.findMany({ where: { category: 'Food & Groceries', type: old.type } })
-      for (const b of bills) {
-        await tx.bill.update({ where: { id: b.id }, data: { category: isGroceries(b.subcategory) ? 'Groceries' : 'Food' } })
-        billsMigrated++
-      }
+      const bills = await tx.bill.findMany({ where: { category: 'Food & Groceries', type: old.type }, select: { id: true, subcategory: true } })
+      const billGroceryIds = bills.filter(b => isGroceries(b.subcategory)).map(b => b.id)
+      const billFoodIds = bills.filter(b => !isGroceries(b.subcategory)).map(b => b.id)
+      if (billGroceryIds.length) await tx.bill.updateMany({ where: { id: { in: billGroceryIds } }, data: { category: 'Groceries' } })
+      if (billFoodIds.length) await tx.bill.updateMany({ where: { id: { in: billFoodIds } }, data: { category: 'Food' } })
+      billsMigrated += bills.length
 
-      const budgets = await tx.budget.findMany({ where: { category: 'Food & Groceries' } })
-      for (const b of budgets) {
-        // A budget amount can't be split automatically — move the whole
-        // thing to Food (the larger/more variable of the two historically)
-        // and let the user add a separate Groceries budget if they want one.
-        await tx.budget.update({ where: { id: b.id }, data: { category: 'Food' } })
-        budgetsMigrated++
-      }
+      // A budget amount can't be split automatically — move the whole
+      // thing to Food and let the user add a separate Groceries budget
+      // after if they want one.
+      const budgetRes = await tx.budget.updateMany({ where: { category: 'Food & Groceries' }, data: { category: 'Food' } })
+      budgetsMigrated += budgetRes.count
 
-      const nicknames = await tx.merchantNickname.findMany({ where: { category: 'Food & Groceries', userId: old.userId } })
-      for (const n of nicknames) {
-        await tx.merchantNickname.update({ where: { pib: n.pib }, data: { category: isGroceries(n.subcategory) ? 'Groceries' : 'Food' } })
-        nicknamesMigrated++
-      }
+      const nicknames = await tx.merchantNickname.findMany({ where: { category: 'Food & Groceries', userId: old.userId }, select: { pib: true, subcategory: true } })
+      const nickGroceryPibs = nicknames.filter(n => isGroceries(n.subcategory)).map(n => n.pib)
+      const nickFoodPibs = nicknames.filter(n => !isGroceries(n.subcategory)).map(n => n.pib)
+      if (nickGroceryPibs.length) await tx.merchantNickname.updateMany({ where: { pib: { in: nickGroceryPibs } }, data: { category: 'Groceries' } })
+      if (nickFoodPibs.length) await tx.merchantNickname.updateMany({ where: { pib: { in: nickFoodPibs } }, data: { category: 'Food' } })
+      nicknamesMigrated += nicknames.length
 
       await tx.category.delete({ where: { id: old.id } })
     }
 
     return { expensesToFood, expensesToGroceries, billsMigrated, budgetsMigrated, nicknamesMigrated }
-  })
+  }, { timeout: 20000 })
 
   return NextResponse.json({ done: true, ...result })
 }
