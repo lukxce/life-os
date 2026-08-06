@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronUp, Pencil, Check, X } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Pencil, Check, X, Split } from 'lucide-react'
 
 export default function CategoriesPage() {
   const [personal, setPersonal] = useState<any[]>([])
@@ -12,6 +12,8 @@ export default function CategoriesPage() {
   const [editingCatName, setEditingCatName] = useState('')
   const [form, setForm] = useState({ name: '', subcategories: '' })
   const [subForm, setSubForm] = useState('')
+  const [splitting, setSplitting] = useState(false)
+  const [splitResult, setSplitResult] = useState<string | null>(null)
 
   const load = async () => {
     const [p, b] = await Promise.all([
@@ -93,6 +95,23 @@ export default function CategoriesPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id })
     })
+    load()
+  }
+
+  const splitFoodGroceries = async () => {
+    if (!confirm('Split "Food & Groceries" into separate Food and Groceries categories? Existing expenses will be re-filed based on their subcategory (Supermarket/Cleaning Supplies → Groceries, everything else → Food).')) return
+    setSplitting(true)
+    setSplitResult(null)
+    try {
+      const res = await fetch('/api/finance/categories/split-food-groceries', { method: 'POST' })
+      const data = await res.json()
+      setSplitResult(data.alreadyDone
+        ? 'Already split — nothing to do.'
+        : `Done — ${data.expensesToFood} expense(s) → Food, ${data.expensesToGroceries} → Groceries${data.budgetsMigrated ? `, ${data.budgetsMigrated} budget(s) moved to Food` : ''}${data.billsMigrated ? `, ${data.billsMigrated} bill(s) migrated` : ''}${data.nicknamesMigrated ? `, ${data.nicknamesMigrated} merchant nickname(s) migrated` : ''}.`)
+    } catch {
+      setSplitResult('Failed — try again.')
+    }
+    setSplitting(false)
     load()
   }
 
@@ -214,6 +233,25 @@ export default function CategoriesPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <h2 className="text-2xl font-bold text-ldg-ink">Categories</h2>
+
+      {personal.some(c => c.name === 'Food & Groceries') && (
+        <div className="bg-ldg-green/10 border border-ldg-green/30 rounded-2xl p-4 flex items-start gap-3">
+          <Split size={18} className="text-ldg-green shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-ldg-ink">Split "Food & Groceries" into Food + Groceries</p>
+            <p className="text-xs text-ldg-ink/55 mt-0.5">
+              Food: Restaurant, Takeaway, Bakery, Snacks, Other. Groceries: Supermarket, Cleaning Supplies, Other.
+              Existing expenses are re-filed automatically by their current subcategory.
+            </p>
+            {splitResult && <p className="text-xs text-ldg-green font-medium mt-2">{splitResult}</p>}
+            <button onClick={splitFoodGroceries} disabled={splitting}
+              className="mt-2 bg-ldg-green text-white px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">
+              {splitting ? 'Splitting…' : 'Split now'}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div>
         <h3 className="text-lg font-semibold text-ldg-ink/70 mb-3">Personal Categories</h3>
         {renderList(personal, 'personal')}
