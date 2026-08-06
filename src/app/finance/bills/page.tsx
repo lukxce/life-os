@@ -88,14 +88,21 @@ export default function BillsPage() {
     setShowForm(true)
   }
 
+  const [payAccountId, setPayAccountId] = useState('')
+
   const markPaid = async () => {
     if (!payingBill) return
-    await fetch('/api/finance/bills/pay', {
+    const res = await fetch('/api/finance/bills/pay', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ billId: payingBill.id, amount: +(payAmount || payingBill.amount), accountId: payingBill.accountId, category: payingBill.category, subcategory: payingBill.subcategory })
+      body: JSON.stringify({ billId: payingBill.id, amount: +(payAmount || payingBill.amount), accountId: payAccountId || payingBill.accountId, category: payingBill.category, subcategory: payingBill.subcategory })
     })
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      toast.error(data?.error || 'Failed to mark as paid — try again')
+      return
+    }
     toast.success(`${payingBill.name} marked as paid`)
-    setPayingBill(null); setPayAmount(''); load()
+    setPayingBill(null); setPayAmount(''); setPayAccountId(''); load()
   }
 
   // Category.type uses 'personal' | 'business', Bill.type uses 'personal' | 'company'.
@@ -278,17 +285,23 @@ export default function BillsPage() {
       {payingBill && (
         <div className="bg-ldg-card rounded-2xl border border-ldg-ink/10 p-4">
           <h3 className="font-semibold text-ldg-ink mb-3">Mark as paid — {payingBill.name}</h3>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <NumberInput value={payAmount || String(payingBill.amount)} onChange={setPayAmount} placeholder={String(payingBill.amount)}
-              className="flex-1 border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+              className="flex-1 min-w-[120px] border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+            <select value={payAccountId} onChange={e => setPayAccountId(e.target.value)}
+              className="flex-1 min-w-[160px] border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink">
+              <option value="">Select account</option>
+              {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
             <button onClick={markPaid} className="bg-ldg-green text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90">Confirm</button>
-            <button onClick={() => { setPayingBill(null); setPayAmount('') }} className="border border-ldg-ink/10 px-4 py-2 rounded-lg text-sm">Cancel</button>
+            <button onClick={() => { setPayingBill(null); setPayAmount(''); setPayAccountId('') }} className="border border-ldg-ink/10 px-4 py-2 rounded-lg text-sm">Cancel</button>
           </div>
+          {!payAccountId && <p className="text-xs text-ldg-urgent mt-2">Pick an account before confirming.</p>}
         </div>
       )}
 
       {tab === 'calendar' ? (
-        <BillCalendar bills={bills} rate={rate} onMarkPaid={b => { setPayingBill(b); setPayAmount(String(b.amount)) }} />
+        <BillCalendar bills={bills} rate={rate} onMarkPaid={b => { setPayingBill(b); setPayAmount(String(b.amount)); setPayAccountId(b.accountId || '') }} />
       ) : (
       <div className="space-y-3">
         {shown.length === 0 ? (
@@ -322,7 +335,7 @@ export default function BillsPage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {!paid && (
-                    <button onClick={() => { setPayingBill(b); setPayAmount(String(b.amount)) }}
+                    <button onClick={() => { setPayingBill(b); setPayAmount(String(b.amount)); setPayAccountId(b.accountId || '') }}
                       className="bg-ldg-green text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90 flex items-center gap-1">
                       <CheckCircle size={12} /> Mark paid
                     </button>
