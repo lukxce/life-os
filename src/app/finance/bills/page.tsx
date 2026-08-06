@@ -98,6 +98,9 @@ export default function BillsPage() {
     setPayingBill(null); setPayAmount(''); load()
   }
 
+  // Category.type uses 'personal' | 'business', Bill.type uses 'personal' | 'company'.
+  const categoryType = form.type === 'company' ? 'business' : 'personal'
+  const typeCategories = categories.filter((c: any) => c.type === categoryType)
   const selectedCat = categories.find((c: any) => c.name === form.category)
   const subcats: string[] = selectedCat?.subcategories ?? []
 
@@ -216,7 +219,7 @@ export default function BillsPage() {
                 <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
                   className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink">
                   <option value="">None</option>
-                  {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                  {typeCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
             )}
@@ -228,7 +231,7 @@ export default function BillsPage() {
                 <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
                   className="mt-1 w-full border border-ldg-ink/10 rounded-lg px-3 py-2 text-sm focus:outline-none text-ldg-ink">
                   <option value="">None</option>
-                  {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                  {typeCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
             )}
@@ -246,7 +249,7 @@ export default function BillsPage() {
               <label className="text-xs font-medium text-ldg-ink/55">Type</label>
               <div className="mt-1 flex gap-2">
                 {(['personal', 'company'] as const).map(t => (
-                  <button key={t} type="button" onClick={() => setForm(p => ({ ...p, type: t }))}
+                  <button key={t} type="button" onClick={() => setForm(p => ({ ...p, type: t, category: '', subcategory: '' }))}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors capitalize ${form.type === t ? 'bg-ldg-green border-ldg-green text-white' : 'border-ldg-ink/10 text-ldg-ink/70 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                     {t}
                   </button>
