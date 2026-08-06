@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
               text: `Extract data from this receipt/bill photo. Most receipts will be Serbian fiscal receipts ("fiskalni račun").
 
 Serbian receipt hints:
-- Merchant name is at the very top (often ALL CAPS company name, may end in DOO/D.O.O.)
+- Near the top you'll typically see TWO names: a legal company/holding name (often ALL CAPS, may end in DOO/D.O.O., e.g. "EUREKA BAR DOO BEOGRAD") and, right below it after a store/location number, the actual branded location name (e.g. "Boutique Nis"). Use the LOCATION name as "merchantName" — that's the specific place the customer recognizes, not the legal registrant. Only use the company name if no separate location name is shown.
 - PIB is a 9-digit tax number, labeled "PIB:"
 - The total is labeled "УКУПАН ИЗНОС" / "UKUPAN IZNOS" / "ZA UPLATU" — use THAT number, not item prices or "POVRAĆAJ"
 - Dates are DD.MM.YYYY. — convert carefully (day first!)

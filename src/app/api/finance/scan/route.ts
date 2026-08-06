@@ -77,19 +77,27 @@ function parseJournalText(html: string): {
   const text = pre.replace(/\r\n/g, '\n')
 
   let merchantPib: string | null = null
-  let merchantName: string | null = null
+  let companyName: string | null = null
+  let locationName: string | null = null
   const pibMatch = text.match(/ФИСКАЛНИ РАЧУН[^\n]*\n\s*(\d{9})\s*\n/)
   if (pibMatch) {
     merchantPib = pibMatch[1]
     const nameLines: string[] = []
     for (const line of text.slice(pibMatch.index! + pibMatch[0].length).split('\n')) {
       const t = line.trim()
-      if (/^\d+-/.test(t)) break
+      // The line after the company name is "<locationId>-<locationName>" —
+      // e.g. "1254400-Boutique Nis". Serbian receipts commonly register the
+      // PIB under a holding/legal entity ("EUREKA BAR DOO BEOGRAD") that's
+      // different from the actual branded location the customer recognizes
+      // ("Boutique") — prefer that location name as the merchant.
+      const locMatch = t.match(/^\d+-(.+)/)
+      if (locMatch) { locationName = locMatch[1].trim() || null; break }
       if (t) nameLines.push(t)
       if (nameLines.length >= 3) break
     }
-    merchantName = nameLines.join(' ').trim() || null
+    companyName = nameLines.join(' ').trim() || null
   }
+  const merchantName = locationName || companyName
 
   const totalMatch = text.match(/Укупан износ:\s*([\d.,]+)/)
   const total = totalMatch ? parseAmount(totalMatch[1]) : null
