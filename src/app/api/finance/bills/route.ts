@@ -34,7 +34,20 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const body = await req.json()
-  const { id, ...data } = body
+  const { id, ...rest } = body
+  // The edit form sends raw string fields including empty strings for unset
+  // optional values ("" for category/accountId/loanEndDate on a non-loan
+  // bill) — Prisma rejects "" for a DateTime column outright, which used to
+  // fail the *entire* update (including whatever field was actually being
+  // changed, e.g. dayOfMonth) while the client still reported success.
+  const data: Record<string, unknown> = { ...rest }
+  if ('loanEndDate' in data) data.loanEndDate = data.loanEndDate ? new Date(data.loanEndDate as string) : null
+  if ('category' in data) data.category = data.category || null
+  if ('subcategory' in data) data.subcategory = data.subcategory || null
+  if ('accountId' in data) data.accountId = data.accountId || null
+  if ('notes' in data) data.notes = data.notes || null
+  if ('lender' in data) data.lender = data.lender || null
+
   const bill = await prisma.bill.update({ where: { id }, data })
   return NextResponse.json(bill)
 }

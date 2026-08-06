@@ -64,13 +64,14 @@ export default function BillsPage() {
 
   const submit = async () => {
     const payload = { ...form, amount: +form.amount, dayOfMonth: +form.dayOfMonth }
-    if (editingId) {
-      await fetch('/api/finance/bills', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingId, ...payload }) })
-      toast.success(form.isLoan ? 'Loan updated' : 'Bill updated')
-    } else {
-      await fetch('/api/finance/bills', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      toast.success(form.isLoan ? 'Loan added' : 'Bill added')
+    const res = editingId
+      ? await fetch('/api/finance/bills', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingId, ...payload }) })
+      : await fetch('/api/finance/bills', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    if (!res.ok) {
+      toast.error(`Failed to save — ${await res.text().catch(() => 'server error')}`)
+      return
     }
+    toast.success(editingId ? (form.isLoan ? 'Loan updated' : 'Bill updated') : (form.isLoan ? 'Loan added' : 'Bill added'))
     setShowForm(false); setEditingId(null); setForm(defaultForm); load()
   }
 
