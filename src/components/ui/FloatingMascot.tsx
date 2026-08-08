@@ -177,7 +177,7 @@ export function FloatingMascot() {
                 const canSave = a.type !== 'unclear' && !(a.type === 'expense' && !a.accountId)
                 return (
                   <div key={i} className={cn('flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px]',
-                    a.type === 'unclear' ? 'bg-ink/[0.04] text-ink/45' : saved ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-canvas-alt text-ink/80')}>
+                    a.type === 'unclear' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : saved ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-canvas-alt text-ink/80')}>
                     <span className="flex-1 min-w-0 truncate">{describeCommandAction(a)}</span>
                     {saved ? (
                       <Check size={12} className="shrink-0 text-emerald-500" />

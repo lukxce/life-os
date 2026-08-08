@@ -160,7 +160,7 @@ export default function HomePage() {
                   const canSave = a.type !== 'unclear' && !(a.type === 'expense' && !a.accountId)
                   return (
                     <div key={i} className={cn('flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px]',
-                      a.type === 'unclear' ? 'bg-ldg-ink/[0.04] text-ldg-ink/45' : saved ? 'bg-ldg-green/10 text-ldg-green' : 'bg-ldg-ink/[0.04] text-ldg-ink/80')}>
+                      a.type === 'unclear' ? 'bg-ldg-urgent/[0.08] text-ldg-urgent' : saved ? 'bg-ldg-green/10 text-ldg-green' : 'bg-ldg-ink/[0.04] text-ldg-ink/80')}>
                       <span className="flex-1 min-w-0 truncate">{describeCommandAction(a)}</span>
                       {saved ? (
                         <Check size={13} className="shrink-0 text-ldg-green" />

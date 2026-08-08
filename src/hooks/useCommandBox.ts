@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 
 export type CommandAction =
   | { type: 'expense'; expenseType: 'personal' | 'business'; amount: number; currency: string; merchant: string | null; category: string | null; description: string | null; accountId: string | null; accountName: string | null }
-  | { type: 'meal'; mealType: string; description: string }
+  | { type: 'meal'; mealType: string; description: string; calories: number | null; protein: number | null }
   | { type: 'water'; volumeMl: number }
   | { type: 'habit'; habitId: string; habitName: string }
   | { type: 'task'; text: string }
@@ -19,7 +19,7 @@ export type CommandAction =
 export function describeCommandAction(a: CommandAction): string {
   switch (a.type) {
     case 'expense': return `${a.amount.toLocaleString()} ${a.currency} · ${a.merchant || a.category || 'expense'}${a.category ? ` (${a.category})` : ''}`
-    case 'meal': return `${a.mealType} — ${a.description}`
+    case 'meal': return `${a.mealType} — ${a.description}${a.calories ? ` (${a.calories} cal)` : ''}`
     case 'water': return `${a.volumeMl}ml water`
     case 'habit': return `✓ ${a.habitName}`
     case 'task': return `Task: ${a.text}`
@@ -53,7 +53,18 @@ export function useCommandBox(onSaved?: () => void) {
       })
       if (!res.ok) throw new Error()
       const data = await res.json()
-      setCommandActions(data.actions ?? [])
+      const actions: CommandAction[] = data.actions ?? []
+      setCommandActions(actions)
+
+      if (actions.length > 0 && actions.every(a => a.type === 'unclear')) {
+        toast.error("Didn't catch that — try rephrasing it")
+      } else if (actions.length === 1 && actions[0].type !== 'unclear' && !(actions[0].type === 'expense' && !actions[0].accountId)) {
+        // A single, unambiguous action doesn't need a manual confirm tap —
+        // save it immediately so typing + Enter behaves like a real reply,
+        // not a form you have to remember to submit a second time.
+        await saveCommandAction(actions[0], 0)
+        toast.success(`Logged: ${describeCommandAction(actions[0])}`)
+      }
     } catch {
       toast.error("Couldn't parse that — try again")
     } finally {
@@ -79,7 +90,11 @@ export function useCommandBox(onSaved?: () => void) {
         case 'meal':
           res = await fetch('/api/life/meal-log', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: todayStr(), mealType: a.mealType, description: a.description }),
+            body: JSON.stringify({
+              date: todayStr(), mealType: a.mealType, description: a.description,
+              ...(a.calories != null && { calories: a.calories }),
+              ...(a.protein != null && { protein: a.protein }),
+            }),
           })
           break
         case 'water':

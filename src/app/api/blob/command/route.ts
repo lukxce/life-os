@@ -48,7 +48,7 @@ Meal-type rule: this app has three meal slots — breakfast, snack, dinner (no "
 Extract ONE OR MORE actions from the message. Return ONLY a JSON array (no markdown, no explanation), each item shaped as one of:
 
 {"type":"expense","expenseType":"personal"|"business","amount":number,"currency":"RSD"|"EUR","merchant":string|null,"category":string|null,"description":string|null}
-{"type":"meal","mealType":"breakfast"|"snack"|"dinner","description":string}
+{"type":"meal","mealType":"breakfast"|"snack"|"dinner","description":string,"calories":number|null,"protein":number|null}
 {"type":"water","volumeMl":number}
 {"type":"habit","habitName":string}
 {"type":"task","text":string}
@@ -60,8 +60,9 @@ Rules:
 - "habitName" must exactly match one of the active habits listed above, or use "unclear" if no confident match exists.
 - "category" for expenses should match one of the listed categories if a confident match exists, else null.
 - Amounts: if the user gives a bare number with no currency and no clear indication, assume RSD (this user is in Serbia).
+- For meals: if the user states a calorie or protein number themselves ("about 140 calories", "20g protein"), put it in "calories"/"protein" — that's ground truth, don't second-guess it. If they don't state one, leave it null (the app estimates it separately).
 - If a message contains multiple distinct actions ("ate eggs and spent 300 at maxi"), return one array item per action.
-- If you cannot confidently classify part of the message, emit an "unclear" item for that part rather than guessing.
+- Be generous about recognizing a logging intent even when phrased loosely or with typos ("i ate 2 kinder chocolates its about 140 calories" is clearly a meal — don't mark it unclear just because it's casual). Only use "unclear" when the intent genuinely can't be determined at all.
 
 Message: "${text.trim()}"`
 
