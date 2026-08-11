@@ -234,7 +234,7 @@ export default function CategoriesPage() {
     <div className="max-w-4xl mx-auto space-y-8">
       <h2 className="text-2xl font-bold text-ldg-ink">Categories</h2>
 
-      {personal.some(c => c.name === 'Food & Groceries') && (
+      {(personal.some(c => c.name === 'Food & Groceries') || business.some(c => c.name === 'Food & Groceries')) && (
         <div className="bg-ldg-green/10 border border-ldg-green/30 rounded-2xl p-4 flex items-start gap-3">
           <Split size={18} className="text-ldg-green shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
