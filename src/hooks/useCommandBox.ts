@@ -15,6 +15,7 @@ export type CommandAction =
   | { type: 'task'; text: string }
   | { type: 'weight'; value: number }
   | { type: 'mood'; mood: string; notes: string | null }
+  | { type: 'answer'; reply: string }
   | { type: 'unclear'; originalText: string; reason: string }
 
 type LastLoggedMeal = { id: string; mealType: string; description: string; calories: number | null; protein: number | null }
@@ -29,6 +30,7 @@ export function describeCommandAction(a: CommandAction): string {
     case 'task': return `Task: ${a.text}`
     case 'weight': return `Weight: ${a.value}`
     case 'mood': return `Mood ${a.mood}${a.notes ? ` — ${a.notes}` : ''}`
+    case 'answer': return a.reply
     case 'unclear': return `Not sure: "${a.originalText}"`
   }
 }
@@ -66,6 +68,9 @@ export function useCommandBox(onSaved?: () => void) {
 
       if (actions.length > 0 && actions.every(a => a.type === 'unclear')) {
         toast.error("Didn't catch that — try rephrasing it")
+      } else if (actions.length === 1 && actions[0].type === 'answer') {
+        // A question, not something to log — the reply itself is the
+        // response, nothing to save or confirm.
       } else if (actions.length === 1 && actions[0].type !== 'unclear' && !(actions[0].type === 'expense' && !actions[0].accountId)) {
         // A single, unambiguous action doesn't need a manual confirm tap —
         // save it immediately so typing + Enter behaves like a real reply,

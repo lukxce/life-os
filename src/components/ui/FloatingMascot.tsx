@@ -174,11 +174,13 @@ export function FloatingMascot() {
               )}
               {commandActions.map((a, i) => {
                 const saved = commandSaved.has(i)
-                const canSave = a.type !== 'unclear' && !(a.type === 'expense' && !a.accountId)
+                const canSave = a.type !== 'unclear' && a.type !== 'answer' && !(a.type === 'expense' && !a.accountId)
                 return (
-                  <div key={i} className={cn('flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px]',
-                    a.type === 'unclear' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : saved ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-canvas-alt text-ink/80')}>
-                    <span className="flex-1 min-w-0 truncate">{describeCommandAction(a)}</span>
+                  <div key={i} className={cn('flex items-start gap-2 px-2.5 py-1.5 rounded-lg text-[11px]',
+                    a.type === 'unclear' ? 'bg-red-500/10 text-red-600 dark:text-red-400'
+                    : a.type === 'answer' ? 'bg-canvas-alt text-ink'
+                    : saved ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-canvas-alt text-ink/80')}>
+                    <span className={cn('flex-1 min-w-0', a.type === 'answer' ? 'leading-snug' : 'truncate')}>{describeCommandAction(a)}</span>
                     {saved ? (
                       <Check size={12} className="shrink-0 text-emerald-500" />
                     ) : canSave ? (
