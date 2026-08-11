@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   const key = process.env.ANTHROPIC_API_KEY
   if (!key) return NextResponse.json({ error: 'ANTHROPIC_API_KEY not set' }, { status: 500 })
 
-  const { text, date, hour } = await req.json()
+  const { text, date, hour, lastLoggedMeal } = await req.json()
   if (!text?.trim()) return NextResponse.json({ error: 'text required' }, { status: 400 })
 
   const localDate: string = date || new Date().toISOString().slice(0, 10)
@@ -44,11 +44,15 @@ The user's actual data (use this to resolve references — don't invent names):
 - Business expense categories: ${businessCats.map(c => c.name).join(', ') || '(none)'}
 
 Meal-type rule: this app has three meal slots — breakfast, snack, dinner (no "lunch"). If the user doesn't say which meal, infer from the current hour: before 15:00 → breakfast, 15:00–18:30 → snack, after 18:30 → dinner. An explicit meal name in the text always wins over the hour.
-
+${lastLoggedMeal ? `
+The meal you JUST logged for the user, seconds ago: ${lastLoggedMeal.mealType} — "${lastLoggedMeal.description}"${lastLoggedMeal.calories != null ? ` (${lastLoggedMeal.calories} kcal${lastLoggedMeal.protein != null ? `, ${lastLoggedMeal.protein}g protein` : ''})` : ''}.
+If this new message is clearly correcting that entry — wrong calorie count, wrong protein, wrong description — instead of describing a new/different meal, respond with a SINGLE "mealCorrection" action instead of a "meal" action. Only the fields being corrected should be non-null.
+` : ''}
 Extract ONE OR MORE actions from the message. Return ONLY a JSON array (no markdown, no explanation), each item shaped as one of:
 
 {"type":"expense","expenseType":"personal"|"business","amount":number,"currency":"RSD"|"EUR","merchant":string|null,"category":string|null,"description":string|null}
 {"type":"meal","mealType":"breakfast"|"snack"|"dinner","description":string,"calories":number|null,"protein":number|null}
+{"type":"mealCorrection","calories":number|null,"protein":number|null,"description":string|null}
 {"type":"water","volumeMl":number}
 {"type":"habit","habitName":string}
 {"type":"task","text":string}
@@ -61,6 +65,7 @@ Rules:
 - "category" for expenses should match one of the listed categories if a confident match exists, else null.
 - Amounts: if the user gives a bare number with no currency and no clear indication, assume RSD (this user is in Serbia).
 - For meals: if the user states a calorie or protein number themselves ("about 140 calories", "20g protein"), put it in "calories"/"protein" — that's ground truth, don't second-guess it. If they don't state one, leave it null (the app estimates it separately).
+- "mealCorrection" is ONLY valid when a just-logged meal was provided above — never emit it otherwise.
 - If a message contains multiple distinct actions ("ate eggs and spent 300 at maxi"), return one array item per action.
 - Be generous about recognizing a logging intent even when phrased loosely or with typos ("i ate 2 kinder chocolates its about 140 calories" is clearly a meal — don't mark it unclear just because it's casual). Only use "unclear" when the intent genuinely can't be determined at all.
 

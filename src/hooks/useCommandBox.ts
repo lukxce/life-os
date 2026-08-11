@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 export type CommandAction =
   | { type: 'expense'; expenseType: 'personal' | 'business'; amount: number; currency: string; merchant: string | null; category: string | null; description: string | null; accountId: string | null; accountName: string | null }
   | { type: 'meal'; mealType: string; description: string; calories: number | null; protein: number | null }
+  | { type: 'mealCorrection'; calories: number | null; protein: number | null; description: string | null }
   | { type: 'water'; volumeMl: number }
   | { type: 'habit'; habitId: string; habitName: string }
   | { type: 'task'; text: string }
@@ -16,10 +17,13 @@ export type CommandAction =
   | { type: 'mood'; mood: string; notes: string | null }
   | { type: 'unclear'; originalText: string; reason: string }
 
+type LastLoggedMeal = { id: string; mealType: string; description: string; calories: number | null; protein: number | null }
+
 export function describeCommandAction(a: CommandAction): string {
   switch (a.type) {
     case 'expense': return `${a.amount.toLocaleString()} ${a.currency} · ${a.merchant || a.category || 'expense'}${a.category ? ` (${a.category})` : ''}`
     case 'meal': return `${a.mealType} — ${a.description}${a.calories ? ` (${a.calories} cal)` : ''}`
+    case 'mealCorrection': return `Corrected${a.calories != null ? ` — ${a.calories} cal` : ''}${a.protein != null ? ` · ${a.protein}g protein` : ''}${a.description ? ` — ${a.description}` : ''}`
     case 'water': return `${a.volumeMl}ml water`
     case 'habit': return `✓ ${a.habitName}`
     case 'task': return `Task: ${a.text}`
@@ -39,6 +43,10 @@ export function useCommandBox(onSaved?: () => void) {
   const [commandLoading, setCommandLoading] = useState(false)
   const [commandActions, setCommandActions] = useState<CommandAction[] | null>(null)
   const [commandSaved, setCommandSaved] = useState<Set<number>>(new Set())
+  // Remembers the meal just logged through this box (id + values), so a
+  // follow-up like "you miscounted, it's 200 calories" can be recognized as
+  // a correction to that entry instead of a brand-new, unrelated log.
+  const [lastLoggedMeal, setLastLoggedMeal] = useState<LastLoggedMeal | null>(null)
 
   async function submitCommand() {
     if (!commandText.trim() || commandLoading) return
@@ -49,7 +57,7 @@ export function useCommandBox(onSaved?: () => void) {
       const n = new Date()
       const res = await fetch('/api/blob/command', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: commandText.trim(), date: todayStr(), hour: n.getHours() }),
+        body: JSON.stringify({ text: commandText.trim(), date: todayStr(), hour: n.getHours(), lastLoggedMeal }),
       })
       if (!res.ok) throw new Error()
       const data = await res.json()
@@ -87,7 +95,7 @@ export function useCommandBox(onSaved?: () => void) {
             }),
           })
           break
-        case 'meal':
+        case 'meal': {
           res = await fetch('/api/life/meal-log', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -96,7 +104,33 @@ export function useCommandBox(onSaved?: () => void) {
               ...(a.protein != null && { protein: a.protein }),
             }),
           })
+          if (res.ok) {
+            const created = await res.json().catch(() => null)
+            if (created?.id) setLastLoggedMeal({ id: created.id, mealType: a.mealType, description: a.description, calories: created.calories ?? a.calories ?? null, protein: created.protein ?? a.protein ?? null })
+          }
           break
+        }
+        case 'mealCorrection': {
+          if (!lastLoggedMeal) { toast.error("Nothing to correct — log a meal first"); return }
+          res = await fetch('/api/life/meal-log', {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: lastLoggedMeal.id,
+              ...(a.calories != null && { calories: a.calories }),
+              ...(a.protein != null && { protein: a.protein }),
+              ...(a.description != null && { description: a.description }),
+            }),
+          })
+          if (res.ok) {
+            setLastLoggedMeal({
+              ...lastLoggedMeal,
+              calories: a.calories ?? lastLoggedMeal.calories,
+              protein: a.protein ?? lastLoggedMeal.protein,
+              description: a.description ?? lastLoggedMeal.description,
+            })
+          }
+          break
+        }
         case 'water':
           res = await fetch('/api/life/water', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },

@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, Check, X } from 'lucide-react'
+import { ChevronLeft, Check, X, Pencil } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface MealSlot { id: string; dayOfWeek: number; mealType: string; name: string; calories: number; protein: number }
 interface MealLogRow { id: string; date: string; mealType: string; description: string | null; calories: number | null; protein: number | null }
@@ -22,6 +23,9 @@ export default function MealHistoryPage() {
   const [meals, setMeals] = useState<MealSlot[]>([])
   const [logs, setLogs] = useState<MealLogRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editCalories, setEditCalories] = useState('')
+  const [editProtein, setEditProtein] = useState('')
 
   const load = useCallback(async () => {
     const today = new Date()
@@ -37,6 +41,27 @@ export default function MealHistoryPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  const startEdit = (l: MealLogRow) => {
+    setEditingId(l.id)
+    setEditCalories(l.calories != null ? String(l.calories) : '')
+    setEditProtein(l.protein != null ? String(l.protein) : '')
+  }
+
+  const saveEdit = async (id: string) => {
+    const res = await fetch('/api/life/meal-log', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id,
+        calories: editCalories.trim() === '' ? null : +editCalories,
+        protein: editProtein.trim() === '' ? null : +editProtein,
+      }),
+    })
+    if (!res.ok) { toast.error('Failed to save — try again'); return }
+    toast.success('Updated')
+    setEditingId(null)
+    load()
+  }
 
   if (loading) return (
     <div className="space-y-3">
@@ -103,14 +128,30 @@ export default function MealHistoryPage() {
                           </p>
                         )}
                         {mealLogs.length > 0 ? mealLogs.map(l => (
-                          <div key={l.id} className="flex items-start gap-1.5">
+                          <div key={l.id} className="flex items-start gap-1.5 group">
                             {l.description ? <Check size={13} className="text-emerald-500 shrink-0 mt-0.5" /> : <X size={13} className="text-gray-300 shrink-0 mt-0.5" />}
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <p className="text-sm text-gray-700 dark:text-gray-200 leading-snug">
                                 {l.description ?? <em className="not-italic text-gray-400">Skipped</em>}
                               </p>
-                              {l.calories != null && (
-                                <p className="text-[11px] font-mono text-[rgb(var(--l-green))]">{l.calories} kcal{l.protein != null ? ` · ${l.protein}g protein` : ''}</p>
+                              {editingId === l.id ? (
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <input type="number" value={editCalories} onChange={e => setEditCalories(e.target.value)}
+                                    placeholder="kcal" className="w-16 border border-black/10 dark:border-white/10 rounded px-1.5 py-0.5 text-[11px] bg-transparent focus:outline-none" />
+                                  <input type="number" value={editProtein} onChange={e => setEditProtein(e.target.value)}
+                                    placeholder="protein g" className="w-16 border border-black/10 dark:border-white/10 rounded px-1.5 py-0.5 text-[11px] bg-transparent focus:outline-none" />
+                                  <button onClick={() => saveEdit(l.id)} className="text-[11px] font-bold text-[rgb(var(--l-green))]">Save</button>
+                                  <button onClick={() => setEditingId(null)} className="text-[11px] text-gray-400">Cancel</button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5">
+                                  {l.calories != null && (
+                                    <p className="text-[11px] font-mono text-[rgb(var(--l-green))]">{l.calories} kcal{l.protein != null ? ` · ${l.protein}g protein` : ''}</p>
+                                  )}
+                                  <button onClick={() => startEdit(l)} className="text-gray-300 hover:text-gray-500 dark:hover:text-gray-300">
+                                    <Pencil size={11} />
+                                  </button>
+                                </div>
                               )}
                             </div>
                           </div>

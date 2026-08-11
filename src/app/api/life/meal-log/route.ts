@@ -83,6 +83,21 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(log)
 }
 
+export async function PATCH(req: NextRequest) {
+  const body = await req.json()
+  const { id, description, mealType, calories, protein } = body
+  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+
+  const data: Record<string, unknown> = {}
+  if (description !== undefined) data.description = description?.trim() || null
+  if (mealType !== undefined) data.mealType = mealType
+  if (calories !== undefined) data.calories = calories === null ? null : Math.round(calories)
+  if (protein !== undefined) data.protein = protein === null ? null : Math.round(protein)
+
+  const log = await prisma.mealLog.update({ where: { id }, data })
+  return NextResponse.json(log)
+}
+
 export async function DELETE(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
