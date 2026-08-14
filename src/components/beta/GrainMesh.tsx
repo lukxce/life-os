@@ -4,7 +4,7 @@
 // CSS gradient reads as flat because there's no detail behind it to blur;
 // this gives it real texture, the same way a blurred photo does in the
 // reference designs, without hot-linking an external image.
-export function GrainMesh({ tone }: { tone: 'warm' | 'cool' }) {
+export function GrainMesh({ tone }: { tone: 'warm' | 'cool' | 'sage' }) {
   const blobs = tone === 'warm'
     ? [
         { cx: 15, cy: 12, r: 34, color: '#ff8a3d', o: 0.55 },
@@ -14,7 +14,8 @@ export function GrainMesh({ tone }: { tone: 'warm' | 'cool' }) {
         { cx: 55, cy: 90, r: 38, color: '#1a1210', o: 0.7 },
         { cx: 48, cy: 40, r: 26, color: '#e8674f', o: 0.25 },
       ]
-    : [
+    : tone === 'cool'
+    ? [
         { cx: 12, cy: 15, r: 32, color: '#4fa3c4', o: 0.5 },
         { cx: 85, cy: 10, r: 30, color: '#7a5ec8', o: 0.35 },
         { cx: 90, cy: 60, r: 34, color: '#123047', o: 0.65 },
@@ -22,7 +23,18 @@ export function GrainMesh({ tone }: { tone: 'warm' | 'cool' }) {
         { cx: 55, cy: 92, r: 36, color: '#0a1626', o: 0.7 },
         { cx: 45, cy: 42, r: 24, color: '#6fc4d8', o: 0.22 },
       ]
-  const base = tone === 'warm' ? '#0b0b0d' : '#0a1626'
+    : [
+        { cx: 12, cy: 10, r: 36, color: '#a8c8a0', o: 0.6 },
+        { cx: 85, cy: 5, r: 30, color: '#e8dba8', o: 0.5 },
+        { cx: 92, cy: 55, r: 34, color: '#6fae7b', o: 0.45 },
+        { cx: 6, cy: 68, r: 32, color: '#c4d8be', o: 0.55 },
+        { cx: 50, cy: 92, r: 40, color: '#8fb87a', o: 0.4 },
+        { cx: 45, cy: 38, r: 26, color: '#f4f0dc', o: 0.5 },
+      ]
+  const base = tone === 'warm' ? '#0b0b0d' : tone === 'cool' ? '#0a1626' : '#eef4ee'
+  const grainMatrix = tone === 'sage'
+    ? '0 0 0 0 0.1  0 0 0 0 0.18  0 0 0 0 0.1  0 0 0 0.04 0' // faint dark grain, visible on light
+    : '0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0' // faint white grain, visible on dark
 
   return (
     <svg
@@ -36,7 +48,7 @@ export function GrainMesh({ tone }: { tone: 'warm' | 'cool' }) {
         </filter>
         <filter id={`grain-${tone}`}>
           <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" result="noise" />
-          <feColorMatrix in="noise" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0" />
+          <feColorMatrix in="noise" type="matrix" values={grainMatrix} />
         </filter>
       </defs>
       <rect width="100" height="100" fill={base} />
