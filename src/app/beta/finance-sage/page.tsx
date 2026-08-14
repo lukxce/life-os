@@ -1,24 +1,12 @@
 'use client'
 import Link from 'next/link'
+import { Bell, Settings, RotateCcw } from 'lucide-react'
 import { useFinanceBetaData } from '@/hooks/useFinanceBetaData'
 import { formatRSD, formatEUR } from '@/lib/utils'
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts'
 
-function Switcher() {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-      <Link href="/beta" style={{ fontSize: 12, color: 'rgba(30,40,30,0.45)', textDecoration: 'none' }}>← All styles</Link>
-      {[['finance-dark', 'Dark'], ['finance-sage', 'Sage'], ['finance-photo', 'Photo']].map(([href, label]) => (
-        <Link key={href} href={`/beta/${href}`}
-          style={{
-            fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 999, textDecoration: 'none',
-            background: href === 'finance-sage' ? '#5b8a63' : 'rgba(30,50,30,0.06)',
-            color: href === 'finance-sage' ? '#fff' : 'rgba(30,50,30,0.6)',
-          }}>{label}</Link>
-      ))}
-    </div>
-  )
-}
+const TABS = ['Overview', 'Accounts', 'Spending', 'Bills', 'Income']
+const SUBTABS = ['This Month', 'Trends', 'Categories', 'Accounts', 'Bills', 'Goals']
 
 function RingGauge({ pct, label, tone }: { pct: number; label: string; tone: string }) {
   const r = 34, c = 2 * Math.PI * r
@@ -37,54 +25,116 @@ function RingGauge({ pct, label, tone }: { pct: number; label: string; tone: str
   )
 }
 
+// Outer "shell" glass — more saturated sage tint, sits between the page
+// wash and the lighter content cards, giving the two-tone layered depth.
+const shellGlass: React.CSSProperties = {
+  background: 'rgba(207, 227, 207, 0.55)', backdropFilter: 'blur(20px) saturate(140%)', WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+  border: '1px solid rgba(255,255,255,0.5)', boxShadow: '0 8px 32px rgba(60,90,60,0.1), inset 0 1px 0 rgba(255,255,255,0.6)',
+}
+// Inner content glass — near-white, sits inside the shell.
+const cardGlass: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.55)', backdropFilter: 'blur(16px) saturate(130%)', WebkitBackdropFilter: 'blur(16px) saturate(130%)',
+  border: '1px solid rgba(255,255,255,0.7)', boxShadow: '0 6px 24px rgba(60,90,60,0.08), inset 0 1px 0 rgba(255,255,255,0.7)',
+}
+
 export default function FinanceSageBeta() {
   const { dashboard, signals, loading } = useFinanceBetaData()
 
   if (loading || !dashboard) {
-    return <div style={{ minHeight: '100dvh', background: '#eef4ee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(30,50,30,0.4)' }}>Loading…</div>
+    return <div style={{ minHeight: '100dvh', background: '#e6f0e6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(30,50,30,0.4)' }}>Loading…</div>
   }
 
   const allCats = [...dashboard.personalExpenses, ...dashboard.businessExpenses]
     .filter((c: any) => c.amountRSD > 0).sort((a: any, b: any) => b.amountRSD - a.amountRSD)
   const chartData = allCats.slice(0, 8).map((c: any) => ({ name: c.category, value: Math.round(c.amountRSD) }))
+  const peak = chartData.reduce((m, c) => (c.value > (m?.value ?? -1) ? c : m), null as null | { name: string; value: number })
   const totalNetWorth = dashboard.totals.totalRSD || 1
   const pace = signals?.pace
+  const totalSpend = allCats.reduce((s: number, c: any) => s + c.amountRSD, 0)
   const savingsRate = dashboard.income.totalGrossRSD > 0
-    ? Math.max(0, Math.round((dashboard.income.totalNetRSD - allCats.reduce((s: number, c: any) => s + c.amountRSD, 0)) / dashboard.income.totalGrossRSD * 100))
+    ? Math.max(0, Math.round((dashboard.income.totalNetRSD - totalSpend) / dashboard.income.totalGrossRSD * 100))
     : 0
 
   return (
     <div style={{
-      minHeight: '100dvh', fontFamily: 'inherit', padding: '28px 20px 60px', color: '#1e2e1e',
-      background: 'linear-gradient(160deg, #f3f8f3 0%, #e6f0e6 45%, #d7e8d9 100%)',
+      minHeight: '100dvh', padding: '20px 20px 60px', color: '#1e2e1e',
+      background: 'radial-gradient(1000px 500px at 20% -10%, rgba(143,184,122,0.35), transparent 60%), radial-gradient(800px 500px at 100% 20%, rgba(111,174,123,0.25), transparent 55%), linear-gradient(170deg, #f3f8f3 0%, #e2ede2 55%, #cfe3cf 100%)',
     }}>
-      <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
+      <div style={{ maxWidth: 1040, margin: '0 auto' }}>
+        {/* Sticky top nav — the more-saturated outer shell */}
+        <div style={{ ...shellGlass, borderRadius: 20, padding: '10px 16px', position: 'sticky', top: 12, zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
+            <span style={{ fontSize: 15, fontWeight: 800 }}>Finance OS</span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {TABS.map(t => (
+                <span key={t} style={{
+                  fontSize: 12.5, fontWeight: 600, padding: '6px 13px', borderRadius: 999,
+                  background: t === 'Overview' ? '#5b8a63' : 'transparent',
+                  color: t === 'Overview' ? '#fff' : 'rgba(30,50,30,0.6)',
+                }}>{t}</span>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {[['finance-dark', 'Dark'], ['finance-sage', 'Sage'], ['finance-photo', 'Photo']].map(([href, label]) => (
+              <Link key={href} href={`/beta/${href}`} style={{
+                fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999, textDecoration: 'none',
+                background: href === 'finance-sage' ? '#1e2e1e' : 'rgba(30,50,30,0.08)',
+                color: href === 'finance-sage' ? '#fff' : 'rgba(30,50,30,0.55)',
+              }}>{label}</Link>
+            ))}
+            <Bell size={16} color="rgba(30,50,30,0.5)" />
+            <Settings size={16} color="rgba(30,50,30,0.5)" />
+            <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#5b8a63', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>LJ</div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
           <div>
             <p style={{ fontSize: 15, color: 'rgba(30,50,30,0.55)' }}>Hey, Luka 👋</p>
-            <h1 style={{ fontSize: 26, fontWeight: 800, marginTop: 2 }}>Explore your finances</h1>
+            <h1 style={{ fontSize: 25, fontWeight: 800, marginTop: 2, letterSpacing: '-0.01em' }}>Explore your finances</h1>
           </div>
-          <Switcher />
+          <RotateCcw size={16} color="rgba(30,50,30,0.35)" />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.6fr) 1fr', gap: 16 }}>
           {/* Left: hero + chart */}
           <div>
-            <div style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.6)', borderRadius: 24, padding: 26, boxShadow: '0 8px 30px rgba(60,90,60,0.08)' }}>
-              <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(30,50,30,0.45)', marginBottom: 6 }}>Net worth</p>
+            <div style={{ ...cardGlass, borderRadius: 24, padding: 26 }}>
+              <p style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(30,50,30,0.45)', marginBottom: 6 }}>Net worth</p>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-                <p style={{ fontSize: 46, fontWeight: 800, lineHeight: 1 }}>{formatEUR(dashboard.totals.totalEUR)}</p>
+                <p style={{ fontSize: 44, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em' }}>{formatEUR(dashboard.totals.totalEUR)}</p>
                 {pace && (
                   <span style={{
                     fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 999,
-                    background: pace.status === 'ahead' ? 'rgba(200,80,60,0.12)' : pace.status === 'behind' ? 'rgba(91,138,99,0.14)' : 'rgba(30,50,30,0.08)',
+                    background: pace.status === 'ahead' ? 'rgba(200,80,60,0.14)' : pace.status === 'behind' ? 'rgba(91,138,99,0.16)' : 'rgba(30,50,30,0.08)',
                     color: pace.status === 'ahead' ? '#c8503c' : pace.status === 'behind' ? '#4b7a53' : 'rgba(30,50,30,0.6)',
                   }}>{pace.status === 'ahead' ? '↑ pace ahead' : pace.status === 'behind' ? '↓ pace behind' : '— on pace'}</span>
                 )}
               </div>
               <p style={{ fontSize: 14, color: 'rgba(30,50,30,0.45)', marginTop: 4, fontFamily: 'monospace' }}>{formatRSD(dashboard.totals.totalRSD)}</p>
 
-              <div style={{ marginTop: 22, height: 180 }}>
+              {/* Chip legend */}
+              <div style={{ display: 'flex', gap: 16, marginTop: 14, flexWrap: 'wrap' }}>
+                {[['#5b8a63', 'Spent', formatRSD(totalSpend)], ['#8fb87a', 'Net income', formatRSD(dashboard.income.totalNetRSD)], ['#c8a35b', 'Deductions', formatRSD(dashboard.income.totalDeductions)]].map(([dot, label, val]) => (
+                  <div key={label as string} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: dot as string }} />
+                    <span style={{ color: 'rgba(30,50,30,0.55)' }}>{label}</span>
+                    <span style={{ fontWeight: 700, fontFamily: 'monospace' }}>{val}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 22, height: 190, position: 'relative' }}>
+                {peak && (
+                  <div style={{
+                    position: 'absolute', top: -6, right: 8, background: '#1e2e1e', color: '#fff', borderRadius: 12, padding: '8px 12px',
+                    fontSize: 11, lineHeight: 1.5, boxShadow: '0 8px 20px rgba(30,50,30,0.25)', zIndex: 2,
+                  }}>
+                    <strong>{peak.name}</strong><br />
+                    {formatRSD(peak.value)} · biggest category
+                  </div>
+                )}
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
                     <defs>
@@ -101,14 +151,25 @@ export default function FinanceSageBeta() {
               </div>
             </div>
 
+            {/* Sub-tab strip */}
+            <div style={{ display: 'flex', gap: 4, marginTop: 16, marginBottom: 12, overflowX: 'auto', paddingBottom: 2 }}>
+              {SUBTABS.map(t => (
+                <span key={t} style={{
+                  fontSize: 12, fontWeight: 600, padding: '6px 13px', borderRadius: 999, whiteSpace: 'nowrap',
+                  background: t === 'Goals' ? 'rgba(30,50,30,0.85)' : 'rgba(30,50,30,0.06)',
+                  color: t === 'Goals' ? '#fff' : 'rgba(30,50,30,0.55)',
+                }}>{t}</span>
+              ))}
+            </div>
+
             {/* Accounts performance list */}
-            <div style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.6)', borderRadius: 24, padding: 22, marginTop: 16, boxShadow: '0 8px 30px rgba(60,90,60,0.08)' }}>
-              <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Accounts</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ ...cardGlass, borderRadius: 24, padding: 22 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Accounts performance</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {dashboard.accounts.map((a: any) => {
                   const share = Math.round((a.balanceRSD / totalNetWorth) * 100)
                   return (
-                    <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderTop: '1px solid rgba(30,50,30,0.06)' }}>
+                    <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderTop: '1px solid rgba(30,50,30,0.06)' }}>
                       <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(91,138,99,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#4b7a53', flexShrink: 0 }}>
                         {a.name.slice(0, 1)}
                       </div>
@@ -126,22 +187,23 @@ export default function FinanceSageBeta() {
 
           {/* Right: gauges */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.6)', borderRadius: 24, padding: 22, boxShadow: '0 8px 30px rgba(60,90,60,0.08)' }}>
-              <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 16 }}>This month</p>
+            <div style={{ ...cardGlass, borderRadius: 24, padding: 22 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Budget health</p>
+              <p style={{ fontSize: 11, color: 'rgba(30,50,30,0.45)', marginBottom: 14 }}>vs. your usual pace</p>
               <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-                <RingGauge pct={pace?.spentPct ?? 0} label="vs. usual spend" tone="#5b8a63" />
+                <RingGauge pct={pace?.spentPct ?? 0} label="spend pace" tone="#5b8a63" />
                 <RingGauge pct={savingsRate} label="savings rate" tone="#8fb87a" />
               </div>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.6)', borderRadius: 24, padding: 22, boxShadow: '0 8px 30px rgba(60,90,60,0.08)' }}>
+            <div style={{ ...cardGlass, borderRadius: 24, padding: 22 }}>
               <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Income this month</p>
               <p style={{ fontSize: 26, fontWeight: 800 }}>{formatRSD(dashboard.income.totalNetRSD)}</p>
               <p style={{ fontSize: 12, color: 'rgba(30,50,30,0.45)', marginTop: 4 }}>after {formatRSD(dashboard.income.totalDeductions)} deductions</p>
             </div>
 
             {signals?.billsDueSoon?.length > 0 && (
-              <div style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.6)', borderRadius: 24, padding: 22, boxShadow: '0 8px 30px rgba(60,90,60,0.08)' }}>
+              <div style={{ ...cardGlass, borderRadius: 24, padding: 22 }}>
                 <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Due soon</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {signals.billsDueSoon.slice(0, 4).map((b: any) => (
