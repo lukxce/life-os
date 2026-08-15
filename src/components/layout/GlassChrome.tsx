@@ -1,9 +1,9 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
-import { Bell, Moon, Sun, Plus, ChevronDown, X } from 'lucide-react'
+import { Bell, Moon, Sun, Plus, ChevronDown, X, MoreHorizontal } from 'lucide-react'
 import type { ModuleConfig, NavGroup } from './AppShell'
 import { GlobalSearch } from './GlobalSearch'
 import { QuickMenu, QuickAction } from '@/components/ledger/QuickMenu'
@@ -60,6 +60,7 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
   const path = usePathname()
   const [notifOpen, setNotifOpen] = useState(false)
   const [newOpen, setNewOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [signals, setSignals] = useState<any>(null)
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -96,42 +97,55 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
             <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.08em' }}>LIFE OS</span>
           </Link>
 
-          <div className="hidden md:flex" style={{ gap: 2, flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          {/* Always visible now, not just md+ — this was the only way to
+              switch modules from Home on mobile, and hiding it below md
+              left mobile with literally no cross-module nav at all. Scrolls
+              horizontally if it doesn't fit rather than wrapping/clipping. */}
+          <div className="no-scrollbar" style={{ display: 'flex', gap: 2, flex: 1, justifyContent: 'center', alignItems: 'center', overflowX: 'auto', minWidth: 0 }}>
             {GLOBAL_NAV.map(n => {
               const active = isPathActive(path, n.href)
               return (
                 <Link key={n.href} href={n.href} style={{
-                  fontSize: 12.5, fontWeight: 600, padding: '7px 14px', borderRadius: 999, whiteSpace: 'nowrap', textDecoration: 'none',
+                  fontSize: 12.5, fontWeight: 600, padding: '7px 14px', borderRadius: 999, whiteSpace: 'nowrap', textDecoration: 'none', flexShrink: 0,
                   background: active ? 'rgb(var(--l-green) / 0.12)' : 'transparent',
                   color: active ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.55)',
                 }}>{n.label}</Link>
               )
             })}
-            {/* Bridge span (out-of-flow, no layout height) keeps :hover alive
-                across the gap to the flyout — without it the mouse loses
-                hover in transit and the menu closes before you can click. */}
-            <span className="glass-more" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-              <span style={{
-                fontSize: 12.5, fontWeight: 600, padding: '7px 12px', borderRadius: 999, whiteSpace: 'nowrap',
-                color: moreActive ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.55)', display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer',
-              }}>More <ChevronDown size={13} /></span>
-              <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, top: '100%', height: 10 }} />
-              <div className="glass-more-flyout" style={{
-                ...flyoutGlass, position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 10,
-                borderRadius: 14, padding: '8px', minWidth: 150, opacity: 0, pointerEvents: 'none', transition: 'opacity .15s',
-                display: 'flex', flexDirection: 'column', gap: 1, zIndex: 50,
-              }}>
-                {GLOBAL_NAV_MORE.map(n => (
-                  <Link key={n.href} href={n.href} style={{
-                    fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
-                    padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap', textAlign: 'center',
-                  }}>{n.label}</Link>
-                ))}
-              </div>
-            </span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            {/* Click-based, not hover — hover has no equivalent on touch, so
+                a hover-only "More" was completely unreachable on mobile
+                (and, per feedback, unreliable on desktop too: crossing the
+                gap between the trigger and the flyout could drop :hover
+                before the flyout was reached). A tap/click always works. */}
+            <span style={{ position: 'relative' }}>
+              <button onClick={() => setMoreOpen(o => !o)} title="More" style={{
+                width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.6)', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: moreActive ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.55)',
+              }}>
+                <MoreHorizontal size={16} />
+              </button>
+              {moreOpen && (
+                <>
+                  <div onClick={() => setMoreOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 55 }} />
+                  <div style={{
+                    ...flyoutGlass, position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '100%', marginTop: 10, zIndex: 56,
+                    borderRadius: 14, padding: 8, minWidth: 150, display: 'flex', flexDirection: 'column', gap: 1,
+                  }}>
+                    {GLOBAL_NAV_MORE.map(n => (
+                      <Link key={n.href} href={n.href} onClick={() => setMoreOpen(false)} className="glass-flyout-link" style={{
+                        fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
+                        padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap', textAlign: 'center',
+                      }}>{n.label}</Link>
+                    ))}
+                  </div>
+                </>
+              )}
+            </span>
+
             <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <GlobalSearch mobileIconOnly />
             </span>
@@ -201,8 +215,8 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
         </div>
       </div>
       <style>{`
-        .glass-more:hover .glass-more-flyout { opacity: 1 !important; pointer-events: auto !important; }
-        .glass-more-flyout a:hover, .glass-rail-flyout a:hover { background: rgb(var(--l-green) / 0.1); color: rgb(var(--l-green)); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .glass-rail-flyout a:hover, .glass-flyout-link:hover { background: rgb(var(--l-green) / 0.1); color: rgb(var(--l-green)); }
       `}</style>
     </header>
   )
@@ -262,46 +276,53 @@ function RailLeaf({ href, icon: Icon, label, active }: { href: string; icon: any
 function RailGroup({ title, items, isActive }: { title: string; items: NavGroup['items']; isActive: (href: string) => boolean }) {
   const Icon = items[0].icon
   const groupActive = items.some(it => isActive(it.href))
+
+  // Raw CSS :hover across a gap turned out to be genuinely unreliable here —
+  // even a touching (zero-width) boundary between icon and flyout could
+  // drop hover mid-transition and close the menu right as you moved toward
+  // it. This is the fix: JS-tracked open state with a short grace period
+  // before closing, cancelled if the cursor re-enters either the icon or
+  // the flyout in the meantime — the standard "hover intent" pattern, and
+  // the only version of this that can't have a dead zone. Click still works
+  // too (and is the only thing that works at all on touch).
+  const [open, setOpen] = useState(false)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cancelClose = () => { if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null } }
+  const openNow = () => { cancelClose(); setOpen(true) }
+  const closeSoon = () => { cancelClose(); closeTimer.current = setTimeout(() => setOpen(false), 300) }
+  useEffect(() => () => cancelClose(), [])
+
   return (
-    // Explicit width bridges the icon→flyout gap into the element's own
-    // hit-box (flyout starts exactly at left:42, touching) — otherwise the
-    // dead 10px strip between them drops :hover before the flyout is
-    // reached, and it closes right as you try to click it.
-    <span className="rail-group group" style={{ position: 'relative', display: 'inline-block', width: 42, height: 42, flexShrink: 0 }}>
-      <span title={title} style={{
+    <span style={{ position: 'relative', display: 'inline-block', width: 42, height: 42, flexShrink: 0 }}
+      onMouseEnter={openNow} onMouseLeave={closeSoon}>
+      <span title={title} onClick={() => setOpen(o => !o)} style={{
         width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative', cursor: 'pointer',
         ...(groupActive ? { background: 'rgb(var(--l-green) / 0.16)', border: '1px solid rgb(var(--l-green) / 0.3)' } : { ...navGlass }),
       }}>
         <Icon size={16} color={groupActive ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.6)'} />
-        {/* No separate hover tooltip here on purpose — the flyout already
-            opens with the group's name as its own header, so a second,
-            differently-positioned label doing the same job was pure visual
-            noise (that's the stray floating tag in the screenshot) — it's
-            gone, not just relabeled. */}
       </span>
-      {/* Anchored to the icon's TOP, not vertically centered — a flyout
-          taller than the ~50px gap between icons only grows downward now,
-          so it can no longer climb up over the icon above it. zIndex still
-          matters for whatever's below: every rail-group is a sibling in the
-          same stacking context, painted in DOM order, so without it a tall
-          flyout would get drawn under the icon two spots down. */}
-      <div className="rail-group-flyout glass-rail-flyout" style={{
-        ...flyoutGlass, position: 'absolute', left: 42, top: -6, zIndex: 60,
-        borderRadius: 14, padding: '8px 8px 8px 18px', minWidth: 186, opacity: 0, pointerEvents: 'none', transition: 'opacity .15s',
-        display: 'flex', flexDirection: 'column', gap: 1,
-      }}>
-        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '4px 10px 6px' }}>{title}</span>
-        {items.map(it => (
-          <Link key={it.href} href={it.href} style={{
-            fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
-            padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap',
-          }}>{it.label}</Link>
-        ))}
-      </div>
-      <style>{`
-        .rail-group:hover .rail-group-flyout { opacity: 1 !important; pointer-events: auto !important; }
-      `}</style>
+      {open && (
+        // Anchored to the icon's TOP, not vertically centered — a flyout
+        // taller than the ~50px gap between icons only grows downward, so
+        // it can't climb up over the icon above it. zIndex matters for
+        // whatever's below: every rail-group is a sibling in the same
+        // stacking context, painted in DOM order, so without it a tall
+        // flyout would get drawn under the icon two spots down.
+        <div onMouseEnter={openNow} onMouseLeave={closeSoon} className="glass-rail-flyout" style={{
+          ...flyoutGlass, position: 'absolute', left: 42, top: -6, zIndex: 60,
+          borderRadius: 14, padding: '8px 8px 8px 18px', minWidth: 186,
+          display: 'flex', flexDirection: 'column', gap: 1,
+        }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '4px 10px 6px' }}>{title}</span>
+          {items.map(it => (
+            <Link key={it.href} href={it.href} onClick={() => setOpen(false)} className="glass-flyout-link" style={{
+              fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
+              padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap',
+            }}>{it.label}</Link>
+          ))}
+        </div>
+      )}
     </span>
   )
 }
