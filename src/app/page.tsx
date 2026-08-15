@@ -8,7 +8,7 @@ import { Mascot } from '@/components/ui/Mascot'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { MealPhotoButton } from '@/components/ui/MealPhotoButton'
 import { WeeklyDigestCard } from '@/components/ui/WeeklyDigestCard'
-import { AppHeader, AppHeaderSpacer } from '@/components/ledger/AppHeader'
+import { GlassHeader, GlassHeaderSpacer } from '@/components/layout/GlassChrome'
 import { QuickFab } from '@/components/ledger/QuickFab'
 import { QuickAction } from '@/components/ledger/QuickMenu'
 import { Card, Label, SolidBtn, GhostBtn } from '@/components/ledger/primitives'
@@ -75,8 +75,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-ldg-paper text-ldg-ink">
-      <AppHeader actions={HOME_ACTIONS} />
-      <AppHeaderSpacer />
+      <GlassHeader actions={HOME_ACTIONS} />
+      <GlassHeaderSpacer />
 
       <div className="max-w-xl mx-auto px-5 py-6 pb-28 space-y-4">
 
