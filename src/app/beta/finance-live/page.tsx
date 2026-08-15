@@ -40,20 +40,22 @@ const RAIL = [
   { icon: Lightbulb,       href: '/finance/insights',           label: 'Insights' },
 ]
 
-// Light frosted glass for the floating chrome (nav + rail).
+// Glass only reads as glass when it's meaningfully lighter than the surface
+// it floats on — white-on-near-white has no contrast for blur to reveal,
+// regardless of blur radius. The page background below is a real gray-green,
+// not a near-white tint, specifically so these panels have something to lift
+// off of.
 const navGlass: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.68)',
+  background: 'rgba(255,255,255,0.78)',
+  backdropFilter: 'blur(24px) saturate(170%)', WebkitBackdropFilter: 'blur(24px) saturate(170%)',
+  border: '1px solid rgba(255,255,255,0.9)',
+  boxShadow: '0 14px 36px rgba(20,30,25,0.16), inset 0 1px 0 rgba(255,255,255,0.95)',
+}
+const cardGlass: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.72)',
   backdropFilter: 'blur(22px) saturate(160%)', WebkitBackdropFilter: 'blur(22px) saturate(160%)',
   border: '1px solid rgba(255,255,255,0.85)',
-  boxShadow: '0 10px 30px rgba(20,30,25,0.08), inset 0 1px 0 rgba(255,255,255,0.9)',
-}
-// Content cards — lighter/thinner glass than the chrome, still minimal
-// white/gray/green, just translucent instead of flat opaque white.
-const cardGlass: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.55)',
-  backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-  border: '1px solid rgba(255,255,255,0.7)',
-  boxShadow: '0 6px 24px rgba(20,30,25,0.06), inset 0 1px 0 rgba(255,255,255,0.75)',
+  boxShadow: '0 10px 30px rgba(20,30,25,0.1), inset 0 1px 0 rgba(255,255,255,0.85)',
 }
 
 export default function FinanceLiveGlassBeta() {
@@ -74,15 +76,20 @@ export default function FinanceLiveGlassBeta() {
   const monthOut = data ? data.personalExpenses.concat(data.businessExpenses).reduce((s: number, e: any) => s + e.amountRSD, 0) : 0
 
   return (
-    <div style={{
-      minHeight: '100dvh', fontFamily: SYSTEM_FONT,
-      background: `
-        radial-gradient(900px 500px at 12% -8%, rgba(46,125,79,0.07), transparent 60%),
-        radial-gradient(700px 460px at 100% 6%, rgba(120,140,132,0.09), transparent 55%),
-        radial-gradient(800px 500px at 40% 100%, rgba(46,125,79,0.05), transparent 55%),
-        rgb(var(--l-paper))
-      `,
-    }}>
+    <div style={{ minHeight: '100dvh', fontFamily: SYSTEM_FONT, position: 'relative' }}>
+      {/* Fixed pseudo-background, not background-attachment:fixed on the
+          scrolling element — the latter forces a full-page repaint every
+          scroll frame once several stacked backdrop-filters are involved,
+          janky enough that the first click on nav links gets swallowed. */}
+      <div aria-hidden style={{
+        position: 'fixed', inset: 0, zIndex: -1,
+        background: `
+          radial-gradient(1000px 560px at 12% -8%, rgba(46,125,79,0.16), transparent 62%),
+          radial-gradient(800px 520px at 102% 4%, rgba(120,140,132,0.22), transparent 58%),
+          radial-gradient(900px 560px at 40% 108%, rgba(46,125,79,0.12), transparent 58%),
+          linear-gradient(165deg, #d6dcd7 0%, #ccd4cd 50%, #d2d9d3 100%)
+        `,
+      }} />
       {/* Left rail — hidden below lg, exactly like the real app's own ModuleDock */}
       <div className="hidden lg:flex" style={{ position: 'fixed', left: 18, top: '50%', transform: 'translateY(-50%)', zIndex: 30, flexDirection: 'column', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.35)', marginBottom: 2, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>Finance</span>
@@ -204,7 +211,7 @@ export default function FinanceLiveGlassBeta() {
 
           <SignalsCard style={cardGlass} />
 
-          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {[
               { label: 'Today', period: 'day' as Period, offset: 0 },
               { label: 'This Week', period: 'week' as Period, offset: 0 },
@@ -219,9 +226,9 @@ export default function FinanceLiveGlassBeta() {
               const active = period === s.period && (s.period === 'all' || date === dStr)
               return (
                 <button key={s.label} onClick={() => { setPeriod(s.period); setDate(dStr) }}
-                  className={cn('shrink-0 text-[13px] px-3 py-1.5 rounded-lg border transition-colors',
-                    active ? 'font-semibold bg-ldg-green/10 text-ldg-green border-ldg-green/30' : 'font-medium text-ldg-ink/55 border-ldg-ink/10')}
-                  style={!active ? cardGlass : undefined}>
+                  className={cn('shrink-0 text-[14px] px-5 py-2.5 rounded-xl border transition-colors',
+                    active ? 'font-semibold bg-ldg-green/10 text-ldg-green border-ldg-green/30' : 'font-medium text-ldg-ink/60 border-transparent')}
+                  style={!active ? navGlass : undefined}>
                   {s.label}
                 </button>
               )
