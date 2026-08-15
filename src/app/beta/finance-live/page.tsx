@@ -10,6 +10,12 @@ import { formatRSD, formatEUR, formatDate, Period, cn } from '@/lib/utils'
 import { Card, Label, CHART_COLORS } from '@/components/ledger/primitives'
 import { SignalsCard } from '@/components/finance/SignalsCard'
 import { useCommandBox, describeCommandAction } from '@/hooks/useCommandBox'
+// The real app's floating bot-head companion — normally mounted once by
+// AppShell, which every module's Shell wraps its pages in. This page lives
+// outside /finance/layout.tsx entirely (that's the point, for custom chrome),
+// so it never gets AppShell and lost the mascot along with it. It's fully
+// self-contained (own nudges fetch, own command box), so just render it.
+import { FloatingMascot } from '@/components/ui/FloatingMascot'
 
 // Matches the real app's system-font stack exactly, overriding the beta
 // layout's Geist wrapper via inline style (highest specificity) — this
@@ -221,16 +227,19 @@ export default function FinanceLiveGlassBeta() {
               })}
               {/* "More" flyout keeps Journal/Food/Personal/Watchlist reachable
                   without crowding the pill or pushing Watchlist off-screen. */}
-              {/* paddingBottom (not marginTop on the flyout) extends this
-                  element's own hit-box down to where the flyout starts, so
-                  there's no gap for the mouse to lose :hover in transit. */}
-              <span className="nav-more" style={{ position: 'relative', display: 'inline-block', paddingBottom: 10 }}>
+              {/* The bridge below is a separate, out-of-flow (absolute) element
+                  covering the gap to the flyout — it doesn't add to this
+                  span's own layout height, unlike the previous paddingBottom
+                  trick, which inflated the box and threw off vertical
+                  alignment with the plain-text pills next to it. */}
+              <span className="nav-more" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
                 <span style={{
                   fontSize: 12.5, fontWeight: 600, padding: '7px 12px', borderRadius: 999, whiteSpace: 'nowrap',
                   color: 'rgb(var(--l-ink) / 0.55)', display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer',
                 }}>More <ChevronDown size={13} /></span>
+                <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, top: '100%', height: 10 }} />
                 <div className="nav-more-flyout" style={{
-                  ...flyoutGlass, position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
+                  ...flyoutGlass, position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 10,
                   borderRadius: 14, padding: '8px', minWidth: 150, opacity: 0, pointerEvents: 'none', transition: 'opacity .15s',
                   display: 'flex', flexDirection: 'column', gap: 1, zIndex: 50,
                 }}>
@@ -490,6 +499,7 @@ export default function FinanceLiveGlassBeta() {
           )}
         </div>
       </div>
+      <FloatingMascot />
     </div>
   )
 }
