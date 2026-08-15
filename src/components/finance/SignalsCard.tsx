@@ -19,7 +19,7 @@ function dueLabel(days: number) {
   return `due in ${days}d`
 }
 
-export function SignalsCard() {
+export function SignalsCard({ style }: { style?: React.CSSProperties } = {}) {
   const [data, setData] = useState<Signals | null>(null)
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export function SignalsCard() {
   if (rows.length === 0) return null
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden" style={style}>
       <div className="px-5 py-3.5 border-b border-ldg-ink/[0.07]">
         <Label>Signals</Label>
       </div>

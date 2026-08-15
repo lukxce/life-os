@@ -17,8 +17,8 @@ export function Label({ children, className }: { children: React.ReactNode; clas
 }
 
 export function Card({
-  children, className, accent, as: As = 'section',
-}: { children: React.ReactNode; className?: string; accent?: 'urgent' | 'green'; as?: 'section' | 'div' }) {
+  children, className, accent, as: As = 'section', style,
+}: { children: React.ReactNode; className?: string; accent?: 'urgent' | 'green'; as?: 'section' | 'div'; style?: React.CSSProperties }) {
   // Accent border-left uses an inline color, not a Tailwind border-l-{color}
   // class — directional-prefix ambiguity is exactly what "ldg-" avoids
   // everywhere else, no reason to reintroduce it here
@@ -28,7 +28,7 @@ export function Card({
       'rounded-2xl bg-ldg-card border border-ldg-ink/10 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.35)]',
       accent && 'border-l-[3px]',
       className,
-    )} style={accentColor ? { borderLeftColor: accentColor } : undefined}>
+    )} style={{ ...(accentColor ? { borderLeftColor: accentColor } : {}), ...style }}>
       {children}
     </As>
   )
