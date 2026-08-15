@@ -30,17 +30,22 @@ const GLOBAL_NAV_MORE = [
   { href: '/watchlist', label: 'Watchlist' },
 ]
 
+// Built from --l-card/--l-ink (the same tokens the plain Card component
+// uses: 255 255 255 light / 31 31 35 dark) instead of hardcoded white — a
+// fixed white tint on a dark page renders as a flat, muddy gray plate with
+// low-contrast text, not glass. This way it's a proper light frosted panel
+// in light mode and a proper dark frosted panel in dark mode.
 const navGlass: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.6)',
+  background: 'rgb(var(--l-card) / 0.6)',
   backdropFilter: 'blur(26px) saturate(180%)', WebkitBackdropFilter: 'blur(26px) saturate(180%)',
-  border: '1px solid rgba(255,255,255,0.5)',
-  boxShadow: '0 8px 24px rgba(20,30,25,0.08)',
+  border: '1px solid rgb(var(--l-ink) / 0.08)',
+  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
 }
 const flyoutGlass: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.92)',
+  background: 'rgb(var(--l-card) / 0.94)',
   backdropFilter: 'blur(20px) saturate(160%)', WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-  border: '1px solid rgba(255,255,255,0.7)',
-  boxShadow: '0 16px 36px rgba(20,30,25,0.16)',
+  border: '1px solid rgb(var(--l-ink) / 0.1)',
+  boxShadow: '0 16px 36px rgba(0,0,0,0.2)',
 }
 
 function isPathActive(path: string, href: string) {
