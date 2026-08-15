@@ -85,17 +85,23 @@ const MOBILE_PRIMARY = [
 // blur, soft shadow, a barely-there border. Two prior passes added a
 // diagonal internal gradient chasing a "sheen", which read as a fake
 // plastic bevel instead of glass. Dropping it fixed that.
-// This is chrome-only now (top pill bar, rail, mobile bar) — content cards
-// below use the plain themed Card component like the real app, unchanged.
-// An earlier pass put this same glass on every content card too, which
-// read fine in light mode but went flat gray-on-black in dark mode (the
-// white tint doesn't adapt), and wasn't the ask to begin with — only the
-// nav chrome was ever meant to be glass.
 const navGlass: React.CSSProperties = {
   background: 'rgba(255,255,255,0.6)',
   backdropFilter: 'blur(26px) saturate(180%)', WebkitBackdropFilter: 'blur(26px) saturate(180%)',
   border: '1px solid rgba(255,255,255,0.5)',
   boxShadow: '0 8px 24px rgba(20,30,25,0.08)',
+}
+// Content-card glass, brought back after the first pass hardcoded white and
+// went flat gray-on-black in dark mode. Built from the same --l-card/--l-ink
+// tokens the plain Card component uses (255 255 255 light / 31 31 35 dark),
+// so the tint itself flips with the theme instead of staying stuck on white
+// — translucent white glass in light mode, translucent dark glass in dark
+// mode, both with real edges behind them to blur (the nav/page chrome).
+const cardGlass: React.CSSProperties = {
+  background: 'rgb(var(--l-card) / 0.6)',
+  backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)',
+  border: '1px solid rgb(var(--l-ink) / 0.08)',
+  boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
 }
 // Flyout/dropdown panels — more opaque than the ambient glass for legibility.
 const flyoutGlass: React.CSSProperties = {
@@ -336,7 +342,7 @@ export default function FinanceLiveGlassBeta() {
         </div>
 
         <div className="space-y-4 pb-8">
-          <Card className="p-5">
+          <Card className="p-5" style={cardGlass}>
             <Label>Net worth</Label>
             {data ? (
               <>
@@ -394,7 +400,7 @@ export default function FinanceLiveGlassBeta() {
             </div>
           </Card>
 
-          <SignalsCard />
+          <SignalsCard style={cardGlass} />
 
           <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {[
@@ -430,7 +436,7 @@ export default function FinanceLiveGlassBeta() {
                 </div>
                 <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }}>
                   {shown.map((acc: any) => (
-                    <Card key={acc.id} className="p-4">
+                    <Card key={acc.id} className="p-4" style={cardGlass}>
                       <Label>{acc.name}</Label>
                       <p className="font-mono text-[15px] font-semibold tabular-nums mt-1.5">{acc.currency === 'EUR' ? formatEUR(acc.currentBalance) : formatRSD(acc.currentBalance)}</p>
                       <p className="font-mono text-[12px] text-ldg-ink/55 tabular-nums">{acc.currency === 'EUR' ? formatRSD(acc.balanceRSD) : formatEUR(acc.balanceEUR)}</p>
@@ -442,7 +448,7 @@ export default function FinanceLiveGlassBeta() {
           })()}
 
           {recent.length > 0 && (
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden" style={cardGlass}>
               <div className="px-5 py-3.5 border-b border-ldg-ink/[0.07]"><Label>Recent activity</Label></div>
               <div className="px-5">
                 {recent.map(r => (
@@ -465,7 +471,7 @@ export default function FinanceLiveGlassBeta() {
           {data && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {[{ title: 'Personal spending', data: data.personalExpenses }, { title: 'Business spending', data: data.businessExpenses }].map(section => (
-                <Card key={section.title} className="p-5">
+                <Card key={section.title} className="p-5" style={cardGlass}>
                   <Label>{section.title}</Label>
                   {section.data.filter((e: any) => e.amountRSD > 0).length === 0 ? (
                     <p className="font-mono text-[12px] text-ldg-ink/55 text-center py-8">nothing this period</p>
