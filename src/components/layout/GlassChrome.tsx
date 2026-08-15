@@ -3,19 +3,18 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
-import { Bell, Moon, Sun, Plus, X, MoreHorizontal } from 'lucide-react'
+import { Bell, Moon, Sun, Plus, X, MoreHorizontal, Home as HomeIcon } from 'lucide-react'
 import type { ModuleConfig, NavGroup } from './AppShell'
 import { GlobalSearch } from './GlobalSearch'
 import { QuickMenu, QuickAction } from '@/components/ledger/QuickMenu'
 import { cn } from '@/lib/utils'
 
-// ── Glass chrome — desktop header + rail for every module ───────────────────
+// ── Glass chrome — header, rail, and mobile bar for every module ────────────
 // This is the finance-live beta's chrome (floating pill top bar, floating
-// icon rail with grouped hover flyouts), generalized to run off any
-// module's existing ModuleConfig instead of being hand-written per page.
-// Desktop only (md+) — mobile keeps AppShell's existing BottomBar/GoSheet,
-// which already works well and wasn't part of what anyone asked to change;
-// this only replaces the old fixed AppHeader + labeled Sidebar.
+// icon rail with grouped click flyouts), generalized to run off any module's
+// existing ModuleConfig instead of being hand-written per page. Desktop gets
+// the vertical rail; mobile gets the same groups laid out horizontally in
+// GlassMobileBar, replacing the old fixed bottom nav entirely.
 
 const GLOBAL_NAV = [
   { href: '/finance',  label: 'Finance' },
@@ -296,6 +295,65 @@ export function GlassSidebar({ config }: { config: ModuleConfig }) {
   )
 }
 
+// ── Mobile bar ────────────────────────────────────────────────────────────
+// Same glass-circle language as the desktop rail, laid out horizontally
+// right under the header, replacing the old fixed bottom nav (Home /
+// module home / (+) actions / Go-sheet) — that bar predated this whole
+// redesign and looked visibly out of place next to the new glass chrome.
+// Covers what it did: Home is the first icon, the module's own home is
+// wherever it falls in the group list (same as the desktop rail), quick
+// actions get their own icon, and every group is directly reachable here
+// instead of behind a separate "Go" sheet.
+export function GlassMobileBar({ config }: { config: ModuleConfig }) {
+  const path = usePathname()
+  const isActive = (href: string) => href === config.home ? path === href : isPathActive(path, href)
+  const isHome = path === '/'
+  const [actionsOpen, setActionsOpen] = useState(false)
+  const actionsRef = useClickOutside(() => setActionsOpen(false), actionsOpen)
+  const actions = (config.actions ?? []) as QuickAction[]
+
+  return (
+    <div className="md:hidden no-scrollbar" style={{
+      position: 'fixed', top: 92, left: 12, right: 12, zIndex: 35,
+      ...navGlass, borderRadius: 999, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto',
+    }}>
+      <Link href="/" title="Home" style={{
+        width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none',
+        ...(isHome ? { background: 'rgb(var(--l-green))', boxShadow: '0 4px 14px rgba(46,125,79,0.35)' } : { ...navGlass }),
+      }}>
+        <HomeIcon size={16} color={isHome ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
+      </Link>
+      <div style={{ width: 1, height: 24, background: 'rgb(var(--l-ink) / 0.1)', flexShrink: 0 }} />
+      {config.groups.map((group: NavGroup, gi: number) =>
+        group.title
+          ? <RailGroup key={group.title} title={group.title} items={group.items} isActive={isActive} direction="down" />
+          : group.items.map(it => (
+              <RailLeaf key={it.href} href={it.href} icon={it.icon} label={it.label} active={isActive(it.href)} />
+            ))
+      )}
+      {actions.length > 0 && (
+        <span ref={actionsRef as any} style={{ position: 'relative', flexShrink: 0 }}>
+          <button onClick={() => setActionsOpen(o => !o)} title="New" style={{
+            width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer',
+            background: 'rgb(var(--l-ink))', color: '#fff',
+          }}>
+            <Plus size={16} />
+          </button>
+          {actionsOpen && (
+            <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '100%', marginTop: 10, zIndex: 60 }}>
+              <QuickMenu actions={actions} onClose={() => setActionsOpen(false)} />
+            </div>
+          )}
+        </span>
+      )}
+    </div>
+  )
+}
+
+export function GlassMobileBarSpacer() {
+  return <div className="md:hidden" style={{ height: 66 }} />
+}
+
 function RailLeaf({ href, icon: Icon, label, active }: { href: string; icon: any; label: string; active: boolean }) {
   return (
     <Link href={href} title={label} className="group" style={{
@@ -314,7 +372,9 @@ function RailLeaf({ href, icon: Icon, label, active }: { href: string; icon: any
   )
 }
 
-function RailGroup({ title, items, isActive }: { title: string; items: NavGroup['items']; isActive: (href: string) => boolean }) {
+// direction 'right' = vertical desktop rail (flyout opens to the icon's
+// right); 'down' = horizontal mobile bar (flyout opens below, centered).
+function RailGroup({ title, items, isActive, direction = 'right' }: { title: string; items: NavGroup['items']; isActive: (href: string) => boolean; direction?: 'right' | 'down' }) {
   const Icon = items[0].icon
   const groupActive = items.some(it => isActive(it.href))
 
@@ -330,6 +390,13 @@ function RailGroup({ title, items, isActive }: { title: string; items: NavGroup[
   const [open, setOpen] = useState(false)
   const ref = useClickOutside(() => setOpen(false), open)
 
+  const flyoutPos: React.CSSProperties = direction === 'right'
+    // Anchored to the icon's TOP, not vertically centered — a flyout taller
+    // than the ~50px gap between icons only grows downward, so it can't
+    // climb up over the icon above it.
+    ? { left: 42, top: -6 }
+    : { left: '50%', transform: 'translateX(-50%)', top: '100%', marginTop: 10 }
+
   return (
     <span ref={ref as any} style={{ position: 'relative', display: 'inline-block', width: 42, height: 42, flexShrink: 0 }}>
       <span title={title} onClick={() => setOpen(o => !o)} style={{
@@ -340,22 +407,19 @@ function RailGroup({ title, items, isActive }: { title: string; items: NavGroup[
         <Icon size={16} color={groupActive ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.6)'} />
       </span>
       {open && (
-        // Anchored to the icon's TOP, not vertically centered — a flyout
-        // taller than the ~50px gap between icons only grows downward, so
-        // it can't climb up over the icon above it. zIndex matters for
-        // whatever's below: every rail-group is a sibling in the same
-        // stacking context, painted in DOM order, so without it a tall
-        // flyout would get drawn under the icon two spots down.
+        // zIndex matters: every rail-group is a sibling in the same
+        // stacking context, painted in DOM order, so without it a flyout
+        // can get drawn under whatever's next in the list.
         <div className="glass-rail-flyout" style={{
-          ...flyoutGlass, position: 'absolute', left: 42, top: -6, zIndex: 60,
-          borderRadius: 14, padding: '8px 8px 8px 18px', minWidth: 186,
+          ...flyoutGlass, position: 'absolute', ...flyoutPos, zIndex: 60,
+          borderRadius: 14, padding: direction === 'right' ? '8px 8px 8px 18px' : 8, minWidth: 186,
           display: 'flex', flexDirection: 'column', gap: 1,
         }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '4px 10px 6px' }}>{title}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '4px 10px 6px', textAlign: direction === 'down' ? 'center' : 'left' }}>{title}</span>
           {items.map(it => (
             <Link key={it.href} href={it.href} onClick={() => setOpen(false)} className="glass-flyout-link" style={{
               fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
-              padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap',
+              padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap', textAlign: direction === 'down' ? 'center' : 'left',
             }}>{it.label}</Link>
           ))}
         </div>
