@@ -40,28 +40,26 @@ const RAIL = [
   { icon: Lightbulb,       href: '/finance/insights',           label: 'Insights' },
 ]
 
-// The glass reads through its OWN material, not by demanding a dark
-// backdrop to contrast against: a diagonal internal gradient (color drifting
-// bluish → greenish, the way real glass catches light unevenly) layered
-// under the translucency, plus a bright inset top edge. Keeps the page
-// itself light and minimal instead of needing a heavier gray scene.
+// Much subtler than the last pass — that gradient+border combo read as a
+// fake plastic bevel, not glass. Real glass sheen is barely perceptible;
+// the border should nearly disappear into the background, not glow.
 const navGlass: React.CSSProperties = {
   background: `
-    linear-gradient(155deg, rgba(210,230,225,0.55) 0%, rgba(255,255,255,0.3) 45%, rgba(220,238,224,0.55) 100%),
-    rgba(255,255,255,0.55)
+    linear-gradient(155deg, rgba(255,255,255,0.5) 0%, rgba(240,246,242,0.32) 100%),
+    rgba(255,255,255,0.48)
   `,
-  backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)',
-  border: '1px solid rgba(255,255,255,0.75)',
-  boxShadow: '0 12px 32px rgba(20,30,25,0.12), inset 0 1.5px 0 rgba(255,255,255,0.85)',
+  backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+  border: '1px solid rgba(255,255,255,0.4)',
+  boxShadow: '0 6px 20px rgba(20,30,25,0.06), inset 0 1px 0 rgba(255,255,255,0.5)',
 }
 const cardGlass: React.CSSProperties = {
   background: `
-    linear-gradient(155deg, rgba(214,232,222,0.4) 0%, rgba(255,255,255,0.25) 50%, rgba(224,238,226,0.4) 100%),
-    rgba(255,255,255,0.42)
+    linear-gradient(155deg, rgba(255,255,255,0.36) 0%, rgba(238,244,240,0.2) 100%),
+    rgba(255,255,255,0.32)
   `,
-  backdropFilter: 'blur(18px) saturate(150%)', WebkitBackdropFilter: 'blur(18px) saturate(150%)',
-  border: '1px solid rgba(255,255,255,0.65)',
-  boxShadow: '0 8px 26px rgba(20,30,25,0.08), inset 0 1px 0 rgba(255,255,255,0.75)',
+  backdropFilter: 'blur(16px) saturate(140%)', WebkitBackdropFilter: 'blur(16px) saturate(140%)',
+  border: '1px solid rgba(255,255,255,0.3)',
+  boxShadow: '0 4px 16px rgba(20,30,25,0.04), inset 0 1px 0 rgba(255,255,255,0.4)',
 }
 
 export default function FinanceLiveGlassBeta() {
@@ -119,25 +117,28 @@ export default function FinanceLiveGlassBeta() {
           </span>
         ))}
       </div>
-      <style>{`.group:hover .rail-label { opacity: 1 !important; }`}</style>
+      <style>{`
+        .group:hover .rail-label { opacity: 1 !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+      `}</style>
 
       <div className="pl-4 lg:pl-[100px]" style={{ maxWidth: 980, margin: '0 auto', padding: '20px 20px 60px' }}>
         {/* Floating pill top nav — wider, full-bleed within the page's max-width */}
-        <div style={{ position: 'sticky', top: 14, zIndex: 40, marginBottom: 22 }}>
+        <div style={{ position: 'sticky', top: 14, zIndex: 40, marginBottom: 12 }}>
           <div style={{ ...navGlass, borderRadius: 999, padding: '9px 12px 9px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, width: '100%' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
               <div style={{ width: 24, height: 24, borderRadius: 8, background: 'rgb(var(--l-green))' }} />
               <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.08em' }}>LIFE OS</span>
             </div>
-            <div className="hidden md:flex" style={{ gap: 2, overflowX: 'auto', flex: 1, justifyContent: 'center' }}>
+            <div className="hidden md:flex no-scrollbar" style={{ gap: 2, overflowX: 'auto', flex: 1, justifyContent: 'center' }}>
               {GLOBAL_NAV.map(n => {
                 const active = n.href === '/finance'
                 return (
-                  <span key={n.href} style={{
-                    fontSize: 12.5, fontWeight: 600, padding: '7px 14px', borderRadius: 999, whiteSpace: 'nowrap',
+                  <Link key={n.href} href={n.href} style={{
+                    fontSize: 12.5, fontWeight: 600, padding: '7px 14px', borderRadius: 999, whiteSpace: 'nowrap', textDecoration: 'none',
                     background: active ? 'rgb(var(--l-green) / 0.12)' : 'transparent',
                     color: active ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.55)',
-                  }}>{n.label}</span>
+                  }}>{n.label}</Link>
                 )
               })}
             </div>
@@ -153,6 +154,22 @@ export default function FinanceLiveGlassBeta() {
               </span>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgb(var(--l-green))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>LJ</div>
             </div>
+          </div>
+
+          {/* Mobile substitute for the left rail — that just vanishes below lg
+              otherwise, taking every finance sub-page with it. Horizontal
+              scroll strip of the same real links instead of nothing. */}
+          <div className="flex lg:hidden no-scrollbar" style={{ ...navGlass, borderRadius: 999, marginTop: 8, padding: '6px 8px', gap: 4, overflowX: 'auto' }}>
+            {RAIL.map(r => (
+              <Link key={r.href} href={r.href} title={r.label} style={{
+                display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 999, flexShrink: 0, textDecoration: 'none',
+                background: r.active ? 'rgb(var(--l-green))' : 'transparent',
+                color: r.active ? '#fff' : 'rgb(var(--l-ink) / 0.6)',
+              }}>
+                <r.icon size={13} />
+                <span style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}>{r.label}</span>
+              </Link>
+            ))}
           </div>
         </div>
 
@@ -250,9 +267,9 @@ export default function FinanceLiveGlassBeta() {
                   <Label>Accounts</Label>
                   <Link href="/finance/accounts" className="font-mono text-[12px] underline underline-offset-2 text-ldg-ink/55">See all {data.accounts.length} →</Link>
                 </div>
-                <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+                <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }}>
                   {shown.map((acc: any) => (
-                    <Card key={acc.id} className="snap-start shrink-0 w-[190px] p-4" style={cardGlass}>
+                    <Card key={acc.id} className="p-4" style={cardGlass}>
                       <Label>{acc.name}</Label>
                       <p className="font-mono text-[15px] font-semibold tabular-nums mt-1.5">{acc.currency === 'EUR' ? formatEUR(acc.currentBalance) : formatRSD(acc.currentBalance)}</p>
                       <p className="font-mono text-[12px] text-ldg-ink/55 tabular-nums">{acc.currency === 'EUR' ? formatRSD(acc.balanceRSD) : formatEUR(acc.balanceEUR)}</p>
