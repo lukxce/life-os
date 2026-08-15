@@ -58,10 +58,13 @@ export function NeedleChart({ daily, todayIndex }: { daily: number[]; todayIndex
   return (
     <div style={{ position: 'relative' }}>
       {/* Period labels above the chart */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: `0 ${PAD_R}px 0 ${PAD_L}px`, marginBottom: 6 }}>
-        {[1, Math.round(n / 4), Math.round(n / 2), Math.round((3 * n) / 4), n].map((d, i) => (
-          <span key={i} style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'rgba(20,37,34,0.4)' }}>D{d}</span>
-        ))}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: `0 ${PAD_R}px 0 ${PAD_L}px`, marginBottom: 6 }}>
+        <span style={{ fontSize: 10, color: 'rgba(20,37,34,0.4)' }}>This month · hover to inspect</span>
+        <div style={{ display: 'flex', gap: 18 }}>
+          {[1, Math.round(n / 4), Math.round(n / 2), Math.round((3 * n) / 4), n].map((d, i) => (
+            <span key={i} style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'rgba(20,37,34,0.4)' }}>D{d}</span>
+          ))}
+        </div>
       </div>
 
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} width="100%" height={H} style={{ cursor: 'crosshair', display: 'block' }}

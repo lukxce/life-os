@@ -25,6 +25,12 @@ const STYLES = [
     desc: 'Full spec port: cool-grey scene, two-tone teal glass, highlighter accent, interactive needle+momentum chart.',
     swatch: 'linear-gradient(135deg, #a7aeae 0%, #cae8e0 55%, #eafd35 130%)',
   },
+  {
+    href: '/beta/finance-live',
+    name: 'Current App, Glass Chrome',
+    desc: "The real finance page exactly as it lives today — only the top nav and left sidebar are redone as floating frosted glass.",
+    swatch: 'linear-gradient(135deg, #f4f4f6 0%, #ffffff 55%, #2e7d4f 130%)',
+  },
 ]
 
 export default function BetaIndexPage() {
