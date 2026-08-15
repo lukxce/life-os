@@ -274,23 +274,17 @@ export function GlassHeaderSpacer() {
 }
 
 // ── Left rail ─────────────────────────────────────────────────────────────
-// Same width/breakpoint/sticky-offset the old labeled Sidebar used (hidden
-// md:flex, w-56 → here w-20 since it's icon-only) so the flex layout math
-// every page already assumes doesn't shift — only the visual treatment
-// changes. Icon per group: the group's own first item's icon, since
-// NavGroup only carries per-item icons, not a group-level one.
+// position:fixed, not sticky — matches the finance-live beta this was
+// generalized from, and sidesteps position:sticky's known hit-testing
+// quirks for content that overflows the sticky box via position:absolute
+// (which is exactly what a flyout does). No longer an in-flow flex sibling,
+// so AppShell reserves the same 80px visually via padding on <main> instead.
 export function GlassSidebar({ config }: { config: ModuleConfig }) {
   const path = usePathname()
   const isActive = (href: string) => href === config.home ? path === href : isPathActive(path, href)
 
-  // No overflow-y here on purpose: setting only one axis non-visible forces
-  // the CSS spec to make the other 'auto' too (this bit finance-live once
-  // already — it silently clips flyouts that render outside the box). The
-  // rail tops out around 8 icons for the biggest module (Finance), which
-  // fits any real viewport height without scrolling, so there's nothing to
-  // gain from overflow-y here and real risk in adding it back.
   return (
-    <aside className="hidden md:flex flex-col w-20 shrink-0 sticky top-[86px] items-center pt-1 gap-3">
+    <aside className="hidden md:flex flex-col items-center pt-1 gap-3" style={{ position: 'fixed', left: 18, top: 96, zIndex: 30 }}>
       {config.groups.map((group: NavGroup, gi: number) =>
         group.title
           ? <RailGroup key={group.title} title={group.title} items={group.items} isActive={isActive} />

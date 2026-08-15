@@ -158,19 +158,27 @@ export function AppShell({ config, children }: { config: ModuleConfig; children:
       <GlassHeader actions={(config.actions ?? []) as QuickAction[]} />
       <GlassHeaderSpacer />
 
-      <div className="flex">
-        <GlassSidebar config={config} />
+      {/* GlassSidebar is position:fixed now (matches the one version of this
+          chrome that actually got proven out, the finance-live beta) — not
+          an in-flow flex sibling anymore, so it no longer reserves layout
+          space itself. md:pl-20 on main reserves the same 80px visually
+          instead. This swap is also a real bug fix, not just tidying:
+          position:sticky is a known source of hit-testing quirks for
+          content that overflows the sticky element's own box via
+          position:absolute — exactly what the rail's flyouts do — and
+          that's the leading suspect for the flyout links being genuinely
+          unclickable while still fully visible. */}
+      <GlassSidebar config={config} />
 
-        {config.fullBleed ? (
-          <main className="flex-1 min-w-0 relative">{children}</main>
-        ) : (
-          <main className="flex-1 min-w-0">
-            <div key={path} className={cn('page-in mx-auto w-full px-4 md:px-6 py-6 pb-32 md:pb-10', config.contentClassName ?? 'max-w-3xl')}>
-              {children}
-            </div>
-          </main>
-        )}
-      </div>
+      {config.fullBleed ? (
+        <main className="md:pl-20 relative">{children}</main>
+      ) : (
+        <main className="md:pl-20">
+          <div key={path} className={cn('page-in mx-auto w-full px-4 md:px-6 py-6 pb-32 md:pb-10', config.contentClassName ?? 'max-w-3xl')}>
+            {children}
+          </div>
+        </main>
+      )}
 
       <BottomBar config={config} />
       <FloatingMascot />
