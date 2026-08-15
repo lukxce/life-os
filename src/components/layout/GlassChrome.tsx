@@ -312,10 +312,20 @@ export function GlassMobileBar({ config }: { config: ModuleConfig }) {
   const actionsRef = useClickOutside(() => setActionsOpen(false), actionsOpen)
   const actions = (config.actions ?? []) as QuickAction[]
 
+  // In normal document flow (not fixed/sticky), wrapping instead of
+  // horizontally scrolling — both deliberate, and both fixing real bugs:
+  // overflow-x:auto without overflow-y set forces the CSS spec to make
+  // overflow-y 'auto' too, which was silently clipping every dropdown that
+  // opens below this bar (that's why nothing looked like it happened on
+  // tap — it rendered, just invisibly, cut off by its own container).
+  // Being in-flow instead of position:fixed also means its real height
+  // (which varies — this wraps to 2 rows on modules with lots of groups,
+  // like Finance) pushes the page content down correctly on its own,
+  // instead of needing a fixed-height spacer to guess at that number.
   return (
-    <div className="md:hidden no-scrollbar" style={{
-      position: 'fixed', top: 92, left: 12, right: 12, zIndex: 35,
-      ...navGlass, borderRadius: 999, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto',
+    <div className="md:hidden" style={{
+      margin: '10px 12px 0', ...navGlass, borderRadius: 22, padding: '8px 10px',
+      display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6,
     }}>
       <Link href="/" title="Home" style={{
         width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none',
@@ -348,10 +358,6 @@ export function GlassMobileBar({ config }: { config: ModuleConfig }) {
       )}
     </div>
   )
-}
-
-export function GlassMobileBarSpacer() {
-  return <div className="md:hidden" style={{ height: 66 }} />
 }
 
 function RailLeaf({ href, icon: Icon, label, active }: { href: string; icon: any; label: string; active: boolean }) {

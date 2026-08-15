@@ -2,7 +2,7 @@
 import { usePathname } from 'next/navigation'
 import type { LucideIcon } from 'lucide-react'
 import { FloatingMascot } from '@/components/ui/FloatingMascot'
-import { GlassHeader, GlassHeaderSpacer, GlassSidebar, GlassMobileBar, GlassMobileBarSpacer } from './GlassChrome'
+import { GlassHeader, GlassHeaderSpacer, GlassSidebar, GlassMobileBar } from './GlassChrome'
 import { QuickAction } from '@/components/ledger/QuickMenu'
 import { cn } from '@/lib/utils'
 
@@ -43,7 +43,6 @@ export function AppShell({ config, children }: { config: ModuleConfig; children:
       <GlassHeader actions={(config.actions ?? []) as QuickAction[]} />
       <GlassHeaderSpacer />
       <GlassMobileBar config={config} />
-      <GlassMobileBarSpacer />
 
       {/* GlassSidebar is position:fixed (matches the one version of this
           chrome that actually got proven out, the finance-live beta) — not
