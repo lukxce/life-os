@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
-import { Bell, Moon, Sun, Plus, ChevronDown, X, MoreHorizontal } from 'lucide-react'
+import { Bell, Moon, Sun, Plus, X, MoreHorizontal } from 'lucide-react'
 import type { ModuleConfig, NavGroup } from './AppShell'
 import { GlobalSearch } from './GlobalSearch'
 import { QuickMenu, QuickAction } from '@/components/ledger/QuickMenu'
@@ -52,6 +52,35 @@ function isPathActive(path: string, href: string) {
   return path === href || path.startsWith(href + '/')
 }
 
+// Real root cause of the "stays open a bit then disappears, links
+// unclickable" bug: the pill has `backdropFilter` set, and per the CSS
+// spec, backdrop-filter (like transform/filter/perspective) creates a new
+// containing block for any `position: fixed` descendant. The old
+// "full-viewport backdrop div, close on click" pattern rendered that
+// backdrop INSIDE the pill — so `inset: 0` resolved to the pill's own small
+// box, not the real viewport. On mobile, a delayed/ghost click landing back
+// inside that shrunk box (still within the pill, where the trigger button
+// lives) closed the menu almost immediately, often before a tap on a link
+// below it could register. This sidesteps the whole class of bug: no
+// backdrop element, no positioning to get wrong — just a direct check of
+// what was actually clicked, straight off the DOM.
+function useClickOutside(onClose: () => void, active: boolean) {
+  const ref = useRef<HTMLElement>(null)
+  useEffect(() => {
+    if (!active) return
+    const handler = (e: Event) => {
+      if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) onClose()
+    }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('touchstart', handler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('touchstart', handler)
+    }
+  }, [active, onClose])
+  return ref
+}
+
 // ── Top bar ───────────────────────────────────────────────────────────────
 // Takes actions directly (not a ModuleConfig) — same shape AppHeader used —
 // so Home (which has quick actions but no module sidebar/groups) can use
@@ -87,6 +116,9 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
   ] : []
 
   const moreActive = GLOBAL_NAV_MORE.some(n => isPathActive(path, n.href))
+  const moreRef = useClickOutside(() => setMoreOpen(false), moreOpen)
+  const notifRef = useClickOutside(() => setNotifOpen(false), notifOpen)
+  const newRef = useClickOutside(() => setNewOpen(false), newOpen)
 
   return (
     <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 40, height: 78, display: 'flex', alignItems: 'center', padding: '0 16px' }}>
@@ -97,11 +129,12 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
             <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.08em' }}>LIFE OS</span>
           </Link>
 
-          {/* Always visible now, not just md+ — this was the only way to
-              switch modules from Home on mobile, and hiding it below md
-              left mobile with literally no cross-module nav at all. Scrolls
-              horizontally if it doesn't fit rather than wrapping/clipping. */}
-          <div className="no-scrollbar" style={{ display: 'flex', gap: 2, flex: 1, justifyContent: 'center', alignItems: 'center', overflowX: 'auto', minWidth: 0 }}>
+          {/* md+ only — on a real phone width there simply isn't room for
+              logo + 4 tabs + 5-6 icon buttons in one pill; trying to keep
+              this "always visible, just scroll" squeezed it down to an
+              invisible sliver. Mobile instead gets every module (this list
+              plus More's own 4) inside the More button below — see there. */}
+          <div className="hidden md:flex no-scrollbar" style={{ gap: 2, flex: 1, justifyContent: 'center', alignItems: 'center', overflowX: 'auto', minWidth: 0 }}>
             {GLOBAL_NAV.map(n => {
               const active = isPathActive(path, n.href)
               return (
@@ -120,7 +153,7 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
                 (and, per feedback, unreliable on desktop too: crossing the
                 gap between the trigger and the flyout could drop :hover
                 before the flyout was reached). A tap/click always works. */}
-            <span style={{ position: 'relative' }}>
+            <span ref={moreRef as any} style={{ position: 'relative' }}>
               <button onClick={() => setMoreOpen(o => !o)} title="More" style={{
                 width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.6)', border: 'none', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -129,20 +162,26 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
                 <MoreHorizontal size={16} />
               </button>
               {moreOpen && (
-                <>
-                  <div onClick={() => setMoreOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 55 }} />
-                  <div style={{
-                    ...flyoutGlass, position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '100%', marginTop: 10, zIndex: 56,
-                    borderRadius: 14, padding: 8, minWidth: 150, display: 'flex', flexDirection: 'column', gap: 1,
-                  }}>
-                    {GLOBAL_NAV_MORE.map(n => (
-                      <Link key={n.href} href={n.href} onClick={() => setMoreOpen(false)} className="glass-flyout-link" style={{
-                        fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
-                        padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap', textAlign: 'center',
-                      }}>{n.label}</Link>
-                    ))}
-                  </div>
-                </>
+                <div style={{
+                  ...flyoutGlass, position: 'absolute', right: 0, top: '100%', marginTop: 10, zIndex: 56,
+                  borderRadius: 14, padding: 8, minWidth: 150, display: 'flex', flexDirection: 'column', gap: 1,
+                }}>
+                  {/* Only shown when the pills row above is hidden (below
+                      md) — on desktop those 4 are already visible, so
+                      repeating them here would be redundant. */}
+                  {GLOBAL_NAV.map(n => (
+                    <Link key={n.href} href={n.href} onClick={() => setMoreOpen(false)} className="glass-flyout-link md:hidden" style={{
+                      fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
+                      padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap', textAlign: 'center',
+                    }}>{n.label}</Link>
+                  ))}
+                  {GLOBAL_NAV_MORE.map(n => (
+                    <Link key={n.href} href={n.href} onClick={() => setMoreOpen(false)} className="glass-flyout-link" style={{
+                      fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
+                      padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap', textAlign: 'center',
+                    }}>{n.label}</Link>
+                  ))}
+                </div>
               )}
             </span>
 
@@ -150,7 +189,7 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
               <GlobalSearch mobileIconOnly />
             </span>
 
-            <span style={{ position: 'relative' }}>
+            <span ref={notifRef as any} style={{ position: 'relative' }}>
               <button onClick={() => setNotifOpen(o => !o)} style={{
                 width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.6)', border: 'none', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
@@ -161,24 +200,21 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
                 )}
               </button>
               {notifOpen && (
-                <>
-                  <div onClick={() => setNotifOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 55 }} />
-                  <div style={{
-                    ...flyoutGlass, position: 'absolute', right: 0, top: '100%', marginTop: 10, zIndex: 56,
-                    borderRadius: 14, padding: 8, minWidth: 260, maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 1,
-                  }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '4px 10px 6px' }}>Notifications</span>
-                    {notifItems.length === 0 ? (
-                      <span style={{ fontSize: 13, color: 'rgb(var(--l-ink) / 0.5)', padding: '8px 10px' }}>You&apos;re all caught up.</span>
-                    ) : notifItems.map(n => (
-                      <Link key={n.key} href={n.href} onClick={() => setNotifOpen(false)} style={{
-                        fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'block',
-                        color: n.urgent ? 'rgb(var(--l-urgent))' : 'rgb(var(--l-ink) / 0.8)',
-                        padding: '8px 10px', borderRadius: 8,
-                      }}>{n.text}</Link>
-                    ))}
-                  </div>
-                </>
+                <div style={{
+                  ...flyoutGlass, position: 'absolute', right: 0, top: '100%', marginTop: 10, zIndex: 56,
+                  borderRadius: 14, padding: 8, minWidth: 260, maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 1,
+                }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '4px 10px 6px' }}>Notifications</span>
+                  {notifItems.length === 0 ? (
+                    <span style={{ fontSize: 13, color: 'rgb(var(--l-ink) / 0.5)', padding: '8px 10px' }}>You&apos;re all caught up.</span>
+                  ) : notifItems.map(n => (
+                    <Link key={n.key} href={n.href} onClick={() => setNotifOpen(false)} style={{
+                      fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'block',
+                      color: n.urgent ? 'rgb(var(--l-urgent))' : 'rgb(var(--l-ink) / 0.8)',
+                      padding: '8px 10px', borderRadius: 8,
+                    }}>{n.text}</Link>
+                  ))}
+                </div>
               )}
             </span>
 
@@ -192,7 +228,7 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
             )}
 
             {actions.length > 0 && (
-              <span className="hidden sm:block" style={{ position: 'relative' }}>
+              <span ref={newRef as any} className="hidden sm:block" style={{ position: 'relative' }}>
                 <button onClick={() => setNewOpen(o => !o)} style={{
                   fontSize: 12.5, fontWeight: 700, color: '#fff', background: newOpen ? 'rgb(var(--l-ink) / 0.85)' : 'rgb(var(--l-ink))',
                   borderRadius: 999, padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 5, border: 'none', cursor: 'pointer',
@@ -200,12 +236,9 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
                   {newOpen ? <X size={13} /> : <Plus size={13} />} New
                 </button>
                 {newOpen && (
-                  <>
-                    <div onClick={() => setNewOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 55 }} />
-                    <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 10, zIndex: 56 }}>
-                      <QuickMenu actions={actions} onClose={() => setNewOpen(false)} />
-                    </div>
-                  </>
+                  <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 10, zIndex: 56 }}>
+                    <QuickMenu actions={actions} onClose={() => setNewOpen(false)} />
+                  </div>
                 )}
               </span>
             )}
@@ -291,9 +324,13 @@ function RailGroup({ title, items, isActive }: { title: string; items: NavGroup[
   const openNow = () => { cancelClose(); setOpen(true) }
   const closeSoon = () => { cancelClose(); closeTimer.current = setTimeout(() => setOpen(false), 300) }
   useEffect(() => () => cancelClose(), [])
+  // Backstop for a click-opened menu (the icon's onClick toggle below) —
+  // without this there was no way to close it except waiting out the hover
+  // timer, since clicking elsewhere did nothing.
+  const outsideRef = useClickOutside(() => setOpen(false), open)
 
   return (
-    <span style={{ position: 'relative', display: 'inline-block', width: 42, height: 42, flexShrink: 0 }}
+    <span ref={outsideRef as any} style={{ position: 'relative', display: 'inline-block', width: 42, height: 42, flexShrink: 0 }}
       onMouseEnter={openNow} onMouseLeave={closeSoon}>
       <span title={title} onClick={() => setOpen(o => !o)} style={{
         width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
