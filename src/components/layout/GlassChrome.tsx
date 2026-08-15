@@ -229,7 +229,7 @@ export function GlassSidebar({ config }: { config: ModuleConfig }) {
   // fits any real viewport height without scrolling, so there's nothing to
   // gain from overflow-y here and real risk in adding it back.
   return (
-    <aside className="hidden md:flex flex-col w-20 shrink-0 sticky top-[86px] items-center pt-1 gap-2">
+    <aside className="hidden md:flex flex-col w-20 shrink-0 sticky top-[86px] items-center pt-1 gap-3">
       {config.groups.map((group: NavGroup, gi: number) =>
         group.title
           ? <RailGroup key={group.title} title={group.title} items={group.items} isActive={isActive} />
@@ -274,17 +274,20 @@ function RailGroup({ title, items, isActive }: { title: string; items: NavGroup[
         ...(groupActive ? { background: 'rgb(var(--l-green) / 0.16)', border: '1px solid rgb(var(--l-green) / 0.3)' } : { ...navGlass }),
       }}>
         <Icon size={16} color={groupActive ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.6)'} />
-        <span className="rail-label" style={{
-          position: 'absolute', left: 52, top: '50%', transform: 'translateY(-50%)',
-          background: 'rgb(var(--l-ink))', color: 'rgb(var(--l-paper))', fontSize: 11, fontWeight: 600,
-          padding: '5px 10px', borderRadius: 8, whiteSpace: 'nowrap', opacity: 0, pointerEvents: 'none', transition: 'opacity .15s',
-        }}>{title}</span>
+        {/* No separate hover tooltip here on purpose — the flyout already
+            opens with the group's name as its own header, so a second,
+            differently-positioned label doing the same job was pure visual
+            noise (that's the stray floating tag in the screenshot) — it's
+            gone, not just relabeled. */}
       </span>
-      {/* zIndex matters: every rail-group is a sibling in the same stacking
-          context, painted in DOM order — without it, a flyout taller than
-          the ~50px gap between icons gets drawn under the next icon down. */}
+      {/* Anchored to the icon's TOP, not vertically centered — a flyout
+          taller than the ~50px gap between icons only grows downward now,
+          so it can no longer climb up over the icon above it. zIndex still
+          matters for whatever's below: every rail-group is a sibling in the
+          same stacking context, painted in DOM order, so without it a tall
+          flyout would get drawn under the icon two spots down. */}
       <div className="rail-group-flyout glass-rail-flyout" style={{
-        ...flyoutGlass, position: 'absolute', left: 42, top: '50%', transform: 'translateY(-50%)', zIndex: 60,
+        ...flyoutGlass, position: 'absolute', left: 42, top: -6, zIndex: 60,
         borderRadius: 14, padding: '8px 8px 8px 18px', minWidth: 186, opacity: 0, pointerEvents: 'none', transition: 'opacity .15s',
         display: 'flex', flexDirection: 'column', gap: 1,
       }}>
@@ -297,7 +300,6 @@ function RailGroup({ title, items, isActive }: { title: string; items: NavGroup[
         ))}
       </div>
       <style>{`
-        .group:hover .rail-label { opacity: 1 !important; }
         .rail-group:hover .rail-group-flyout { opacity: 1 !important; pointer-events: auto !important; }
       `}</style>
     </span>

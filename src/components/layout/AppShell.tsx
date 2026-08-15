@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { Command, X, Plus, Home as HomeIcon } from 'lucide-react'
 import { FloatingMascot } from '@/components/ui/FloatingMascot'
-import { GlassHeader, GlassHeaderSpacer } from './GlassChrome'
+import { GlassHeader, GlassHeaderSpacer, GlassSidebar } from './GlassChrome'
 import { QuickMenu, QuickAction } from '@/components/ledger/QuickMenu'
 import { cn } from '@/lib/utils'
 
@@ -44,50 +44,6 @@ function useIsActive(home: string) {
   const path = usePathname()
   return (href: string) =>
     href === home ? path === href : path === href || path.startsWith(href + '/')
-}
-
-// ── Desktop sidebar ───────────────────────────────────────────────────────────
-// Reverted back from the icon-only glass rail: with only a handful of
-// groups per module, a flyout taller than the ~50px gap between icons
-// visually overlapped its neighbors, made worse by a duplicate hover
-// tooltip stacking on top of the flyout at the same time. The labeled list
-// never had that problem, and was explicitly preferred anyway.
-function Sidebar({ config }: { config: ModuleConfig }) {
-  const isActive = useIsActive(config.home)
-  return (
-    <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-ldg-ink/10 bg-transparent h-[calc(100vh-78px)] sticky top-[78px]">
-      <div className="px-3 pt-4 pb-2">
-        <div className="flex items-center gap-2 px-2.5">
-          <config.icon size={18} className="text-ldg-ink/70" />
-          <span className="font-bold text-ldg-ink">{config.name}</span>
-        </div>
-      </div>
-      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
-        {config.groups.map((group, gi) => (
-          <div key={group.title ?? gi}>
-            {group.title && (
-              <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-ldg-ink/35">
-                {group.title}
-              </p>
-            )}
-            <div className="space-y-0.5">
-              {group.items.map(({ href, label, icon: Icon }) => {
-                const active = isActive(href)
-                return (
-                  <Link key={href} href={href}
-                    className={cn('flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors',
-                      active ? 'bg-ldg-green/10 text-ldg-green' : 'text-ldg-ink/65 hover:bg-ldg-ink/[0.05]')}>
-                    <Icon size={17} strokeWidth={active ? 2.5 : 2} />
-                    {label}
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-      </nav>
-    </aside>
-  )
 }
 
 // ── Mobile bottom sheet shell ─────────────────────────────────────────────────
@@ -203,7 +159,7 @@ export function AppShell({ config, children }: { config: ModuleConfig; children:
       <GlassHeaderSpacer />
 
       <div className="flex">
-        <Sidebar config={config} />
+        <GlassSidebar config={config} />
 
         {config.fullBleed ? (
           <main className="flex-1 min-w-0 relative">{children}</main>
