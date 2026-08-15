@@ -40,22 +40,28 @@ const RAIL = [
   { icon: Lightbulb,       href: '/finance/insights',           label: 'Insights' },
 ]
 
-// Glass only reads as glass when it's meaningfully lighter than the surface
-// it floats on — white-on-near-white has no contrast for blur to reveal,
-// regardless of blur radius. The page background below is a real gray-green,
-// not a near-white tint, specifically so these panels have something to lift
-// off of.
+// The glass reads through its OWN material, not by demanding a dark
+// backdrop to contrast against: a diagonal internal gradient (color drifting
+// bluish → greenish, the way real glass catches light unevenly) layered
+// under the translucency, plus a bright inset top edge. Keeps the page
+// itself light and minimal instead of needing a heavier gray scene.
 const navGlass: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.78)',
-  backdropFilter: 'blur(24px) saturate(170%)', WebkitBackdropFilter: 'blur(24px) saturate(170%)',
-  border: '1px solid rgba(255,255,255,0.9)',
-  boxShadow: '0 14px 36px rgba(20,30,25,0.16), inset 0 1px 0 rgba(255,255,255,0.95)',
+  background: `
+    linear-gradient(155deg, rgba(210,230,225,0.55) 0%, rgba(255,255,255,0.3) 45%, rgba(220,238,224,0.55) 100%),
+    rgba(255,255,255,0.55)
+  `,
+  backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)',
+  border: '1px solid rgba(255,255,255,0.75)',
+  boxShadow: '0 12px 32px rgba(20,30,25,0.12), inset 0 1.5px 0 rgba(255,255,255,0.85)',
 }
 const cardGlass: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.72)',
-  backdropFilter: 'blur(22px) saturate(160%)', WebkitBackdropFilter: 'blur(22px) saturate(160%)',
-  border: '1px solid rgba(255,255,255,0.85)',
-  boxShadow: '0 10px 30px rgba(20,30,25,0.1), inset 0 1px 0 rgba(255,255,255,0.85)',
+  background: `
+    linear-gradient(155deg, rgba(214,232,222,0.4) 0%, rgba(255,255,255,0.25) 50%, rgba(224,238,226,0.4) 100%),
+    rgba(255,255,255,0.42)
+  `,
+  backdropFilter: 'blur(18px) saturate(150%)', WebkitBackdropFilter: 'blur(18px) saturate(150%)',
+  border: '1px solid rgba(255,255,255,0.65)',
+  boxShadow: '0 8px 26px rgba(20,30,25,0.08), inset 0 1px 0 rgba(255,255,255,0.75)',
 }
 
 export default function FinanceLiveGlassBeta() {
@@ -84,10 +90,10 @@ export default function FinanceLiveGlassBeta() {
       <div aria-hidden style={{
         position: 'fixed', inset: 0, zIndex: -1,
         background: `
-          radial-gradient(1000px 560px at 12% -8%, rgba(46,125,79,0.16), transparent 62%),
-          radial-gradient(800px 520px at 102% 4%, rgba(120,140,132,0.22), transparent 58%),
-          radial-gradient(900px 560px at 40% 108%, rgba(46,125,79,0.12), transparent 58%),
-          linear-gradient(165deg, #d6dcd7 0%, #ccd4cd 50%, #d2d9d3 100%)
+          radial-gradient(1000px 560px at 12% -8%, rgba(46,125,79,0.07), transparent 62%),
+          radial-gradient(800px 520px at 102% 4%, rgba(120,140,132,0.08), transparent 58%),
+          radial-gradient(900px 560px at 40% 108%, rgba(46,125,79,0.05), transparent 58%),
+          rgb(var(--l-paper))
         `,
       }} />
       {/* Left rail — hidden below lg, exactly like the real app's own ModuleDock */}
