@@ -1,9 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useTheme } from 'next-themes'
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
 import {
-  Search, Bell, Moon, Plus, LayoutDashboard, TrendingUp, Repeat, Building2, Target,
+  Bell, Moon, Sun, Plus, LayoutDashboard, TrendingUp, Repeat, Building2, Target,
   Lightbulb, Send, Check, ChevronDown, Wallet, Dumbbell, CalendarDays, MoreHorizontal,
 } from 'lucide-react'
 import { formatRSD, formatEUR, formatDate, Period, cn } from '@/lib/utils'
@@ -16,6 +17,9 @@ import { useCommandBox, describeCommandAction } from '@/hooks/useCommandBox'
 // so it never gets AppShell and lost the mascot along with it. It's fully
 // self-contained (own nudges fetch, own command box), so just render it.
 import { FloatingMascot } from '@/components/ui/FloatingMascot'
+// The real app's actual search — ⌘K modal, searches every module, already
+// built and working. Reused as-is instead of a decorative icon.
+import { GlobalSearch } from '@/components/layout/GlobalSearch'
 
 // Matches the real app's system-font stack exactly, overriding the beta
 // layout's Geist wrapper via inline style (highest specificity) — this
@@ -119,6 +123,11 @@ export default function FinanceLiveGlassBeta() {
   // Mobile has no hover, so group flyouts open on tap instead — this tracks
   // which one (a RAIL_GROUPS label, or 'more') is currently open, if any.
   const [mobileOpen, setMobileOpen] = useState<string | null>(null)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [signals, setSignals] = useState<any>(null)
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const { commandText, setCommandText, commandLoading, commandActions, commandSaved, submitCommand, saveCommandAction } = useCommandBox(() => {
     fetch('/api/finance/recent?limit=6').then(r => r.json()).then(setRecent).catch(() => {})
     fetch(`/api/finance/dashboard?period=${period}&date=${date}`).then(r => r.json()).then(setData).catch(() => {})
@@ -128,8 +137,31 @@ export default function FinanceLiveGlassBeta() {
     fetch(`/api/finance/dashboard?period=${period}&date=${date}`).then(r => r.json()).then(setData).catch(() => {})
   }, [period, date])
   useEffect(() => { fetch('/api/finance/recent?limit=6').then(r => r.json()).then(setRecent).catch(() => {}) }, [])
+  // Same signals endpoint SignalsCard already uses (which doesn't expose its
+  // rows externally) — fetched again here so the bell has real content
+  // instead of being purely decorative.
+  useEffect(() => { fetch('/api/finance/signals').then(r => r.json()).then(setSignals).catch(() => {}) }, [])
 
   const monthOut = data ? data.personalExpenses.concat(data.businessExpenses).reduce((s: number, e: any) => s + e.amountRSD, 0) : 0
+
+  const notifItems: { key: string; text: string; href: string; urgent?: boolean }[] = signals ? [
+    ...signals.billsDueSoon.map((b: any) => ({
+      key: `bill-${b.id}`, href: '/finance/bills', urgent: true,
+      text: `${b.name} — ${b.daysUntil < 0 ? `${Math.abs(b.daysUntil)}d overdue` : b.daysUntil === 0 ? 'due today' : `due in ${b.daysUntil}d`}`,
+    })),
+    ...signals.budgetsNearLimit.map((b: any) => ({
+      key: `budget-${b.category}`, href: '/finance/budgets', urgent: b.pct >= 100,
+      text: `${b.category} — ${b.pct}% of budget used`,
+    })),
+    ...signals.renewalsSoon.map((r: any) => ({
+      key: `renew-${r.id}`, href: '/finance/subscriptions',
+      text: `${r.name} renews ${r.daysUntil === 0 ? 'today' : `in ${r.daysUntil}d`}`,
+    })),
+    ...signals.warrantiesExpiringSoon.map((w: any) => ({
+      key: `warr-${w.id}`, href: '/finance/warranties',
+      text: `${w.name} warranty expires in ${w.daysLeft}d`,
+    })),
+  ] : []
 
   return (
     <div style={{ minHeight: '100dvh', fontFamily: SYSTEM_FONT, position: 'relative' }}>
@@ -186,8 +218,14 @@ export default function FinanceLiveGlassBeta() {
               {isHome ? <Link href={g.href!} style={{ textDecoration: 'none', display: 'block' }}>{button}</Link> : button}
               {i === 0 && <div style={{ width: 20, height: 1, background: 'rgb(var(--l-ink) / 0.12)', margin: '4px auto' }} />}
               {g.items && (
+                // zIndex here matters more than it looks: every rail-group span
+                // is a sibling in the same fixed, z-index:30 stacking context,
+                // painted in DOM order — without an explicit z-index a flyout
+                // taller than the ~50px gap between icons got drawn UNDER the
+                // next icon down (later in the list = later in paint order),
+                // so it looked like the icons were slicing through the menu.
                 <div className="rail-flyout" style={{
-                  ...flyoutGlass, position: 'absolute', left: 42, top: '50%', transform: 'translateY(-50%)',
+                  ...flyoutGlass, position: 'absolute', left: 42, top: '50%', transform: 'translateY(-50%)', zIndex: 60,
                   borderRadius: 14, padding: '8px 8px 8px 18px', minWidth: 186, opacity: 0, pointerEvents: 'none', transition: 'opacity .15s',
                   display: 'flex', flexDirection: 'column', gap: 1,
                 }}>
@@ -216,11 +254,16 @@ export default function FinanceLiveGlassBeta() {
         {/* Floating pill top nav — wider, full-bleed within the page's max-width */}
         <div style={{ position: 'sticky', top: 14, zIndex: 40, marginBottom: 12 }}>
           <div style={{ ...navGlass, borderRadius: 999, padding: '9px 12px 9px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, width: '100%' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, textDecoration: 'none', color: 'inherit' }}>
               <div style={{ width: 24, height: 24, borderRadius: 8, background: 'rgb(var(--l-green))' }} />
               <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.08em' }}>LIFE OS</span>
-            </div>
-            <div className="hidden md:flex no-scrollbar" style={{ gap: 2, overflowX: 'auto', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            </Link>
+            {/* No overflow-x here (5 items + More fit fine without scrolling) —
+                setting overflow-x without overflow-y implicitly forces
+                overflow-y to 'auto' too per the CSS overflow spec, which was
+                silently clipping the More flyout since it renders below this
+                row's own box. That's the actual reason it couldn't open. */}
+            <div className="hidden md:flex" style={{ gap: 2, flex: 1, justifyContent: 'center', alignItems: 'center' }}>
               {NAV_PRIMARY.map(n => {
                 const active = n.href === '/finance'
                 return (
@@ -259,12 +302,55 @@ export default function FinanceLiveGlassBeta() {
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-              {[Search, Bell, Moon].map((Icon, i) => (
-                <span key={i} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                  <Icon size={14} color="rgb(var(--l-ink) / 0.55)" />
-                  {i === 1 && <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%', background: 'rgb(var(--l-green))', border: '1.5px solid #fff' }} />}
-                </span>
-              ))}
+              {/* Real ⌘K search — every module, already built. */}
+              <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <GlobalSearch mobileIconOnly />
+              </span>
+
+              {/* Notifications — real signals (bills due, budgets near
+                  limit, renewals, warranties), click to open/close. */}
+              <span style={{ position: 'relative' }}>
+                <button onClick={() => setNotifOpen(o => !o)} style={{
+                  width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.6)', border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
+                }}>
+                  <Bell size={14} color="rgb(var(--l-ink) / 0.55)" />
+                  {notifItems.length > 0 && (
+                    <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%', background: 'rgb(var(--l-green))', border: '1.5px solid #fff' }} />
+                  )}
+                </button>
+                {notifOpen && (
+                  <>
+                    <div onClick={() => setNotifOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 55 }} />
+                    <div style={{
+                      ...flyoutGlass, position: 'absolute', right: 0, top: '100%', marginTop: 10, zIndex: 56,
+                      borderRadius: 14, padding: 8, minWidth: 260, maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 1,
+                    }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '4px 10px 6px' }}>Notifications</span>
+                      {notifItems.length === 0 ? (
+                        <span style={{ fontSize: 13, color: 'rgb(var(--l-ink) / 0.5)', padding: '8px 10px' }}>You're all caught up.</span>
+                      ) : notifItems.map(n => (
+                        <Link key={n.key} href={n.href} onClick={() => setNotifOpen(false)} style={{
+                          fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'block',
+                          color: n.urgent ? 'rgb(var(--l-urgent))' : 'rgb(var(--l-ink) / 0.8)',
+                          padding: '8px 10px', borderRadius: 8,
+                        }}>{n.text}</Link>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </span>
+
+              {/* Dark mode toggle — actually wired to next-themes now. */}
+              {mounted && (
+                <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} title="Toggle theme" style={{
+                  width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.6)', border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {theme === 'dark' ? <Sun size={14} color="rgb(var(--l-ink) / 0.55)" /> : <Moon size={14} color="rgb(var(--l-ink) / 0.55)" />}
+                </button>
+              )}
+
               <span className="hidden sm:flex" style={{ fontSize: 12.5, fontWeight: 700, color: '#fff', background: 'rgb(var(--l-ink))', borderRadius: 999, padding: '8px 16px', alignItems: 'center', gap: 5 }}>
                 <Plus size={13} /> New
               </span>
