@@ -4,13 +4,12 @@ import Link from 'next/link'
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
 import {
   Search, Bell, Moon, Plus, LayoutDashboard, TrendingUp, Repeat, Building2, Target,
-  Lightbulb, Send, Check, ChevronDown,
+  Lightbulb, Send, Check, ChevronDown, Wallet, Dumbbell, CalendarDays, MoreHorizontal,
 } from 'lucide-react'
 import { formatRSD, formatEUR, formatDate, Period, cn } from '@/lib/utils'
 import { Card, Label, CHART_COLORS } from '@/components/ledger/primitives'
 import { SignalsCard } from '@/components/finance/SignalsCard'
 import { useCommandBox, describeCommandAction } from '@/hooks/useCommandBox'
-import { GrainMesh } from '@/components/beta/GrainMesh'
 
 // Matches the real app's system-font stack exactly, overriding the beta
 // layout's Geist wrapper via inline style (highest specificity) — this
@@ -65,22 +64,30 @@ const RAIL_GROUPS: { icon: any; label: string; href?: string; items?: { href: st
     { href: '/finance/merchants', label: 'Merchants' },
   ] },
 ]
-// A flattened version for the mobile strip, where a flyout menu doesn't work.
-const RAIL_FLAT = RAIL_GROUPS.flatMap(g => g.items ? g.items.map(i => ({ ...i, icon: g.icon })) : [{ href: g.href!, label: g.label, icon: g.icon }])
+// Top-level module switcher, icon form, for the mobile bar — the desktop
+// top nav (NAV_PRIMARY as text pills) is hidden below md with nothing to
+// replace it, so mobile loses module switching entirely. These give it back.
+const MOBILE_PRIMARY = [
+  { href: '/',         label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/finance',  label: 'Finance',   icon: Wallet },
+  { href: '/life',     label: 'Habits',    icon: Repeat },
+  { href: '/fitness',  label: 'Fitness',   icon: Dumbbell },
+  { href: '/schedule', label: 'Schedule',  icon: CalendarDays },
+]
 
 // Simplest, most standard glassmorphism recipe — flat translucent white,
 // blur, soft shadow, a barely-there border. Two prior passes added a
 // diagonal internal gradient chasing a "sheen", which read as a fake
 // plastic bevel instead of glass. Dropping it fixed that.
 const navGlass: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.65)',
-  backdropFilter: 'blur(18px) saturate(160%)', WebkitBackdropFilter: 'blur(18px) saturate(160%)',
+  background: 'rgba(255,255,255,0.6)',
+  backdropFilter: 'blur(26px) saturate(180%)', WebkitBackdropFilter: 'blur(26px) saturate(180%)',
   border: '1px solid rgba(255,255,255,0.5)',
   boxShadow: '0 8px 24px rgba(20,30,25,0.08)',
 }
 const cardGlass: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.55)',
-  backdropFilter: 'blur(14px) saturate(150%)', WebkitBackdropFilter: 'blur(14px) saturate(150%)',
+  background: 'rgba(255,255,255,0.52)',
+  backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)',
   border: '1px solid rgba(255,255,255,0.4)',
   boxShadow: '0 6px 20px rgba(20,30,25,0.06)',
 }
@@ -97,6 +104,9 @@ export default function FinanceLiveGlassBeta() {
   const [period, setPeriod] = useState<Period>('month')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [recent, setRecent] = useState<any[]>([])
+  // Mobile has no hover, so group flyouts open on tap instead — this tracks
+  // which one (a RAIL_GROUPS label, or 'more') is currently open, if any.
+  const [mobileOpen, setMobileOpen] = useState<string | null>(null)
   const { commandText, setCommandText, commandLoading, commandActions, commandSaved, submitCommand, saveCommandAction } = useCommandBox(() => {
     fetch('/api/finance/recent?limit=6').then(r => r.json()).then(setRecent).catch(() => {})
     fetch(`/api/finance/dashboard?period=${period}&date=${date}`).then(r => r.json()).then(setData).catch(() => {})
@@ -111,19 +121,24 @@ export default function FinanceLiveGlassBeta() {
 
   return (
     <div style={{ minHeight: '100dvh', fontFamily: SYSTEM_FONT, position: 'relative' }}>
-      {/* Fixed pseudo-background — not background-attachment:fixed on the
-          scrolling element (that forces a full-page repaint every scroll
-          frame once several backdrop-filters are stacked, janky enough to
-          swallow the first click). This is also the actual fix for "nothing
-          looks like frosted glass": a smooth 3-stop gradient has no edges
-          for backdrop-blur to distort, so panels sitting on it look flat no
-          matter the recipe. GrainMesh gives it real, soft-edged blob detail
-          — same mechanism that already worked on the dark/sage/photo betas
-          — using a new 'paper' tone that stays genuinely light (not the
-          gray-green wash that got rejected before). */}
-      <div aria-hidden style={{ position: 'fixed', inset: 0, zIndex: -1, background: 'rgb(var(--l-paper))' }}>
-        <GrainMesh tone="paper" />
-      </div>
+      {/* Fixed pseudo-background, not background-attachment:fixed on the
+          scrolling element — the latter forces a full-page repaint every
+          scroll frame once several stacked backdrop-filters are involved,
+          janky enough to swallow the first click. Back to the plain
+          gray-green-white gradient — a mesh/blob backdrop here made every
+          card wash out into the same pale tone and killed text contrast,
+          and changed the overall color of the page, neither of which is
+          what was asked for. The glass recipe itself carries more blur now
+          instead (below) rather than the page trying to feed it detail. */}
+      <div aria-hidden style={{
+        position: 'fixed', inset: 0, zIndex: -1,
+        background: `
+          radial-gradient(1000px 560px at 12% -8%, rgba(46,125,79,0.07), transparent 62%),
+          radial-gradient(800px 520px at 102% 4%, rgba(120,140,132,0.08), transparent 58%),
+          radial-gradient(900px 560px at 40% 108%, rgba(46,125,79,0.05), transparent 58%),
+          rgb(var(--l-paper))
+        `,
+      }} />
       {/* Left rail — hidden below lg, exactly like the real app's own ModuleDock.
           Finance Home is a direct link; every other group reveals its real
           sub-pages in a flyout on hover instead of only ever showing one
@@ -151,13 +166,17 @@ export default function FinanceLiveGlassBeta() {
             </span>
           )
           return (
-            <span key={g.label} className="rail-group group" style={{ position: 'relative' }}>
+            // Explicit width bridges the icon→flyout gap (icon is 42px, flyout
+            // starts at left:52) into the element's own hit-box, so moving the
+            // mouse across that empty 10px strip doesn't drop :hover before the
+            // flyout is reached — otherwise it closes right as you try to click it.
+            <span key={g.label} className="rail-group group" style={{ position: 'relative', display: 'inline-block', width: 42, height: 42 }}>
               {isHome ? <Link href={g.href!} style={{ textDecoration: 'none', display: 'block' }}>{button}</Link> : button}
               {i === 0 && <div style={{ width: 20, height: 1, background: 'rgb(var(--l-ink) / 0.12)', margin: '4px auto' }} />}
               {g.items && (
                 <div className="rail-flyout" style={{
-                  ...flyoutGlass, position: 'absolute', left: 52, top: '50%', transform: 'translateY(-50%)',
-                  borderRadius: 14, padding: '8px', minWidth: 176, opacity: 0, pointerEvents: 'none', transition: 'opacity .15s',
+                  ...flyoutGlass, position: 'absolute', left: 42, top: '50%', transform: 'translateY(-50%)',
+                  borderRadius: 14, padding: '8px 8px 8px 18px', minWidth: 186, opacity: 0, pointerEvents: 'none', transition: 'opacity .15s',
                   display: 'flex', flexDirection: 'column', gap: 1,
                 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '4px 10px 6px' }}>{g.label}</span>
@@ -202,13 +221,16 @@ export default function FinanceLiveGlassBeta() {
               })}
               {/* "More" flyout keeps Journal/Food/Personal/Watchlist reachable
                   without crowding the pill or pushing Watchlist off-screen. */}
-              <span className="nav-more" style={{ position: 'relative' }}>
+              {/* paddingBottom (not marginTop on the flyout) extends this
+                  element's own hit-box down to where the flyout starts, so
+                  there's no gap for the mouse to lose :hover in transit. */}
+              <span className="nav-more" style={{ position: 'relative', display: 'inline-block', paddingBottom: 10 }}>
                 <span style={{
                   fontSize: 12.5, fontWeight: 600, padding: '7px 12px', borderRadius: 999, whiteSpace: 'nowrap',
                   color: 'rgb(var(--l-ink) / 0.55)', display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer',
                 }}>More <ChevronDown size={13} /></span>
                 <div className="nav-more-flyout" style={{
-                  ...flyoutGlass, position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 8,
+                  ...flyoutGlass, position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
                   borderRadius: 14, padding: '8px', minWidth: 150, opacity: 0, pointerEvents: 'none', transition: 'opacity .15s',
                   display: 'flex', flexDirection: 'column', gap: 1, zIndex: 50,
                 }}>
@@ -235,21 +257,73 @@ export default function FinanceLiveGlassBeta() {
             </div>
           </div>
 
-          {/* Mobile substitute for the left rail — that just vanishes below lg
-              otherwise, taking every finance sub-page with it. Horizontal
-              scroll strip of the same real links (flattened, since a hover
-              flyout doesn't work on touch) instead of nothing. */}
-          <div className="flex lg:hidden no-scrollbar" style={{ ...navGlass, borderRadius: 999, marginTop: 8, padding: '6px 8px', gap: 4, overflowX: 'auto' }}>
-            {RAIL_FLAT.map(r => (
-              <Link key={r.href} href={r.href} title={r.label} style={{
-                display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 999, flexShrink: 0, textDecoration: 'none',
-                color: 'rgb(var(--l-ink) / 0.6)',
-              }}>
-                <r.icon size={13} />
-                <span style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}>{r.label}</span>
-              </Link>
-            ))}
+          {/* Mobile bar — the top nav's text pills are hidden below md with
+              nothing standing in for them, so mobile lost module switching
+              entirely; and the left rail vanishes below lg, taking every
+              finance sub-page with it. This restores both as one row of
+              glass circles: primary modules link straight through, and the
+              grouped sections (plus "More") open their items in a tap
+              dropdown below — hover doesn't exist on touch, so these open
+              on click instead. */}
+          <div className="flex lg:hidden no-scrollbar" style={{ position: 'relative', ...navGlass, borderRadius: 999, marginTop: 8, padding: '6px 8px', gap: 4, overflowX: 'auto', alignItems: 'center' }}>
+            {MOBILE_PRIMARY.map(m => {
+              const active = m.href === '/finance'
+              return (
+                <Link key={m.href} href={m.href} title={m.label} style={{
+                  width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  background: active ? 'rgb(var(--l-green))' : 'transparent',
+                  color: active ? '#fff' : 'rgb(var(--l-ink) / 0.6)',
+                }}>
+                  <m.icon size={15} />
+                </Link>
+              )
+            })}
+            <button type="button" onClick={() => setMobileOpen(mobileOpen === 'more' ? null : 'more')} title="More" style={{
+              width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: 'none', cursor: 'pointer',
+              background: mobileOpen === 'more' ? 'rgb(var(--l-ink) / 0.1)' : 'transparent', color: 'rgb(var(--l-ink) / 0.6)',
+            }}>
+              <MoreHorizontal size={16} />
+            </button>
+            <div style={{ width: 1, alignSelf: 'stretch', background: 'rgb(var(--l-ink) / 0.12)', margin: '2px 4px', flexShrink: 0 }} />
+            {RAIL_GROUPS.map(g => {
+              const Icon = g.icon
+              if (g.href) return (
+                <Link key={g.label} href={g.href} title={g.label} style={{
+                  width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'rgb(var(--l-ink) / 0.6)',
+                }}>
+                  <Icon size={15} />
+                </Link>
+              )
+              return (
+                <button key={g.label} type="button" onClick={() => setMobileOpen(mobileOpen === g.label ? null : g.label)} title={g.label} style={{
+                  width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: 'none', cursor: 'pointer',
+                  background: mobileOpen === g.label ? 'rgb(var(--l-ink) / 0.1)' : 'transparent', color: 'rgb(var(--l-ink) / 0.6)',
+                }}>
+                  <Icon size={15} />
+                </button>
+              )
+            })}
           </div>
+          {mobileOpen && (() => {
+            const items = mobileOpen === 'more' ? NAV_MORE : RAIL_GROUPS.find(g => g.label === mobileOpen)?.items || []
+            return (
+              <>
+                {/* Tap-outside-to-close backdrop */}
+                <div onClick={() => setMobileOpen(null)} style={{ position: 'fixed', inset: 0, zIndex: 44 }} />
+                <div style={{
+                  ...flyoutGlass, position: 'absolute', left: 0, right: 0, top: '100%', marginTop: 8, zIndex: 45,
+                  borderRadius: 16, padding: 8, display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 2,
+                }}>
+                  {items.map(it => (
+                    <Link key={it.href} href={it.href} onClick={() => setMobileOpen(null)} style={{
+                      fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
+                      padding: '10px 12px', borderRadius: 10, textAlign: 'center',
+                    }}>{it.label}</Link>
+                  ))}
+                </div>
+              </>
+            )
+          })()}
         </div>
 
         <div className="space-y-4 pb-8">
