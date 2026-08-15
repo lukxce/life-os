@@ -79,17 +79,17 @@ const MOBILE_PRIMARY = [
 // blur, soft shadow, a barely-there border. Two prior passes added a
 // diagonal internal gradient chasing a "sheen", which read as a fake
 // plastic bevel instead of glass. Dropping it fixed that.
+// This is chrome-only now (top pill bar, rail, mobile bar) — content cards
+// below use the plain themed Card component like the real app, unchanged.
+// An earlier pass put this same glass on every content card too, which
+// read fine in light mode but went flat gray-on-black in dark mode (the
+// white tint doesn't adapt), and wasn't the ask to begin with — only the
+// nav chrome was ever meant to be glass.
 const navGlass: React.CSSProperties = {
   background: 'rgba(255,255,255,0.6)',
   backdropFilter: 'blur(26px) saturate(180%)', WebkitBackdropFilter: 'blur(26px) saturate(180%)',
   border: '1px solid rgba(255,255,255,0.5)',
   boxShadow: '0 8px 24px rgba(20,30,25,0.08)',
-}
-const cardGlass: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.52)',
-  backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)',
-  border: '1px solid rgba(255,255,255,0.4)',
-  boxShadow: '0 6px 20px rgba(20,30,25,0.06)',
 }
 // Flyout/dropdown panels — more opaque than the ambient glass for legibility.
 const flyoutGlass: React.CSSProperties = {
@@ -327,7 +327,7 @@ export default function FinanceLiveGlassBeta() {
         </div>
 
         <div className="space-y-4 pb-8">
-          <Card className="p-5" style={cardGlass}>
+          <Card className="p-5">
             <Label>Net worth</Label>
             {data ? (
               <>
@@ -385,7 +385,7 @@ export default function FinanceLiveGlassBeta() {
             </div>
           </Card>
 
-          <SignalsCard style={cardGlass} />
+          <SignalsCard />
 
           <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {[
@@ -403,8 +403,7 @@ export default function FinanceLiveGlassBeta() {
               return (
                 <button key={s.label} onClick={() => { setPeriod(s.period); setDate(dStr) }}
                   className={cn('shrink-0 text-[14px] px-5 py-2.5 rounded-xl border transition-colors',
-                    active ? 'font-semibold bg-ldg-green/10 text-ldg-green border-ldg-green/30' : 'font-medium text-ldg-ink/60 border-transparent')}
-                  style={!active ? navGlass : undefined}>
+                    active ? 'font-semibold bg-ldg-green/10 text-ldg-green border-ldg-green/30' : 'font-medium text-ldg-ink/60 border-ldg-ink/10')}>
                   {s.label}
                 </button>
               )
@@ -422,7 +421,7 @@ export default function FinanceLiveGlassBeta() {
                 </div>
                 <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }}>
                   {shown.map((acc: any) => (
-                    <Card key={acc.id} className="p-4" style={cardGlass}>
+                    <Card key={acc.id} className="p-4">
                       <Label>{acc.name}</Label>
                       <p className="font-mono text-[15px] font-semibold tabular-nums mt-1.5">{acc.currency === 'EUR' ? formatEUR(acc.currentBalance) : formatRSD(acc.currentBalance)}</p>
                       <p className="font-mono text-[12px] text-ldg-ink/55 tabular-nums">{acc.currency === 'EUR' ? formatRSD(acc.balanceRSD) : formatEUR(acc.balanceEUR)}</p>
@@ -434,12 +433,12 @@ export default function FinanceLiveGlassBeta() {
           })()}
 
           {recent.length > 0 && (
-            <Card className="overflow-hidden" style={cardGlass}>
+            <Card className="overflow-hidden">
               <div className="px-5 py-3.5 border-b border-ldg-ink/[0.07]"><Label>Recent activity</Label></div>
               <div className="px-5">
                 {recent.map(r => (
                   <Link key={`${r.type}-${r.id}`} href={r.href}
-                    className="flex items-center gap-3 py-2.5 border-t border-ldg-ink/[0.07] first:border-t-0 hover:bg-white/40 transition-colors -mx-5 px-5">
+                    className="flex items-center gap-3 py-2.5 border-t border-ldg-ink/[0.07] first:border-t-0 hover:bg-ldg-ink/[0.02] transition-colors -mx-5 px-5">
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] text-ldg-ink truncate">{r.label || r.sub}</p>
                       <p className="font-mono text-[12px] text-ldg-ink/55">{formatDate(r.date)}</p>
@@ -457,7 +456,7 @@ export default function FinanceLiveGlassBeta() {
           {data && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {[{ title: 'Personal spending', data: data.personalExpenses }, { title: 'Business spending', data: data.businessExpenses }].map(section => (
-                <Card key={section.title} className="p-5" style={cardGlass}>
+                <Card key={section.title} className="p-5">
                   <Label>{section.title}</Label>
                   {section.data.filter((e: any) => e.amountRSD > 0).length === 0 ? (
                     <p className="font-mono text-[12px] text-ldg-ink/55 text-center py-8">nothing this period</p>
