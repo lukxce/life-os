@@ -324,13 +324,17 @@ function RailGroup({ title, items, isActive }: { title: string; items: NavGroup[
   const openNow = () => { cancelClose(); setOpen(true) }
   const closeSoon = () => { cancelClose(); closeTimer.current = setTimeout(() => setOpen(false), 300) }
   useEffect(() => () => cancelClose(), [])
-  // Backstop for a click-opened menu (the icon's onClick toggle below) —
-  // without this there was no way to close it except waiting out the hover
-  // timer, since clicking elsewhere did nothing.
-  const outsideRef = useClickOutside(() => setOpen(false), open)
+  // Deliberately NOT using useClickOutside here (tried it, reverted it) —
+  // confirmed on video: it fires on the very first mousedown that lands
+  // even a pixel outside the flyout's exact rendered box (e.g. the small
+  // notch between the icon and the flyout), closing it INSTANTLY — no 300ms
+  // grace period at all. That's what "stays a bit then vanishes, links
+  // unclickable" actually was: a click meant for a menu item landing just
+  // off it killed the menu before the click could land. Moving the mouse
+  // away already closes it via closeSoon above; that's enough.
 
   return (
-    <span ref={outsideRef as any} style={{ position: 'relative', display: 'inline-block', width: 42, height: 42, flexShrink: 0 }}
+    <span style={{ position: 'relative', display: 'inline-block', width: 42, height: 42, flexShrink: 0 }}
       onMouseEnter={openNow} onMouseLeave={closeSoon}>
       <span title={title} onClick={() => setOpen(o => !o)} style={{
         width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
