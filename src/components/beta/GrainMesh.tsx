@@ -24,14 +24,17 @@ export function GrainMesh({ tone }: { tone: 'warm' | 'cool' | 'sage' }) {
         { cx: 45, cy: 42, r: 24, color: '#6fc4d8', o: 0.22 },
       ]
     : [
-        { cx: 12, cy: 10, r: 36, color: '#a8c8a0', o: 0.6 },
-        { cx: 85, cy: 5, r: 30, color: '#e8dba8', o: 0.5 },
-        { cx: 92, cy: 55, r: 34, color: '#6fae7b', o: 0.45 },
-        { cx: 6, cy: 68, r: 32, color: '#c4d8be', o: 0.55 },
-        { cx: 50, cy: 92, r: 40, color: '#8fb87a', o: 0.4 },
-        { cx: 45, cy: 38, r: 26, color: '#f4f0dc', o: 0.5 },
+        // Muted, desaturated blue-gray-green — not "sage" as in bright
+        // mint. The reference is mostly neutral gray with black/white and
+        // one sparse chartreuse accent, never a green wash.
+        { cx: 12, cy: 10, r: 36, color: '#8b9c94', o: 0.5 },
+        { cx: 85, cy: 5, r: 30, color: '#a4b3ac', o: 0.4 },
+        { cx: 92, cy: 55, r: 34, color: '#6f8880', o: 0.4 },
+        { cx: 6, cy: 68, r: 32, color: '#b0bdb6', o: 0.5 },
+        { cx: 50, cy: 92, r: 40, color: '#7e938a', o: 0.35 },
+        { cx: 45, cy: 38, r: 22, color: '#cddc39', o: 0.12 },
       ]
-  const base = tone === 'warm' ? '#0b0b0d' : tone === 'cool' ? '#0a1626' : '#eef4ee'
+  const base = tone === 'warm' ? '#0b0b0d' : tone === 'cool' ? '#0a1626' : '#c7d0ca'
   const grainMatrix = tone === 'sage'
     ? '0 0 0 0 0.1  0 0 0 0 0.18  0 0 0 0 0.1  0 0 0 0.04 0' // faint dark grain, visible on light
     : '0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0' // faint white grain, visible on dark

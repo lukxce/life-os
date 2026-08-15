@@ -19,6 +19,12 @@ const STYLES = [
     desc: 'Full-bleed moody gradient backdrop, frosted glass panel floating on top.',
     swatch: 'linear-gradient(135deg, #0a1a2a 0%, #16344a 55%, #2f6f8f 130%)',
   },
+  {
+    href: '/beta/finance-glass',
+    name: 'The Glass System',
+    desc: 'Full spec port: cool-grey scene, two-tone teal glass, highlighter accent, interactive needle+momentum chart.',
+    swatch: 'linear-gradient(135deg, #a7aeae 0%, #cae8e0 55%, #eafd35 130%)',
+  },
 ]
 
 export default function BetaIndexPage() {
