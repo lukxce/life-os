@@ -325,13 +325,17 @@ function RailGroup({ title, items, isActive }: { title: string; items: NavGroup[
   const closeSoon = () => { cancelClose(); closeTimer.current = setTimeout(() => setOpen(false), 300) }
   useEffect(() => () => cancelClose(), [])
   // Deliberately NOT using useClickOutside here (tried it, reverted it) —
-  // confirmed on video: it fires on the very first mousedown that lands
-  // even a pixel outside the flyout's exact rendered box (e.g. the small
-  // notch between the icon and the flyout), closing it INSTANTLY — no 300ms
-  // grace period at all. That's what "stays a bit then vanishes, links
-  // unclickable" actually was: a click meant for a menu item landing just
-  // off it killed the menu before the click could land. Moving the mouse
-  // away already closes it via closeSoon above; that's enough.
+  // confirmed on video: it fired on the very first mousedown that landed
+  // even a pixel outside the flyout's exact rendered box, closing it
+  // INSTANTLY — no grace period at all.
+  //
+  // The flyout below is now ALWAYS mounted, just toggled via opacity —
+  // it was conditionally rendered ({open && <div>...}) before, which means
+  // React was mounting/unmounting that DOM node mid-hover, right as the
+  // cursor was crossing into it. Browsers can send a spurious mouseleave
+  // when the element under the cursor is added/removed from the DOM at
+  // that exact moment — a real, documented source of "hover-out-of-nowhere"
+  // bugs. Keeping it always in the DOM removes that mutation entirely.
 
   return (
     <span style={{ position: 'relative', display: 'inline-block', width: 42, height: 42, flexShrink: 0 }}
@@ -343,27 +347,26 @@ function RailGroup({ title, items, isActive }: { title: string; items: NavGroup[
       }}>
         <Icon size={16} color={groupActive ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.6)'} />
       </span>
-      {open && (
-        // Anchored to the icon's TOP, not vertically centered — a flyout
-        // taller than the ~50px gap between icons only grows downward, so
-        // it can't climb up over the icon above it. zIndex matters for
-        // whatever's below: every rail-group is a sibling in the same
-        // stacking context, painted in DOM order, so without it a tall
-        // flyout would get drawn under the icon two spots down.
-        <div onMouseEnter={openNow} onMouseLeave={closeSoon} className="glass-rail-flyout" style={{
-          ...flyoutGlass, position: 'absolute', left: 42, top: -6, zIndex: 60,
-          borderRadius: 14, padding: '8px 8px 8px 18px', minWidth: 186,
-          display: 'flex', flexDirection: 'column', gap: 1,
-        }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '4px 10px 6px' }}>{title}</span>
-          {items.map(it => (
-            <Link key={it.href} href={it.href} onClick={() => setOpen(false)} className="glass-flyout-link" style={{
-              fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
-              padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap',
-            }}>{it.label}</Link>
-          ))}
-        </div>
-      )}
+      {/* Anchored to the icon's TOP, not vertically centered — a flyout
+          taller than the ~50px gap between icons only grows downward, so
+          it can't climb up over the icon above it. zIndex matters for
+          whatever's below: every rail-group is a sibling in the same
+          stacking context, painted in DOM order, so without it a tall
+          flyout would get drawn under the icon two spots down. */}
+      <div onMouseEnter={openNow} onMouseLeave={closeSoon} className="glass-rail-flyout" style={{
+        ...flyoutGlass, position: 'absolute', left: 42, top: -6, zIndex: 60,
+        borderRadius: 14, padding: '8px 8px 8px 18px', minWidth: 186,
+        display: 'flex', flexDirection: 'column', gap: 1,
+        opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
+      }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '4px 10px 6px' }}>{title}</span>
+        {items.map(it => (
+          <Link key={it.href} href={it.href} onClick={() => setOpen(false)} className="glass-flyout-link" style={{
+            fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
+            padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap',
+          }}>{it.label}</Link>
+        ))}
+      </div>
     </span>
   )
 }
