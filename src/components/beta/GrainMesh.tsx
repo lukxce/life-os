@@ -4,7 +4,7 @@
 // CSS gradient reads as flat because there's no detail behind it to blur;
 // this gives it real texture, the same way a blurred photo does in the
 // reference designs, without hot-linking an external image.
-export function GrainMesh({ tone }: { tone: 'warm' | 'cool' | 'sage' }) {
+export function GrainMesh({ tone }: { tone: 'warm' | 'cool' | 'sage' | 'paper' }) {
   const blobs = tone === 'warm'
     ? [
         { cx: 15, cy: 12, r: 34, color: '#ff8a3d', o: 0.55 },
@@ -23,7 +23,8 @@ export function GrainMesh({ tone }: { tone: 'warm' | 'cool' | 'sage' }) {
         { cx: 55, cy: 92, r: 36, color: '#0a1626', o: 0.7 },
         { cx: 45, cy: 42, r: 24, color: '#6fc4d8', o: 0.22 },
       ]
-    : [
+    : tone === 'sage'
+    ? [
         // Muted, desaturated blue-gray-green — not "sage" as in bright
         // mint. The reference is mostly neutral gray with black/white and
         // one sparse chartreuse accent, never a green wash.
@@ -34,8 +35,22 @@ export function GrainMesh({ tone }: { tone: 'warm' | 'cool' | 'sage' }) {
         { cx: 50, cy: 92, r: 40, color: '#7e938a', o: 0.35 },
         { cx: 45, cy: 38, r: 22, color: '#cddc39', o: 0.12 },
       ]
-  const base = tone === 'warm' ? '#0b0b0d' : tone === 'cool' ? '#0a1626' : '#c7d0ca'
-  const grainMatrix = tone === 'sage'
+    : [
+        // 'paper' — the actual light ldg-paper tone, kept genuinely light
+        // (base near-white, not gray-green like 'sage'), with very soft
+        // pastel green/gray blobs at low opacity. Barely visible at rest —
+        // its whole job is giving a backdrop-blur real edges to distort,
+        // without darkening or re-tinting the page like the rejected
+        // gray-green pass did.
+        { cx: 10, cy: 8, r: 40, color: '#bcd4c2', o: 0.4 },
+        { cx: 88, cy: 6, r: 32, color: '#c9d6d0', o: 0.32 },
+        { cx: 95, cy: 58, r: 36, color: '#a9c2af', o: 0.3 },
+        { cx: 4, cy: 65, r: 34, color: '#d3ddd6', o: 0.34 },
+        { cx: 52, cy: 95, r: 42, color: '#b6c9bd', o: 0.26 },
+        { cx: 45, cy: 35, r: 26, color: '#8fc98f', o: 0.14 },
+      ]
+  const base = tone === 'warm' ? '#0b0b0d' : tone === 'cool' ? '#0a1626' : tone === 'sage' ? '#c7d0ca' : '#f4f4f6'
+  const grainMatrix = (tone === 'sage' || tone === 'paper')
     ? '0 0 0 0 0.1  0 0 0 0 0.18  0 0 0 0 0.1  0 0 0 0.04 0' // faint dark grain, visible on light
     : '0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0' // faint white grain, visible on dark
 

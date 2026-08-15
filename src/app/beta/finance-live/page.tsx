@@ -3,63 +3,93 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
 import {
-  Search, Bell, Moon, Plus, LayoutDashboard, TrendingUp, ShoppingCart, Briefcase,
-  CreditCard, FileText, Building2, Target, Lightbulb, Send, Check,
+  Search, Bell, Moon, Plus, LayoutDashboard, TrendingUp, Repeat, Building2, Target,
+  Lightbulb, Send, Check, ChevronDown,
 } from 'lucide-react'
 import { formatRSD, formatEUR, formatDate, Period, cn } from '@/lib/utils'
 import { Card, Label, CHART_COLORS } from '@/components/ledger/primitives'
 import { SignalsCard } from '@/components/finance/SignalsCard'
 import { useCommandBox, describeCommandAction } from '@/hooks/useCommandBox'
+import { GrainMesh } from '@/components/beta/GrainMesh'
 
 // Matches the real app's system-font stack exactly, overriding the beta
 // layout's Geist wrapper via inline style (highest specificity) — this
 // page should read as "the current app", not a redesign.
 const SYSTEM_FONT = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
 
-const GLOBAL_NAV = [
-  { href: '/',          label: 'Dashboard' },
-  { href: '/finance',   label: 'Finance' },
-  { href: '/life',      label: 'Habits' },
-  { href: '/fitness',   label: 'Fitness' },
-  { href: '/schedule',  label: 'Schedule' },
+// Curated primary tabs + a "More" flyout for the rest — showing all 9 at
+// once was crowding the pill and pushing Watchlist out of view entirely.
+const NAV_PRIMARY = [
+  { href: '/',         label: 'Dashboard' },
+  { href: '/finance',  label: 'Finance' },
+  { href: '/life',     label: 'Habits' },
+  { href: '/fitness',  label: 'Fitness' },
+  { href: '/schedule', label: 'Schedule' },
+]
+const NAV_MORE = [
   { href: '/journal',   label: 'Journal' },
   { href: '/food',      label: 'Food' },
   { href: '/personal',  label: 'Personal' },
   { href: '/watchlist', label: 'Watchlist' },
 ]
 
-const RAIL = [
-  { icon: LayoutDashboard, href: '/finance',                   label: 'Finance Home', active: true },
-  { icon: TrendingUp,      href: '/finance/income',             label: 'Income' },
-  { icon: ShoppingCart,    href: '/finance/expenses/personal',  label: 'Personal Expenses' },
-  { icon: Briefcase,       href: '/finance/expenses/business',  label: 'Business Expenses' },
-  { icon: CreditCard,      href: '/finance/subscriptions',      label: 'Subscriptions' },
-  { icon: FileText,        href: '/finance/bills',              label: 'Bills & Loans' },
-  { icon: Building2,       href: '/finance/accounts',           label: 'Accounts' },
-  { icon: Target,          href: '/finance/budgets',            label: 'Budgets' },
-  { icon: Lightbulb,       href: '/finance/insights',           label: 'Insights' },
+// Grouped like the real sidebar's actual sections (Money Flow, Recurring,
+// Banking, Planning, Reports) — each rail icon reveals its real sub-pages
+// on hover instead of the rail only ever showing one flat level.
+const RAIL_GROUPS: { icon: any; label: string; href?: string; items?: { href: string; label: string }[] }[] = [
+  { icon: LayoutDashboard, label: 'Finance Home', href: '/finance' },
+  { icon: TrendingUp, label: 'Money Flow', items: [
+    { href: '/finance/income', label: 'Income' },
+    { href: '/finance/expenses/personal', label: 'Personal Expenses' },
+    { href: '/finance/expenses/business', label: 'Business Expenses' },
+  ] },
+  { icon: Repeat, label: 'Recurring', items: [
+    { href: '/finance/subscriptions', label: 'Subscriptions' },
+    { href: '/finance/bills', label: 'Bills & Loans' },
+  ] },
+  { icon: Building2, label: 'Banking', items: [
+    { href: '/finance/accounts', label: 'Accounts' },
+    { href: '/finance/transfers', label: 'Transfers' },
+    { href: '/finance/conversions', label: 'Conversions' },
+    { href: '/finance/crypto', label: 'Crypto' },
+  ] },
+  { icon: Target, label: 'Planning', items: [
+    { href: '/finance/budgets', label: 'Budgets' },
+    { href: '/finance/goals', label: 'Goals' },
+    { href: '/finance/planner', label: 'Planner' },
+  ] },
+  { icon: Lightbulb, label: 'Reports', items: [
+    { href: '/finance/summaries', label: 'Summaries' },
+    { href: '/finance/insights', label: 'Insights' },
+    { href: '/finance/warranties', label: 'Warranties' },
+    { href: '/finance/merchants', label: 'Merchants' },
+  ] },
 ]
+// A flattened version for the mobile strip, where a flyout menu doesn't work.
+const RAIL_FLAT = RAIL_GROUPS.flatMap(g => g.items ? g.items.map(i => ({ ...i, icon: g.icon })) : [{ href: g.href!, label: g.label, icon: g.icon }])
 
-// Much subtler than the last pass — that gradient+border combo read as a
-// fake plastic bevel, not glass. Real glass sheen is barely perceptible;
-// the border should nearly disappear into the background, not glow.
+// Simplest, most standard glassmorphism recipe — flat translucent white,
+// blur, soft shadow, a barely-there border. Two prior passes added a
+// diagonal internal gradient chasing a "sheen", which read as a fake
+// plastic bevel instead of glass. Dropping it fixed that.
 const navGlass: React.CSSProperties = {
-  background: `
-    linear-gradient(155deg, rgba(255,255,255,0.5) 0%, rgba(240,246,242,0.32) 100%),
-    rgba(255,255,255,0.48)
-  `,
-  backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-  border: '1px solid rgba(255,255,255,0.4)',
-  boxShadow: '0 6px 20px rgba(20,30,25,0.06), inset 0 1px 0 rgba(255,255,255,0.5)',
+  background: 'rgba(255,255,255,0.65)',
+  backdropFilter: 'blur(18px) saturate(160%)', WebkitBackdropFilter: 'blur(18px) saturate(160%)',
+  border: '1px solid rgba(255,255,255,0.5)',
+  boxShadow: '0 8px 24px rgba(20,30,25,0.08)',
 }
 const cardGlass: React.CSSProperties = {
-  background: `
-    linear-gradient(155deg, rgba(255,255,255,0.36) 0%, rgba(238,244,240,0.2) 100%),
-    rgba(255,255,255,0.32)
-  `,
-  backdropFilter: 'blur(16px) saturate(140%)', WebkitBackdropFilter: 'blur(16px) saturate(140%)',
-  border: '1px solid rgba(255,255,255,0.3)',
-  boxShadow: '0 4px 16px rgba(20,30,25,0.04), inset 0 1px 0 rgba(255,255,255,0.4)',
+  background: 'rgba(255,255,255,0.55)',
+  backdropFilter: 'blur(14px) saturate(150%)', WebkitBackdropFilter: 'blur(14px) saturate(150%)',
+  border: '1px solid rgba(255,255,255,0.4)',
+  boxShadow: '0 6px 20px rgba(20,30,25,0.06)',
+}
+// Flyout/dropdown panels — more opaque than the ambient glass for legibility.
+const flyoutGlass: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.92)',
+  backdropFilter: 'blur(20px) saturate(160%)', WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+  border: '1px solid rgba(255,255,255,0.7)',
+  boxShadow: '0 16px 36px rgba(20,30,25,0.16)',
 }
 
 export default function FinanceLiveGlassBeta() {
@@ -81,44 +111,73 @@ export default function FinanceLiveGlassBeta() {
 
   return (
     <div style={{ minHeight: '100dvh', fontFamily: SYSTEM_FONT, position: 'relative' }}>
-      {/* Fixed pseudo-background, not background-attachment:fixed on the
-          scrolling element — the latter forces a full-page repaint every
-          scroll frame once several stacked backdrop-filters are involved,
-          janky enough that the first click on nav links gets swallowed. */}
-      <div aria-hidden style={{
-        position: 'fixed', inset: 0, zIndex: -1,
-        background: `
-          radial-gradient(1000px 560px at 12% -8%, rgba(46,125,79,0.07), transparent 62%),
-          radial-gradient(800px 520px at 102% 4%, rgba(120,140,132,0.08), transparent 58%),
-          radial-gradient(900px 560px at 40% 108%, rgba(46,125,79,0.05), transparent 58%),
-          rgb(var(--l-paper))
-        `,
-      }} />
-      {/* Left rail — hidden below lg, exactly like the real app's own ModuleDock */}
+      {/* Fixed pseudo-background — not background-attachment:fixed on the
+          scrolling element (that forces a full-page repaint every scroll
+          frame once several backdrop-filters are stacked, janky enough to
+          swallow the first click). This is also the actual fix for "nothing
+          looks like frosted glass": a smooth 3-stop gradient has no edges
+          for backdrop-blur to distort, so panels sitting on it look flat no
+          matter the recipe. GrainMesh gives it real, soft-edged blob detail
+          — same mechanism that already worked on the dark/sage/photo betas
+          — using a new 'paper' tone that stays genuinely light (not the
+          gray-green wash that got rejected before). */}
+      <div aria-hidden style={{ position: 'fixed', inset: 0, zIndex: -1, background: 'rgb(var(--l-paper))' }}>
+        <GrainMesh tone="paper" />
+      </div>
+      {/* Left rail — hidden below lg, exactly like the real app's own ModuleDock.
+          Finance Home is a direct link; every other group reveals its real
+          sub-pages in a flyout on hover instead of only ever showing one
+          flat level (addresses "it should open everything under like
+          personal expenses and stuff"). */}
       <div className="hidden lg:flex" style={{ position: 'fixed', left: 18, top: '50%', transform: 'translateY(-50%)', zIndex: 30, flexDirection: 'column', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.35)', marginBottom: 2, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>Finance</span>
-        {RAIL.map((r, i) => (
-          <span key={r.href} style={{ position: 'relative' }}>
-            <Link href={r.href} title={r.label}
-              className="group"
+        {RAIL_GROUPS.map((g, i) => {
+          const isHome = !!g.href
+          const Icon = g.icon
+          const button = (
+            <span
+              title={g.label}
               style={{
                 width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                textDecoration: 'none', position: 'relative',
-                ...(r.active ? { background: 'rgb(var(--l-green))', boxShadow: '0 4px 14px rgba(46,125,79,0.35)' } : { ...navGlass }),
+                position: 'relative', cursor: 'pointer',
+                ...(isHome ? { background: 'rgb(var(--l-green))', boxShadow: '0 4px 14px rgba(46,125,79,0.35)' } : { ...navGlass }),
               }}>
-              <r.icon size={16} color={r.active ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
+              <Icon size={16} color={isHome ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
               <span className="rail-label" style={{
                 position: 'absolute', left: 52, top: '50%', transform: 'translateY(-50%)',
                 background: 'rgb(var(--l-ink))', color: 'rgb(var(--l-paper))', fontSize: 11, fontWeight: 600,
                 padding: '5px 10px', borderRadius: 8, whiteSpace: 'nowrap', opacity: 0, pointerEvents: 'none', transition: 'opacity .15s',
-              }}>{r.label}</span>
-            </Link>
-            {i === 0 && <div style={{ width: 20, height: 1, background: 'rgb(var(--l-ink) / 0.12)', margin: '4px auto' }} />}
-          </span>
-        ))}
+              }}>{g.label}</span>
+            </span>
+          )
+          return (
+            <span key={g.label} className="rail-group group" style={{ position: 'relative' }}>
+              {isHome ? <Link href={g.href!} style={{ textDecoration: 'none', display: 'block' }}>{button}</Link> : button}
+              {i === 0 && <div style={{ width: 20, height: 1, background: 'rgb(var(--l-ink) / 0.12)', margin: '4px auto' }} />}
+              {g.items && (
+                <div className="rail-flyout" style={{
+                  ...flyoutGlass, position: 'absolute', left: 52, top: '50%', transform: 'translateY(-50%)',
+                  borderRadius: 14, padding: '8px', minWidth: 176, opacity: 0, pointerEvents: 'none', transition: 'opacity .15s',
+                  display: 'flex', flexDirection: 'column', gap: 1,
+                }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '4px 10px 6px' }}>{g.label}</span>
+                  {g.items.map(it => (
+                    <Link key={it.href} href={it.href} style={{
+                      fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
+                      padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap',
+                    }}>{it.label}</Link>
+                  ))}
+                </div>
+              )}
+            </span>
+          )
+        })}
       </div>
       <style>{`
         .group:hover .rail-label { opacity: 1 !important; }
+        .rail-group:hover .rail-flyout { opacity: 1 !important; pointer-events: auto !important; }
+        .nav-more:hover .nav-more-flyout { opacity: 1 !important; pointer-events: auto !important; }
+        .rail-flyout a:hover, .nav-more-flyout a:hover { background: rgb(var(--l-green) / 0.1); color: rgb(var(--l-green)); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
 
@@ -130,8 +189,8 @@ export default function FinanceLiveGlassBeta() {
               <div style={{ width: 24, height: 24, borderRadius: 8, background: 'rgb(var(--l-green))' }} />
               <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.08em' }}>LIFE OS</span>
             </div>
-            <div className="hidden md:flex no-scrollbar" style={{ gap: 2, overflowX: 'auto', flex: 1, justifyContent: 'center' }}>
-              {GLOBAL_NAV.map(n => {
+            <div className="hidden md:flex no-scrollbar" style={{ gap: 2, overflowX: 'auto', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              {NAV_PRIMARY.map(n => {
                 const active = n.href === '/finance'
                 return (
                   <Link key={n.href} href={n.href} style={{
@@ -141,6 +200,26 @@ export default function FinanceLiveGlassBeta() {
                   }}>{n.label}</Link>
                 )
               })}
+              {/* "More" flyout keeps Journal/Food/Personal/Watchlist reachable
+                  without crowding the pill or pushing Watchlist off-screen. */}
+              <span className="nav-more" style={{ position: 'relative' }}>
+                <span style={{
+                  fontSize: 12.5, fontWeight: 600, padding: '7px 12px', borderRadius: 999, whiteSpace: 'nowrap',
+                  color: 'rgb(var(--l-ink) / 0.55)', display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer',
+                }}>More <ChevronDown size={13} /></span>
+                <div className="nav-more-flyout" style={{
+                  ...flyoutGlass, position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 8,
+                  borderRadius: 14, padding: '8px', minWidth: 150, opacity: 0, pointerEvents: 'none', transition: 'opacity .15s',
+                  display: 'flex', flexDirection: 'column', gap: 1, zIndex: 50,
+                }}>
+                  {NAV_MORE.map(n => (
+                    <Link key={n.href} href={n.href} style={{
+                      fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
+                      padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap', textAlign: 'center',
+                    }}>{n.label}</Link>
+                  ))}
+                </div>
+              </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
               {[Search, Bell, Moon].map((Icon, i) => (
@@ -158,13 +237,13 @@ export default function FinanceLiveGlassBeta() {
 
           {/* Mobile substitute for the left rail — that just vanishes below lg
               otherwise, taking every finance sub-page with it. Horizontal
-              scroll strip of the same real links instead of nothing. */}
+              scroll strip of the same real links (flattened, since a hover
+              flyout doesn't work on touch) instead of nothing. */}
           <div className="flex lg:hidden no-scrollbar" style={{ ...navGlass, borderRadius: 999, marginTop: 8, padding: '6px 8px', gap: 4, overflowX: 'auto' }}>
-            {RAIL.map(r => (
+            {RAIL_FLAT.map(r => (
               <Link key={r.href} href={r.href} title={r.label} style={{
                 display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 999, flexShrink: 0, textDecoration: 'none',
-                background: r.active ? 'rgb(var(--l-green))' : 'transparent',
-                color: r.active ? '#fff' : 'rgb(var(--l-ink) / 0.6)',
+                color: 'rgb(var(--l-ink) / 0.6)',
               }}>
                 <r.icon size={13} />
                 <span style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}>{r.label}</span>
