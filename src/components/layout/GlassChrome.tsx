@@ -322,8 +322,16 @@ export function GlassMobileBar({ config }: { config: ModuleConfig }) {
   // (which varies — this wraps to 2 rows on modules with lots of groups,
   // like Finance) pushes the page content down correctly on its own,
   // instead of needing a fixed-height spacer to guess at that number.
+  //
+  // The outer div carries ONLY the md:hidden class, no inline style — an
+  // inline `display` would have outranked it at every width including
+  // desktop (inline styles beat classes regardless of media queries), which
+  // is exactly why this was showing up stacked on top of the real desktop
+  // rail. All visual/flex styling lives on the inner div instead, where it
+  // can't fight the class that's supposed to hide the whole thing.
   return (
-    <div className="md:hidden" style={{
+    <div className="md:hidden">
+    <div style={{
       margin: '10px 12px 0', ...navGlass, borderRadius: 22, padding: '8px 10px',
       display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6,
     }}>
@@ -356,6 +364,7 @@ export function GlassMobileBar({ config }: { config: ModuleConfig }) {
           )}
         </span>
       )}
+    </div>
     </div>
   )
 }

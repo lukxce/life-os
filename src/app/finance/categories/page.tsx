@@ -88,13 +88,30 @@ export default function CategoriesPage() {
     load()
   }
 
-  const deleteCategory = async (id: string) => {
+  const deleteCategory = async (cat: any) => {
     if (!confirm('Remove this category? Existing expenses are NOT deleted.')) return
-    await fetch('/api/finance/categories', {
+    const res = await fetch('/api/finance/categories', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ id: cat.id })
     })
+    if (!res.ok) {
+      alert('Could not delete that category — try again.')
+      return
+    }
+    // "Food & Groceries" can exist as BOTH a personal and a business
+    // category (the split migration handles both types in one go, but a
+    // manual per-row delete here only ever removed one) — deleting it as
+    // personal left the business row behind, which then reappeared in the
+    // OTHER list and re-triggered the split banner, reading as "it keeps
+    // coming back" even though nothing was actually recreating it.
+    if (cat.name === 'Food & Groceries') {
+      const other = personal.find((c: any) => c.name === 'Food & Groceries' && c.id !== cat.id)
+        ?? business.find((c: any) => c.name === 'Food & Groceries' && c.id !== cat.id)
+      if (other) await fetch('/api/finance/categories', {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: other.id }),
+      })
+    }
     load()
   }
 
@@ -154,7 +171,7 @@ export default function CategoriesPage() {
                     className="p-1.5 text-ldg-ink/40 hover:text-ldg-ink/70 hover:bg-ldg-ink/[0.06] rounded">
                     <Pencil size={14} />
                   </button>
-                  <button onClick={() => deleteCategory(cat.id)}
+                  <button onClick={() => deleteCategory(cat)}
                     className="p-1.5 text-ldg-ink/40 hover:text-ldg-urgent hover:bg-ldg-urgent/[0.08] rounded">
                     <Trash2 size={14} />
                   </button>
