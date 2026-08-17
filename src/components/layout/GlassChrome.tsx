@@ -3,30 +3,38 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
-import { Bell, Moon, Sun, Plus, X, MoreHorizontal, Home as HomeIcon } from 'lucide-react'
+import {
+  Bell, Moon, Sun, Plus, X, Menu as MenuIcon, Home as HomeIcon,
+  Wallet, Sparkles, Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
+} from 'lucide-react'
 import type { ModuleConfig, NavGroup } from './AppShell'
 import { GlobalSearch } from './GlobalSearch'
 import { QuickMenu, QuickAction } from '@/components/ledger/QuickMenu'
-import { cn } from '@/lib/utils'
 
-// ── Glass chrome — header, rail, and mobile bar for every module ────────────
+// ── Glass chrome — header + rail for every module, plus a mobile menu ───────
 // This is the finance-live beta's chrome (floating pill top bar, floating
 // icon rail with grouped click flyouts), generalized to run off any module's
 // existing ModuleConfig instead of being hand-written per page. Desktop gets
-// the vertical rail; mobile gets the same groups laid out horizontally in
-// GlassMobileBar, replacing the old fixed bottom nav entirely.
+// the vertical rail; mobile gets a single "Menu" button in the header that
+// opens a full glass bottom sheet — a horizontal icon row (tried first) kept
+// either wrapping into a messy second line or feeling crammed depending on
+// how many groups a module had, so mobile gets its own real real estate
+// instead of a shrunk-down copy of the desktop rail.
 
+// Icons match each module's own Shell config (Wallet=Finance, Sparkles=Habits, …)
+// — hardcoded here since the global nav list is independent of any one
+// module's own ModuleConfig (there's no single config with all 8 icons).
 const GLOBAL_NAV = [
-  { href: '/finance',  label: 'Finance' },
-  { href: '/life',     label: 'Habits' },
-  { href: '/fitness',  label: 'Fitness' },
-  { href: '/schedule', label: 'Schedule' },
+  { href: '/finance',  label: 'Finance',  icon: Wallet },
+  { href: '/life',     label: 'Habits',   icon: Sparkles },
+  { href: '/fitness',  label: 'Fitness',  icon: Dumbbell },
+  { href: '/schedule', label: 'Schedule', icon: CalendarDays },
 ]
 const GLOBAL_NAV_MORE = [
-  { href: '/journal',   label: 'Journal' },
-  { href: '/food',      label: 'Food' },
-  { href: '/personal',  label: 'Personal' },
-  { href: '/watchlist', label: 'Watchlist' },
+  { href: '/journal',   label: 'Journal',   icon: BookOpen },
+  { href: '/food',      label: 'Food',      icon: MapPin },
+  { href: '/personal',  label: 'Personal',  icon: FolderLock },
+  { href: '/watchlist', label: 'Watchlist', icon: Clapperboard },
 ]
 
 // Built from --l-card/--l-ink (the same tokens the plain Card component
@@ -81,14 +89,15 @@ function useClickOutside(onClose: () => void, active: boolean) {
 }
 
 // ── Top bar ───────────────────────────────────────────────────────────────
-// Takes actions directly (not a ModuleConfig) — same shape AppHeader used —
-// so Home (which has quick actions but no module sidebar/groups) can use
-// this too without needing a fake config object.
-export function GlassHeader({ actions }: { actions: QuickAction[] }) {
+// `actions` is taken directly (not read off config) — same shape AppHeader
+// used — so Home (which has quick actions but no module rail/groups) can
+// use this too. `config` is optional for the same reason: when present, the
+// mobile sheet also lists that module's own pages, not just the 8 modules.
+export function GlassHeader({ actions, config }: { actions: QuickAction[]; config?: ModuleConfig }) {
   const path = usePathname()
   const [notifOpen, setNotifOpen] = useState(false)
   const [newOpen, setNewOpen] = useState(false)
-  const [moreOpen, setMoreOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [moreDesktopOpen, setMoreDesktopOpen] = useState(false)
   const [signals, setSignals] = useState<any>(null)
   const { theme, setTheme } = useTheme()
@@ -116,12 +125,12 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
   ] : []
 
   const moreActive = GLOBAL_NAV_MORE.some(n => isPathActive(path, n.href))
-  const moreRef = useClickOutside(() => setMoreOpen(false), moreOpen)
   const moreDesktopRef = useClickOutside(() => setMoreDesktopOpen(false), moreDesktopOpen)
   const notifRef = useClickOutside(() => setNotifOpen(false), notifOpen)
   const newRef = useClickOutside(() => setNewOpen(false), newOpen)
 
   return (
+    <>
     <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 40, height: 78, display: 'flex', alignItems: 'center', padding: '0 16px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
         <div style={{ ...navGlass, borderRadius: 999, padding: '9px 12px 9px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, width: '100%' }}>
@@ -134,7 +143,7 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
               logo + 4 tabs + 5-6 icon buttons in one pill; trying to keep
               this "always visible, just scroll" squeezed it down to an
               invisible sliver. Mobile instead gets every module inside the
-              icon-only More button in the icon cluster — see there. */}
+              "Menu" button's bottom sheet — see below. */}
           <div className="hidden md:flex no-scrollbar" style={{ gap: 2, flex: 1, justifyContent: 'center', alignItems: 'center', overflowX: 'auto', minWidth: 0 }}>
             {GLOBAL_NAV.map(n => {
               const active = isPathActive(path, n.href)
@@ -173,34 +182,17 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             {/* Mobile-only (md:hidden) — the pills row above (with its own
-                "More") is desktop-only, so mobile needs its own trigger
-                covering every module, not just the extra 4. */}
-            <span ref={moreRef as any} className="md:hidden" style={{ position: 'relative' }}>
-              <button onClick={() => setMoreOpen(o => !o)} title="More" style={{
-                width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.6)', border: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: moreActive ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.55)',
-              }}>
-                <MoreHorizontal size={16} />
-              </button>
-              {moreOpen && (
-                <div style={{
-                  ...flyoutGlass, position: 'absolute', right: 0, top: '100%', marginTop: 10, zIndex: 56,
-                  borderRadius: 14, padding: 8, minWidth: 150, display: 'flex', flexDirection: 'column', gap: 1,
-                }}>
-                  {[...GLOBAL_NAV, ...GLOBAL_NAV_MORE].map(n => (
-                    <Link key={n.href} href={n.href} onClick={() => setMoreOpen(false)} className="glass-flyout-link" style={{
-                      fontSize: 13, fontWeight: 600, color: 'rgb(var(--l-ink) / 0.8)', textDecoration: 'none',
-                      padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap', textAlign: 'center',
-                    }}>{n.label}</Link>
-                  ))}
-                </div>
-              )}
-            </span>
+                "More") is desktop-only. This opens a full bottom sheet
+                instead of a cramped dropdown: was a "..." icon before, which
+                read as unlabeled and unclear about what it even did. */}
+            <button onClick={() => setMenuOpen(true)} title="Menu" className="md:hidden" style={{
+              width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.6)', border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgb(var(--l-ink) / 0.55)',
+            }}>
+              <MenuIcon size={16} />
+            </button>
 
-            <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <GlobalSearch mobileIconOnly />
-            </span>
+            <GlobalSearch mobileIconOnly />
 
             <span ref={notifRef as any} style={{ position: 'relative' }}>
               <button onClick={() => setNotifOpen(o => !o)} style={{
@@ -262,9 +254,11 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
       </div>
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .glass-rail-flyout a:hover, .glass-flyout-link:hover { background: rgb(var(--l-green) / 0.1); color: rgb(var(--l-green)); }
+        .glass-rail-flyout a:hover, .glass-flyout-link:hover, .glass-tile:hover { background: rgb(var(--l-green) / 0.1); color: rgb(var(--l-green)); }
       `}</style>
     </header>
+    <MobileMenuSheet open={menuOpen} onClose={() => setMenuOpen(false)} config={config} actions={actions} />
+    </>
   )
 }
 
@@ -295,76 +289,86 @@ export function GlassSidebar({ config }: { config: ModuleConfig }) {
   )
 }
 
-// ── Mobile bar ────────────────────────────────────────────────────────────
-// Same glass-circle language as the desktop rail, laid out horizontally
-// right under the header, replacing the old fixed bottom nav (Home /
-// module home / (+) actions / Go-sheet) — that bar predated this whole
-// redesign and looked visibly out of place next to the new glass chrome.
-// Covers what it did: Home is the first icon, the module's own home is
-// wherever it falls in the group list (same as the desktop rail), quick
-// actions get their own icon, and every group is directly reachable here
-// instead of behind a separate "Go" sheet.
-export function GlassMobileBar({ config }: { config: ModuleConfig }) {
+// ── Mobile menu sheet ─────────────────────────────────────────────────────
+// One button in the header opens this instead of a horizontal icon row —
+// a row either wrapped into a messy second line (modules with lots of
+// groups) or felt crammed (Home + divider + groups + quick-actions all in
+// one 42px-tall strip), depending on the module. A full-height sheet has
+// room for labels next to every icon (no more guessing what an unlabeled
+// circle does) and never needs to wrap or crowd anything.
+function MobileMenuSheet({ open, onClose, config, actions }: { open: boolean; onClose: () => void; config?: ModuleConfig; actions: QuickAction[] }) {
   const path = usePathname()
-  const isActive = (href: string) => href === config.home ? path === href : isPathActive(path, href)
   const isHome = path === '/'
-  const [actionsOpen, setActionsOpen] = useState(false)
-  const actionsRef = useClickOutside(() => setActionsOpen(false), actionsOpen)
-  const actions = (config.actions ?? []) as QuickAction[]
+  if (!open) return null
 
-  // In normal document flow (not fixed/sticky), wrapping instead of
-  // horizontally scrolling — both deliberate, and both fixing real bugs:
-  // overflow-x:auto without overflow-y set forces the CSS spec to make
-  // overflow-y 'auto' too, which was silently clipping every dropdown that
-  // opens below this bar (that's why nothing looked like it happened on
-  // tap — it rendered, just invisibly, cut off by its own container).
-  // Being in-flow instead of position:fixed also means its real height
-  // (which varies — this wraps to 2 rows on modules with lots of groups,
-  // like Finance) pushes the page content down correctly on its own,
-  // instead of needing a fixed-height spacer to guess at that number.
-  //
-  // The outer div carries ONLY the md:hidden class, no inline style — an
-  // inline `display` would have outranked it at every width including
-  // desktop (inline styles beat classes regardless of media queries), which
-  // is exactly why this was showing up stacked on top of the real desktop
-  // rail. All visual/flex styling lives on the inner div instead, where it
-  // can't fight the class that's supposed to hide the whole thing.
+  // href-based tiles are real links (navigate + close); onClick-only tiles
+  // (an action with no href, e.g. an in-page modal trigger) render as a
+  // plain button instead of a Link with a fake "#" href.
+  const Tile = ({ href, label, icon: Icon, active, onClick }: { href?: string; label: string; icon: any; active?: boolean; onClick?: () => void }) => {
+    const inner = (
+      <>
+        <span style={{
+          width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          ...(active ? { background: 'rgb(var(--l-green))' } : { ...navGlass }),
+        }}>
+          <Icon size={17} color={active ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
+        </span>
+        <span style={{ fontSize: 11.5, fontWeight: 600, lineHeight: 1.2 }}>{label}</span>
+      </>
+    )
+    const tileStyle: React.CSSProperties = {
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center',
+      padding: '14px 8px', borderRadius: 16, textDecoration: 'none', border: 'none', background: 'transparent', cursor: 'pointer',
+      color: active ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.75)',
+      ...(active ? { background: 'rgb(var(--l-green) / 0.1)' } : {}),
+    }
+    return href
+      ? <Link href={href} onClick={onClick ?? onClose} className="glass-tile" style={tileStyle}>{inner}</Link>
+      : <button onClick={() => { onClick?.(); onClose() }} className="glass-tile" style={tileStyle}>{inner}</button>
+  }
+
   return (
     <div className="md:hidden">
-    <div style={{
-      margin: '10px 12px 0', ...navGlass, borderRadius: 22, padding: '8px 10px',
-      display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6,
-    }}>
-      <Link href="/" title="Home" style={{
-        width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none',
-        ...(isHome ? { background: 'rgb(var(--l-green))', boxShadow: '0 4px 14px rgba(46,125,79,0.35)' } : { ...navGlass }),
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.35)' }} />
+      <div style={{
+        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 71, maxHeight: '80vh', overflowY: 'auto',
+        ...flyoutGlass, borderRadius: '28px 28px 0 0', padding: '10px 16px calc(env(safe-area-inset-bottom, 0px) + 20px)',
       }}>
-        <HomeIcon size={16} color={isHome ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
-      </Link>
-      <div style={{ width: 1, height: 24, background: 'rgb(var(--l-ink) / 0.1)', flexShrink: 0 }} />
-      {config.groups.map((group: NavGroup, gi: number) =>
-        group.title
-          ? <RailGroup key={group.title} title={group.title} items={group.items} isActive={isActive} direction="down" />
-          : group.items.map(it => (
-              <RailLeaf key={it.href} href={it.href} icon={it.icon} label={it.label} active={isActive(it.href)} />
-            ))
-      )}
-      {actions.length > 0 && (
-        <span ref={actionsRef as any} style={{ position: 'relative', flexShrink: 0 }}>
-          <button onClick={() => setActionsOpen(o => !o)} title="New" style={{
-            width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer',
-            background: 'rgb(var(--l-ink))', color: '#fff',
-          }}>
-            <Plus size={16} />
-          </button>
-          {actionsOpen && (
-            <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '100%', marginTop: 10, zIndex: 60 }}>
-              <QuickMenu actions={actions} onClose={() => setActionsOpen(false)} />
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgb(var(--l-ink) / 0.15)', margin: '4px auto 14px' }} />
+
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '0 4px 8px' }}>Modules</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+          <Tile href="/" label="Dashboard" icon={HomeIcon} active={isHome} />
+          {[...GLOBAL_NAV, ...GLOBAL_NAV_MORE].map(n => (
+            <Tile key={n.href} href={n.href} label={n.label} icon={n.icon} active={isPathActive(path, n.href)} />
+          ))}
+        </div>
+
+        {config && config.groups.map((group: NavGroup, gi: number) => (
+          <div key={group.title ?? gi}>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '14px 4px 8px' }}>
+              {group.title ?? config.name}
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+              {group.items.map(it => (
+                <Tile key={it.href} href={it.href} label={it.label} icon={it.icon}
+                  active={it.href === config.home ? path === it.href : isPathActive(path, it.href)} />
+              ))}
             </div>
-          )}
-        </span>
-      )}
-    </div>
+          </div>
+        ))}
+
+        {actions.length > 0 && (
+          <div>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '14px 4px 8px' }}>Quick actions</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+              {actions.map(a => (
+                <Tile key={a.label} href={a.href} label={a.label} icon={a.icon} onClick={a.onClick} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

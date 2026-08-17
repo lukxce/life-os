@@ -82,9 +82,15 @@ export function GlobalSearch({ mobileIconOnly, keyboardOnly }: { mobileIconOnly?
 
   if (!open && keyboardOnly) return null
 
+  // Self-sufficient 32px circle — matches the other icon buttons it sits
+  // next to in the glass chrome (Bell, theme toggle) — was a
+  // rounded-rectangle "p-2 rounded-lg" button before, which looked visibly
+  // out of place dropped into a row of circles rather than styled to match.
   if (!open && mobileIconOnly) return (
-    <button onClick={() => setOpen(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Search (⌘K)">
-      <Search size={20} className="text-gray-600 dark:text-gray-300" />
+    <button onClick={() => setOpen(true)}
+      className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+      title="Search (⌘K)">
+      <Search size={14} className="text-gray-600 dark:text-gray-300" />
     </button>
   )
 
