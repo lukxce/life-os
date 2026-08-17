@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
 import {
-  Bell, Moon, Sun, Plus, X, Menu as MenuIcon, Home as HomeIcon,
+  Bell, Moon, Sun, Plus, X, Home as HomeIcon,
   Wallet, Sparkles, Dumbbell, CalendarDays, BookOpen, MapPin, FolderLock, Clapperboard,
 } from 'lucide-react'
 import type { ModuleConfig, NavGroup } from './AppShell'
@@ -93,11 +93,10 @@ function useClickOutside(onClose: () => void, active: boolean) {
 // used — so Home (which has quick actions but no module rail/groups) can
 // use this too. `config` is optional for the same reason: when present, the
 // mobile sheet also lists that module's own pages, not just the 8 modules.
-export function GlassHeader({ actions, config }: { actions: QuickAction[]; config?: ModuleConfig }) {
+export function GlassHeader({ actions }: { actions: QuickAction[] }) {
   const path = usePathname()
   const [notifOpen, setNotifOpen] = useState(false)
   const [newOpen, setNewOpen] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
   const [moreDesktopOpen, setMoreDesktopOpen] = useState(false)
   const [signals, setSignals] = useState<any>(null)
   const { theme, setTheme } = useTheme()
@@ -130,7 +129,6 @@ export function GlassHeader({ actions, config }: { actions: QuickAction[]; confi
   const newRef = useClickOutside(() => setNewOpen(false), newOpen)
 
   return (
-    <>
     <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 40, height: 78, display: 'flex', alignItems: 'center', padding: '0 16px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
         <div style={{ ...navGlass, borderRadius: 999, padding: '9px 12px 9px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, width: '100%' }}>
@@ -181,17 +179,6 @@ export function GlassHeader({ actions, config }: { actions: QuickAction[]; confi
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            {/* Mobile-only (md:hidden) — the pills row above (with its own
-                "More") is desktop-only. This opens a full bottom sheet
-                instead of a cramped dropdown: was a "..." icon before, which
-                read as unlabeled and unclear about what it even did. */}
-            <button onClick={() => setMenuOpen(true)} title="Menu" className="md:hidden" style={{
-              width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.6)', border: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgb(var(--l-ink) / 0.55)',
-            }}>
-              <MenuIcon size={16} />
-            </button>
-
             <GlobalSearch mobileIconOnly />
 
             <span ref={notifRef as any} style={{ position: 'relative' }}>
@@ -257,8 +244,6 @@ export function GlassHeader({ actions, config }: { actions: QuickAction[]; confi
         .glass-rail-flyout a:hover, .glass-flyout-link:hover, .glass-tile:hover { background: rgb(var(--l-green) / 0.1); color: rgb(var(--l-green)); }
       `}</style>
     </header>
-    <MobileMenuSheet open={menuOpen} onClose={() => setMenuOpen(false)} config={config} actions={actions} />
-    </>
   )
 }
 
@@ -334,51 +319,46 @@ function BottomSheet({ title, onClose, children }: { title?: string; onClose: ()
   )
 }
 
-// ── Mobile menu sheet ─────────────────────────────────────────────────────
-// The header's "Menu" button opens this — every module, the current
-// module's own pages, and quick actions, as labeled tiles instead of
-// unlabeled circles. Complements GlassMobileRow below (quick glanceable
-// access to the current module's own groups) rather than replacing it —
-// this is the comprehensive one, including cross-module switching.
-function MobileMenuSheet({ open, onClose, config, actions }: { open: boolean; onClose: () => void; config?: ModuleConfig; actions: QuickAction[] }) {
+// ── Mobile dock ───────────────────────────────────────────────────────────
+// Floating pill, bottom of the screen, inset from all three edges (not a
+// full-width bar) — the global module switcher, always visible on every
+// page (module pages and Home alike). Replaces the old header "Menu" button
+// entirely: with this always on screen there's nothing left for a hamburger
+// to do. Horizontally scrollable (confirmed preference) so 9 icons (Home +
+// 8 modules) never wrap or crowd the pill.
+export function GlassMobileDock() {
   const path = usePathname()
   const isHome = path === '/'
-  if (!open) return null
-
   return (
-    <BottomSheet title="Modules" onClose={onClose}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
-        <Tile href="/" label="Dashboard" icon={HomeIcon} active={isHome} onClose={onClose} />
-        {[...GLOBAL_NAV, ...GLOBAL_NAV_MORE].map(n => (
-          <Tile key={n.href} href={n.href} label={n.label} icon={n.icon} active={isPathActive(path, n.href)} onClose={onClose} />
-        ))}
+    <div className="md:hidden" style={{
+      position: 'fixed', left: 16, right: 16, bottom: 16, zIndex: 50,
+      display: 'flex', justifyContent: 'center',
+    }}>
+      <div className="no-scrollbar" style={{
+        ...navGlass, borderRadius: 999, padding: '8px 10px', maxWidth: '100%',
+        display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto',
+      }}>
+        <Link href="/" title="Home" style={{
+          width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none',
+          ...(isHome ? { background: 'rgb(var(--l-green))', boxShadow: '0 4px 14px rgba(46,125,79,0.35)' } : {}),
+        }}>
+          <HomeIcon size={16} color={isHome ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
+        </Link>
+        <div style={{ width: 1, height: 24, background: 'rgb(var(--l-ink) / 0.1)', flexShrink: 0 }} />
+        {[...GLOBAL_NAV, ...GLOBAL_NAV_MORE].map(n => {
+          const active = isPathActive(path, n.href)
+          const Icon = n.icon
+          return (
+            <Link key={n.href} href={n.href} title={n.label} style={{
+              width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none',
+              ...(active ? { background: 'rgb(var(--l-green))', boxShadow: '0 4px 14px rgba(46,125,79,0.35)' } : {}),
+            }}>
+              <Icon size={16} color={active ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
+            </Link>
+          )
+        })}
       </div>
-
-      {config && config.groups.map((group: NavGroup, gi: number) => (
-        <div key={group.title ?? gi}>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '14px 4px 8px' }}>
-            {group.title ?? config.name}
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
-            {group.items.map(it => (
-              <Tile key={it.href} href={it.href} label={it.label} icon={it.icon}
-                active={it.href === config.home ? path === it.href : isPathActive(path, it.href)} onClose={onClose} />
-            ))}
-          </div>
-        </div>
-      ))}
-
-      {actions.length > 0 && (
-        <div>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '14px 4px 8px' }}>Quick actions</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
-            {actions.map(a => (
-              <Tile key={a.label} href={a.href} label={a.label} icon={a.icon} onClick={a.onClick} onClose={onClose} />
-            ))}
-          </div>
-        </div>
-      )}
-    </BottomSheet>
+    </div>
   )
 }
 
@@ -386,14 +366,15 @@ function MobileMenuSheet({ open, onClose, config, actions }: { open: boolean; on
 // Directly visible under the header on mobile — not hidden behind a tap —
 // horizontally scrollable so it never wraps or crowds regardless of how
 // many groups a module has. Same content as the desktop rail (Home + this
-// module's own groups); cross-module switching stays in the Menu sheet
-// above, which already covers it. Tapping a grouped icon opens a small
-// bottom sheet for just that group instead of a small anchored dropdown —
-// deliberate: a dropdown positioned off an icon inside a horizontally
-// scrolling row is exactly the kind of overflow/positioning problem that
-// caused real bugs earlier in this rework (overflow-x:auto silently forces
-// overflow-y:auto too, clipping anything that opens outside the row's own
-// box) — a sheet rendered as a sibling of the row sidesteps that outright.
+// module's own groups); cross-module switching is GlassMobileDock's job now
+// (floating pill, bottom of screen, every page). Tapping a grouped icon
+// opens a small bottom sheet for just that group instead of a small
+// anchored dropdown — deliberate: a dropdown positioned off an icon inside
+// a horizontally scrolling row is exactly the kind of overflow/positioning
+// problem that caused real bugs earlier in this rework (overflow-x:auto
+// silently forces overflow-y:auto too, clipping anything that opens outside
+// the row's own box) — a sheet rendered as a sibling of the row sidesteps
+// that outright.
 export function GlassMobileRow({ config }: { config: ModuleConfig }) {
   const path = usePathname()
   const isActive = (href: string) => href === config.home ? path === href : isPathActive(path, href)
