@@ -289,44 +289,36 @@ export function GlassSidebar({ config }: { config: ModuleConfig }) {
   )
 }
 
-// ── Mobile menu sheet ─────────────────────────────────────────────────────
-// One button in the header opens this instead of a horizontal icon row —
-// a row either wrapped into a messy second line (modules with lots of
-// groups) or felt crammed (Home + divider + groups + quick-actions all in
-// one 42px-tall strip), depending on the module. A full-height sheet has
-// room for labels next to every icon (no more guessing what an unlabeled
-// circle does) and never needs to wrap or crowd anything.
-function MobileMenuSheet({ open, onClose, config, actions }: { open: boolean; onClose: () => void; config?: ModuleConfig; actions: QuickAction[] }) {
-  const path = usePathname()
-  const isHome = path === '/'
-  if (!open) return null
-
-  // href-based tiles are real links (navigate + close); onClick-only tiles
-  // (an action with no href, e.g. an in-page modal trigger) render as a
-  // plain button instead of a Link with a fake "#" href.
-  const Tile = ({ href, label, icon: Icon, active, onClick }: { href?: string; label: string; icon: any; active?: boolean; onClick?: () => void }) => {
-    const inner = (
-      <>
-        <span style={{
-          width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          ...(active ? { background: 'rgb(var(--l-green))' } : { ...navGlass }),
-        }}>
-          <Icon size={17} color={active ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
-        </span>
-        <span style={{ fontSize: 11.5, fontWeight: 600, lineHeight: 1.2 }}>{label}</span>
-      </>
-    )
-    const tileStyle: React.CSSProperties = {
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center',
-      padding: '14px 8px', borderRadius: 16, textDecoration: 'none', border: 'none', background: 'transparent', cursor: 'pointer',
-      color: active ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.75)',
-      ...(active ? { background: 'rgb(var(--l-green) / 0.1)' } : {}),
-    }
-    return href
-      ? <Link href={href} onClick={onClick ?? onClose} className="glass-tile" style={tileStyle}>{inner}</Link>
-      : <button onClick={() => { onClick?.(); onClose() }} className="glass-tile" style={tileStyle}>{inner}</button>
+// href-based tiles are real links (navigate + close); onClick-only tiles
+// (an action with no href, e.g. an in-page modal trigger) render as a plain
+// button instead of a Link with a fake "#" href. Shared by the full menu
+// sheet and the per-group sheets the mobile row opens.
+function Tile({ href, label, icon: Icon, active, onClick, onClose }: { href?: string; label: string; icon: any; active?: boolean; onClick?: () => void; onClose: () => void }) {
+  const inner = (
+    <>
+      <span style={{
+        width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        ...(active ? { background: 'rgb(var(--l-green))' } : { ...navGlass }),
+      }}>
+        <Icon size={17} color={active ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
+      </span>
+      <span style={{ fontSize: 11.5, fontWeight: 600, lineHeight: 1.2 }}>{label}</span>
+    </>
+  )
+  const tileStyle: React.CSSProperties = {
+    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center',
+    padding: '14px 8px', borderRadius: 16, textDecoration: 'none', border: 'none', background: 'transparent', cursor: 'pointer',
+    color: active ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.75)',
+    ...(active ? { background: 'rgb(var(--l-green) / 0.1)' } : {}),
   }
+  return href
+    ? <Link href={href} onClick={onClick ?? onClose} className="glass-tile" style={tileStyle}>{inner}</Link>
+    : <button onClick={() => { onClick?.(); onClose() }} className="glass-tile" style={tileStyle}>{inner}</button>
+}
 
+// Bare bottom-sheet shell — backdrop + rounded glass panel + a title, used
+// by both the full menu sheet and the per-group sheet the mobile row opens.
+function BottomSheet({ title, onClose, children }: { title?: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="md:hidden">
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.35)' }} />
@@ -335,41 +327,139 @@ function MobileMenuSheet({ open, onClose, config, actions }: { open: boolean; on
         ...flyoutGlass, borderRadius: '28px 28px 0 0', padding: '10px 16px calc(env(safe-area-inset-bottom, 0px) + 20px)',
       }}>
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgb(var(--l-ink) / 0.15)', margin: '4px auto 14px' }} />
-
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '0 4px 8px' }}>Modules</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
-          <Tile href="/" label="Dashboard" icon={HomeIcon} active={isHome} />
-          {[...GLOBAL_NAV, ...GLOBAL_NAV_MORE].map(n => (
-            <Tile key={n.href} href={n.href} label={n.label} icon={n.icon} active={isPathActive(path, n.href)} />
-          ))}
-        </div>
-
-        {config && config.groups.map((group: NavGroup, gi: number) => (
-          <div key={group.title ?? gi}>
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '14px 4px 8px' }}>
-              {group.title ?? config.name}
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
-              {group.items.map(it => (
-                <Tile key={it.href} href={it.href} label={it.label} icon={it.icon}
-                  active={it.href === config.home ? path === it.href : isPathActive(path, it.href)} />
-              ))}
-            </div>
-          </div>
-        ))}
-
-        {actions.length > 0 && (
-          <div>
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '14px 4px 8px' }}>Quick actions</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
-              {actions.map(a => (
-                <Tile key={a.label} href={a.href} label={a.label} icon={a.icon} onClick={a.onClick} />
-              ))}
-            </div>
-          </div>
-        )}
+        {title && <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '0 4px 8px' }}>{title}</p>}
+        {children}
       </div>
     </div>
+  )
+}
+
+// ── Mobile menu sheet ─────────────────────────────────────────────────────
+// The header's "Menu" button opens this — every module, the current
+// module's own pages, and quick actions, as labeled tiles instead of
+// unlabeled circles. Complements GlassMobileRow below (quick glanceable
+// access to the current module's own groups) rather than replacing it —
+// this is the comprehensive one, including cross-module switching.
+function MobileMenuSheet({ open, onClose, config, actions }: { open: boolean; onClose: () => void; config?: ModuleConfig; actions: QuickAction[] }) {
+  const path = usePathname()
+  const isHome = path === '/'
+  if (!open) return null
+
+  return (
+    <BottomSheet title="Modules" onClose={onClose}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+        <Tile href="/" label="Dashboard" icon={HomeIcon} active={isHome} onClose={onClose} />
+        {[...GLOBAL_NAV, ...GLOBAL_NAV_MORE].map(n => (
+          <Tile key={n.href} href={n.href} label={n.label} icon={n.icon} active={isPathActive(path, n.href)} onClose={onClose} />
+        ))}
+      </div>
+
+      {config && config.groups.map((group: NavGroup, gi: number) => (
+        <div key={group.title ?? gi}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '14px 4px 8px' }}>
+            {group.title ?? config.name}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+            {group.items.map(it => (
+              <Tile key={it.href} href={it.href} label={it.label} icon={it.icon}
+                active={it.href === config.home ? path === it.href : isPathActive(path, it.href)} onClose={onClose} />
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {actions.length > 0 && (
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgb(var(--l-ink) / 0.4)', padding: '14px 4px 8px' }}>Quick actions</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+            {actions.map(a => (
+              <Tile key={a.label} href={a.href} label={a.label} icon={a.icon} onClick={a.onClick} onClose={onClose} />
+            ))}
+          </div>
+        </div>
+      )}
+    </BottomSheet>
+  )
+}
+
+// ── Mobile row ────────────────────────────────────────────────────────────
+// Directly visible under the header on mobile — not hidden behind a tap —
+// horizontally scrollable so it never wraps or crowds regardless of how
+// many groups a module has. Same content as the desktop rail (Home + this
+// module's own groups); cross-module switching stays in the Menu sheet
+// above, which already covers it. Tapping a grouped icon opens a small
+// bottom sheet for just that group instead of a small anchored dropdown —
+// deliberate: a dropdown positioned off an icon inside a horizontally
+// scrolling row is exactly the kind of overflow/positioning problem that
+// caused real bugs earlier in this rework (overflow-x:auto silently forces
+// overflow-y:auto too, clipping anything that opens outside the row's own
+// box) — a sheet rendered as a sibling of the row sidesteps that outright.
+export function GlassMobileRow({ config }: { config: ModuleConfig }) {
+  const path = usePathname()
+  const isActive = (href: string) => href === config.home ? path === href : isPathActive(path, href)
+  const isHome = path === '/'
+  const [openGroup, setOpenGroup] = useState<NavGroup | null>(null)
+  const [actionsOpen, setActionsOpen] = useState(false)
+  const actions = (config.actions ?? []) as QuickAction[]
+
+  return (
+    <>
+      {/* Outer: glass background only, no overflow (so nothing here can
+          clip anything). Inner: the actual scroll container — transparent,
+          so the outer glass shows through it. */}
+      <div className="md:hidden" style={{ margin: '10px 12px 0', ...navGlass, borderRadius: 22 }}>
+        <div className="no-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', overflowX: 'auto' }}>
+          <Link href="/" title="Home" style={{
+            width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none',
+            ...(isHome ? { background: 'rgb(var(--l-green))', boxShadow: '0 4px 14px rgba(46,125,79,0.35)' } : {}),
+          }}>
+            <HomeIcon size={16} color={isHome ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
+          </Link>
+          <div style={{ width: 1, height: 24, background: 'rgb(var(--l-ink) / 0.1)', flexShrink: 0 }} />
+          {config.groups.map((group: NavGroup, gi: number) =>
+            group.title ? (
+              <button key={group.title} onClick={() => setOpenGroup(group)} title={group.title} style={{
+                width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                border: 'none', cursor: 'pointer',
+                ...(group.items.some(it => isActive(it.href)) ? { background: 'rgb(var(--l-green) / 0.16)', border: '1px solid rgb(var(--l-green) / 0.3)' } : {}),
+              }}>
+                {(() => { const Icon = group.items[0].icon; return <Icon size={16} color={group.items.some(it => isActive(it.href)) ? 'rgb(var(--l-green))' : 'rgb(var(--l-ink) / 0.6)'} /> })()}
+              </button>
+            ) : group.items.map(it => (
+              <RailLeaf key={it.href} href={it.href} icon={it.icon} label={it.label} active={isActive(it.href)} />
+            ))
+          )}
+          {actions.length > 0 && (
+            <button onClick={() => setActionsOpen(true)} title="New" style={{
+              width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              border: 'none', cursor: 'pointer', background: 'rgb(var(--l-ink))', color: '#fff',
+            }}>
+              <Plus size={16} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {openGroup && (
+        <BottomSheet title={openGroup.title} onClose={() => setOpenGroup(null)}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+            {openGroup.items.map(it => (
+              <Tile key={it.href} href={it.href} label={it.label} icon={it.icon} active={isActive(it.href)} onClose={() => setOpenGroup(null)} />
+            ))}
+          </div>
+        </BottomSheet>
+      )}
+
+      {actionsOpen && (
+        <BottomSheet title="Quick actions" onClose={() => setActionsOpen(false)}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+            {actions.map(a => (
+              <Tile key={a.label} href={a.href} label={a.label} icon={a.icon} onClick={a.onClick} onClose={() => setActionsOpen(false)} />
+            ))}
+          </div>
+        </BottomSheet>
+      )}
+    </>
   )
 }
 

@@ -2,16 +2,17 @@
 import { usePathname } from 'next/navigation'
 import type { LucideIcon } from 'lucide-react'
 import { FloatingMascot } from '@/components/ui/FloatingMascot'
-import { GlassHeader, GlassHeaderSpacer, GlassSidebar } from './GlassChrome'
+import { GlassHeader, GlassHeaderSpacer, GlassSidebar, GlassMobileRow } from './GlassChrome'
 import { QuickAction } from '@/components/ledger/QuickMenu'
 import { cn } from '@/lib/utils'
 
 // ── Life OS navigation, v5 (Glass) ───────────────────────────────────────────
-// Floating glass header on every page. Desktop gets a floating icon rail for
-// the current module's page list. Mobile gets a single "Menu" button in the
-// header instead of its own bar — that bar (tried first) either wrapped
-// into a messy second row or felt crammed, depending on the module — the
-// button opens a full glass bottom sheet with room for real labels.
+// Floating glass header on every page, with a "Menu" button (mobile) that
+// opens a full sheet covering every module + this module's pages + quick
+// actions. Desktop also gets a floating icon rail; mobile also gets
+// GlassMobileRow — the same rail content, directly visible (not behind a
+// tap) right under the header, horizontally scrollable so it never wraps or
+// crowds regardless of how many groups a module has.
 
 export interface NavItem      { href: string; label: string; icon: LucideIcon }
 export interface NavGroup     { title?: string; items: NavItem[] }
@@ -42,6 +43,7 @@ export function AppShell({ config, children }: { config: ModuleConfig; children:
     <div className="min-h-screen bg-ldg-paper text-ldg-ink">
       <GlassHeader actions={(config.actions ?? []) as QuickAction[]} config={config} />
       <GlassHeaderSpacer />
+      <GlassMobileRow config={config} />
 
       {/* GlassSidebar is position:fixed (matches the one version of this
           chrome that actually got proven out, the finance-live beta) — not
