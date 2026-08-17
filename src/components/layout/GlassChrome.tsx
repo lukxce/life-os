@@ -320,76 +320,38 @@ function BottomSheet({ title, onClose, children }: { title?: string; onClose: ()
 }
 
 // ── Mobile dock ───────────────────────────────────────────────────────────
-// Floating pill, bottom of the screen, inset from all three edges (not a
-// full-width bar) — the global module switcher, always visible on every
-// page (module pages and Home alike). Replaces the old header "Menu" button
-// entirely: with this always on screen there's nothing left for a hamburger
-// to do. Horizontally scrollable (confirmed preference) so 9 icons (Home +
-// 8 modules) never wrap or crowd the pill.
-export function GlassMobileDock() {
+// One floating pill, bottom of the screen, inset from all three edges (not
+// a full-width bar) — content is context-dependent, not two separate rows
+// stacked on top of each other: on a module page it's THAT module's own
+// groups (matching the desktop rail), because you're already there and
+// don't need the global switcher cluttering the view; on Home (no config)
+// it's the global module switcher instead. Home is always the first icon
+// either way, as the one consistent escape hatch back out. Horizontally
+// scrollable so it never wraps or crowds regardless of how many icons.
+// Tapping a grouped icon opens a small bottom sheet for just that group
+// instead of a small anchored dropdown — deliberate: a dropdown positioned
+// off an icon inside a horizontally scrolling row is exactly the kind of
+// overflow/positioning problem that caused real bugs earlier in this rework
+// (overflow-x:auto silently forces overflow-y:auto too, clipping anything
+// that opens outside the row's own box) — a sheet rendered as a sibling of
+// the row sidesteps that outright.
+export function GlassMobileDock({ config, actions = [] }: { config?: ModuleConfig; actions?: QuickAction[] }) {
   const path = usePathname()
   const isHome = path === '/'
-  return (
-    <div className="md:hidden" style={{
-      position: 'fixed', left: 16, right: 16, bottom: 16, zIndex: 50,
-      display: 'flex', justifyContent: 'center',
-    }}>
-      <div className="no-scrollbar" style={{
-        ...navGlass, borderRadius: 999, padding: '8px 10px', maxWidth: '100%',
-        display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto',
-      }}>
-        <Link href="/" title="Home" style={{
-          width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none',
-          ...(isHome ? { background: 'rgb(var(--l-green))', boxShadow: '0 4px 14px rgba(46,125,79,0.35)' } : {}),
-        }}>
-          <HomeIcon size={16} color={isHome ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
-        </Link>
-        <div style={{ width: 1, height: 24, background: 'rgb(var(--l-ink) / 0.1)', flexShrink: 0 }} />
-        {[...GLOBAL_NAV, ...GLOBAL_NAV_MORE].map(n => {
-          const active = isPathActive(path, n.href)
-          const Icon = n.icon
-          return (
-            <Link key={n.href} href={n.href} title={n.label} style={{
-              width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none',
-              ...(active ? { background: 'rgb(var(--l-green))', boxShadow: '0 4px 14px rgba(46,125,79,0.35)' } : {}),
-            }}>
-              <Icon size={16} color={active ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
-            </Link>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ── Mobile row ────────────────────────────────────────────────────────────
-// Directly visible under the header on mobile — not hidden behind a tap —
-// horizontally scrollable so it never wraps or crowds regardless of how
-// many groups a module has. Same content as the desktop rail (Home + this
-// module's own groups); cross-module switching is GlassMobileDock's job now
-// (floating pill, bottom of screen, every page). Tapping a grouped icon
-// opens a small bottom sheet for just that group instead of a small
-// anchored dropdown — deliberate: a dropdown positioned off an icon inside
-// a horizontally scrolling row is exactly the kind of overflow/positioning
-// problem that caused real bugs earlier in this rework (overflow-x:auto
-// silently forces overflow-y:auto too, clipping anything that opens outside
-// the row's own box) — a sheet rendered as a sibling of the row sidesteps
-// that outright.
-export function GlassMobileRow({ config }: { config: ModuleConfig }) {
-  const path = usePathname()
-  const isActive = (href: string) => href === config.home ? path === href : isPathActive(path, href)
-  const isHome = path === '/'
+  const isActive = (href: string) => config && href === config.home ? path === href : isPathActive(path, href)
   const [openGroup, setOpenGroup] = useState<NavGroup | null>(null)
   const [actionsOpen, setActionsOpen] = useState(false)
-  const actions = (config.actions ?? []) as QuickAction[]
 
   return (
     <>
-      {/* Outer: glass background only, no overflow (so nothing here can
-          clip anything). Inner: the actual scroll container — transparent,
-          so the outer glass shows through it. */}
-      <div className="md:hidden" style={{ margin: '10px 12px 0', ...navGlass, borderRadius: 22 }}>
-        <div className="no-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', overflowX: 'auto' }}>
+      <div className="md:hidden" style={{
+        position: 'fixed', left: 16, right: 16, bottom: 16, zIndex: 50,
+        display: 'flex', justifyContent: 'center',
+      }}>
+        <div className="no-scrollbar" style={{
+          ...navGlass, borderRadius: 999, padding: '8px 10px', maxWidth: '100%',
+          display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto',
+        }}>
           <Link href="/" title="Home" style={{
             width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none',
             ...(isHome ? { background: 'rgb(var(--l-green))', boxShadow: '0 4px 14px rgba(46,125,79,0.35)' } : {}),
@@ -397,7 +359,8 @@ export function GlassMobileRow({ config }: { config: ModuleConfig }) {
             <HomeIcon size={16} color={isHome ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
           </Link>
           <div style={{ width: 1, height: 24, background: 'rgb(var(--l-ink) / 0.1)', flexShrink: 0 }} />
-          {config.groups.map((group: NavGroup, gi: number) =>
+
+          {config ? config.groups.map((group: NavGroup, gi: number) =>
             group.title ? (
               <button key={group.title} onClick={() => setOpenGroup(group)} title={group.title} style={{
                 width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
@@ -409,7 +372,19 @@ export function GlassMobileRow({ config }: { config: ModuleConfig }) {
             ) : group.items.map(it => (
               <RailLeaf key={it.href} href={it.href} icon={it.icon} label={it.label} active={isActive(it.href)} />
             ))
-          )}
+          ) : [...GLOBAL_NAV, ...GLOBAL_NAV_MORE].map(n => {
+            const active = isPathActive(path, n.href)
+            const Icon = n.icon
+            return (
+              <Link key={n.href} href={n.href} title={n.label} style={{
+                width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none',
+                ...(active ? { background: 'rgb(var(--l-green))', boxShadow: '0 4px 14px rgba(46,125,79,0.35)' } : {}),
+              }}>
+                <Icon size={16} color={active ? '#fff' : 'rgb(var(--l-ink) / 0.6)'} />
+              </Link>
+            )
+          })}
+
           {actions.length > 0 && (
             <button onClick={() => setActionsOpen(true)} title="New" style={{
               width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,

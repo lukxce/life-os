@@ -9,7 +9,6 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { MealPhotoButton } from '@/components/ui/MealPhotoButton'
 import { WeeklyDigestCard } from '@/components/ui/WeeklyDigestCard'
 import { GlassHeader, GlassHeaderSpacer, GlassMobileDock } from '@/components/layout/GlassChrome'
-import { QuickFab } from '@/components/ledger/QuickFab'
 import { QuickAction } from '@/components/ledger/QuickMenu'
 import { Card, Label, SolidBtn, GhostBtn } from '@/components/ledger/primitives'
 import { useHomeData, toLocalDateStr } from '@/hooks/useHomeData'
@@ -77,7 +76,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-ldg-paper text-ldg-ink">
       <GlassHeader actions={HOME_ACTIONS} />
       <GlassHeaderSpacer />
-      <GlassMobileDock />
+      <GlassMobileDock actions={HOME_ACTIONS} />
 
       <div className="max-w-xl mx-auto px-5 py-6 pb-28 space-y-4">
 
@@ -454,8 +453,6 @@ export default function HomePage() {
         </Card>
 
       </div>
-
-      <QuickFab actions={HOME_ACTIONS} />
     </div>
   )
 }
