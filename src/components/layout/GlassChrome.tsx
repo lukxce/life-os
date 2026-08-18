@@ -342,9 +342,16 @@ export function GlassMobileDock({ config, actions = [] }: { config?: ModuleConfi
   const [openGroup, setOpenGroup] = useState<NavGroup | null>(null)
   const [actionsOpen, setActionsOpen] = useState(false)
 
+  // Outer div carries ONLY the md:hidden class, no inline style — same fix
+  // as before, same reason: an inline `display` on the same element as
+  // `md:hidden` outranks it at every width including desktop, since inline
+  // styles beat classes regardless of media queries. Merging the two mobile
+  // nav pieces back into one component reintroduced this exact bug because
+  // the fix lived on the div being deleted, not the one that replaced it.
   return (
     <>
-      <div className="md:hidden" style={{
+      <div className="md:hidden">
+      <div style={{
         position: 'fixed', left: 16, right: 16, bottom: 16, zIndex: 50,
         display: 'flex', justifyContent: 'center',
       }}>
@@ -394,6 +401,7 @@ export function GlassMobileDock({ config, actions = [] }: { config?: ModuleConfi
             </button>
           )}
         </div>
+      </div>
       </div>
 
       {openGroup && (
