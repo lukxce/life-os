@@ -18,6 +18,24 @@ import { prisma } from '@/lib/prisma'
 // workout the same day) rather than an array, to keep the payload — and
 // the Shortcut that builds it — as simple as possible.
 
+// Accepts either a clean "YYYY-MM-DD" (what the Scriptable export-parser
+// sends) or whatever raw string Shortcuts' un-formatted Current Date
+// variable produces when dropped straight into a text field (something like
+// "August 20, 2026 at 12:10 AM") — a Format Date action shouldn't be a
+// precondition for this to work. Either way, only the CALENDAR DAY matters
+// (this is a once-a-day import), so the exact time of day gets discarded
+// and re-anchored to UTC midnight of whichever day the string represents.
+function parseImportDate(raw: string): Date | null {
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (iso) {
+    const d = new Date(Date.UTC(+iso[1], +iso[2] - 1, +iso[3]))
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+  const parsed = new Date(raw)
+  if (Number.isNaN(parsed.getTime())) return null
+  return new Date(Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()))
+}
+
 function mapWorkoutType(raw: string): string {
   const s = raw.toLowerCase()
   if (s.includes('strength') || s.includes('functional') || s.includes('core') || s.includes('weight training')) return 'pt'
@@ -43,9 +61,9 @@ export async function POST(req: NextRequest) {
   if (!body || typeof body.date !== 'string') {
     return NextResponse.json({ error: 'date is required, e.g. "date": "2026-08-20"' }, { status: 400 })
   }
-  const date = new Date(`${body.date}T00:00:00Z`)
-  if (Number.isNaN(date.getTime())) {
-    return NextResponse.json({ error: 'invalid date' }, { status: 400 })
+  const date = parseImportDate(body.date)
+  if (!date) {
+    return NextResponse.json({ error: 'invalid date — send "YYYY-MM-DD" or any date string, e.g. straight from a Current Date variable' }, { status: 400 })
   }
 
   const imported: string[] = []
