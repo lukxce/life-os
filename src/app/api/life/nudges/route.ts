@@ -2,6 +2,8 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { isScheduledDay, utcMidnight } from '@/lib/utils'
+import { daysUntilBillDue, isBillPaidThisMonth } from '@/lib/bills'
+import { computePatterns } from '@/lib/patterns'
 
 // ── The companion's brain, v2 ─────────────────────────────────────────────────
 // Still real signals only — but now every nudge carries a priority score
@@ -58,6 +60,10 @@ export async function GET(req: NextRequest) {
   const localDate = sp.get('date') ?? now.toISOString().slice(0, 10)
   const today = utcMidnight(localDate)
   const [ly, lmo, ld] = localDate.split('-').map(Number)
+  // Client-local "now" as a plain Date, for the bill math shared with the
+  // finance Signals card — both used to compute this independently and
+  // could disagree about the same bill; now there's one implementation.
+  const clientNow = new Date(ly, lmo - 1, ld, hour)
   const jsDow = new Date(localDate + 'T12:00:00Z').getUTCDay()
   const dow = jsDow === 0 ? 7 : jsDow // MealPlanSlot: 1=Mon … 7=Sun
   const streakLookback = new Date(today)
@@ -120,12 +126,9 @@ export async function GET(req: NextRequest) {
   }
 
   // ── Bills: due day passed, no payment recorded this month ─────────────────
-  const monthStart = new Date(Date.UTC(ly, lmo - 1, 1))
-  const overdueBills = bills.filter(b => {
-    if (b.dayOfMonth > ld) return false
-    const lastPaid = b.payments[0]?.paidDate
-    return !lastPaid || new Date(lastPaid) < monthStart
-  })
+  const overdueBills = bills.filter(b =>
+    daysUntilBillDue(b.dayOfMonth, clientNow) <= 0 && !isBillPaidThisMonth(b.payments, clientNow)
+  )
   if (overdueBills.length > 0) {
     nudges.push({
       id: 'bills-overdue',
@@ -253,11 +256,7 @@ export async function GET(req: NextRequest) {
   if (hour < 10) {
     const habitsDueCount = dueToday.length
     const topBillDays = bills
-      .map(b => {
-        const due = new Date(today.getFullYear(), today.getMonth(), b.dayOfMonth)
-        if (due < today) due.setMonth(due.getMonth() + 1)
-        return Math.ceil((due.getTime() - today.getTime()) / 86400000)
-      })
+      .map(b => daysUntilBillDue(b.dayOfMonth, clientNow))
       .filter(d => d <= 3)
     const parts: string[] = []
     if (habitsDueCount > 0) parts.push(`${habitsDueCount} habit${habitsDueCount === 1 ? '' : 's'} today`)
@@ -271,6 +270,20 @@ export async function GET(req: NextRequest) {
         href: '/',
       })
     }
+  }
+
+  // ── Cross-module pattern, if one exists — informational, not actionable,
+  // so it scores low and never crowds out anything that actually needs a
+  // response today. Same detection the Home "Patterns" card uses.
+  const patterns = await computePatterns()
+  if (patterns.length > 0) {
+    nudges.push({
+      id: `insight-${patterns[0].id}`,
+      module: 'home',
+      score: 10,
+      message: patterns[0].text,
+      href: '/',
+    })
   }
 
   nudges.sort((a, b) => b.score - a.score)

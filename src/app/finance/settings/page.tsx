@@ -1,7 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut } from 'lucide-react'
+import { LogOut, Download } from 'lucide-react'
+
+const EXPORTS = [
+  { type: 'expenses', label: 'Expenses' },
+  { type: 'income', label: 'Income' },
+  { type: 'bills', label: 'Bills & loans' },
+  { type: 'subscriptions', label: 'Subscriptions' },
+]
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -84,6 +91,23 @@ export default function SettingsPage() {
               Difference from live rate: {((+manualRate / liveRate - 1) * 100).toFixed(2)}%
             </p>
           )}
+        </div>
+      </div>
+
+      <div className="bg-surface/90 dark:bg-surface/70 rounded-xl border border-black/10 dark:border-white/10 p-6 space-y-4">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Export data</h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            Plain CSV, everything currently in the table — for a backup, or to open in a spreadsheet.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {EXPORTS.map(e => (
+            <a key={e.type} href={`/api/finance/export?type=${e.type}`} download
+              className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+              <Download size={14} className="text-ldg-ink/40" /> {e.label}
+            </a>
+          ))}
         </div>
       </div>
     </div>

@@ -2,20 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getLiveRate } from '@/lib/utils'
-
-function daysUntil(dayOfMonth: number): number {
-  const now = new Date()
-  const due = new Date(now.getFullYear(), now.getMonth(), dayOfMonth)
-  if (due < now) due.setMonth(due.getMonth() + 1)
-  return Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-}
-
-function isPaidThisMonth(payments: { paidDate: Date }[]): boolean {
-  if (!payments?.length) return false
-  const now = new Date()
-  const last = payments[0].paidDate
-  return last.getMonth() === now.getMonth() && last.getFullYear() === now.getFullYear()
-}
+import { daysUntilBillDue, isBillPaidThisMonth } from '@/lib/bills'
 
 export async function GET() {
   const now = new Date()
@@ -34,8 +21,8 @@ export async function GET() {
 
   // ── Bills due within 3 days (includes already-overdue) ──────────────────
   const billsDueSoon = bills
-    .filter(b => !isPaidThisMonth(b.payments))
-    .map(b => ({ id: b.id, name: b.name, amount: b.amount, currency: b.currency, daysUntil: daysUntil(b.dayOfMonth) }))
+    .filter(b => !isBillPaidThisMonth(b.payments, now))
+    .map(b => ({ id: b.id, name: b.name, amount: b.amount, currency: b.currency, daysUntil: daysUntilBillDue(b.dayOfMonth, now) }))
     .filter(b => b.daysUntil <= 3)
     .sort((a, b) => a.daysUntil - b.daysUntil)
 

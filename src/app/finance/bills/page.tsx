@@ -4,23 +4,17 @@ import { Plus, Trash2, Pencil, CheckCircle, CalendarDays } from 'lucide-react'
 import { toast } from 'sonner'
 import { NumberInput } from '@/components/ui/NumberInput'
 import { cn } from '@/lib/utils'
+import { daysUntilBillDue, isBillPaidThisMonth } from '@/lib/bills'
 import { Card, SolidBtn } from '@/components/ledger/primitives'
 
 const defaultForm = { name: '', amount: '', currency: 'RSD', category: '', subcategory: '', accountId: '', dayOfMonth: '1', notes: '', isLoan: false, lender: '', loanEndDate: '', type: 'personal' }
 
-function daysUntil(dayOfMonth: number): number {
-  const now = new Date()
-  const due = new Date(now.getFullYear(), now.getMonth(), dayOfMonth)
-  if (due < now) due.setMonth(due.getMonth() + 1)
-  return Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-}
-
-function isPaidThisMonth(payments: any[]): boolean {
-  if (!payments?.length) return false
-  const now = new Date()
-  const last = new Date(payments[0].paidDate)
-  return last.getMonth() === now.getMonth() && last.getFullYear() === now.getFullYear()
-}
+// Thin same-signature wrappers — this page called these with just
+// (dayOfMonth) / (payments), the shared versions also take `now` (so
+// Signals/nudges can each supply their own reference time).
+const daysUntil = (dayOfMonth: number) => daysUntilBillDue(dayOfMonth, new Date())
+const isPaidThisMonth = (payments: { paidDate: string | Date }[]) =>
+  isBillPaidThisMonth(payments.map(p => ({ paidDate: new Date(p.paidDate) })), new Date())
 
 function statusBadge(days: number, paid: boolean) {
   if (paid) return 'bg-ldg-green/10 text-ldg-green'

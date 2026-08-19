@@ -88,6 +88,14 @@ function useClickOutside(onClose: () => void, active: boolean) {
   return ref
 }
 
+// Module-level (not component state) so it survives GlassHeader remounting —
+// which happens on every module switch, since each module's Shell lives in
+// that module's own layout.tsx. Without this, navigating Finance → Habits →
+// Finance re-fetched signals every single hop, on pages that have nothing
+// to do with finance, just to feed a bell icon nobody had opened yet.
+let signalsCache: { data: any; ts: number } | null = null
+const SIGNALS_TTL_MS = 60_000
+
 // ── Top bar ───────────────────────────────────────────────────────────────
 // `actions` is taken directly (not read off config) — same shape AppHeader
 // used — so Home (which has quick actions but no module rail/groups) can
@@ -98,11 +106,17 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
   const [notifOpen, setNotifOpen] = useState(false)
   const [newOpen, setNewOpen] = useState(false)
   const [moreDesktopOpen, setMoreDesktopOpen] = useState(false)
-  const [signals, setSignals] = useState<any>(null)
+  const [signals, setSignals] = useState<any>(signalsCache?.data ?? null)
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  useEffect(() => { fetch('/api/finance/signals').then(r => r.json()).then(setSignals).catch(() => {}) }, [])
+  useEffect(() => {
+    if (signalsCache && Date.now() - signalsCache.ts < SIGNALS_TTL_MS) return
+    fetch('/api/finance/signals').then(r => r.json()).then(data => {
+      signalsCache = { data, ts: Date.now() }
+      setSignals(data)
+    }).catch(() => {})
+  }, [])
 
   const notifItems: { key: string; text: string; href: string; urgent?: boolean }[] = signals ? [
     ...signals.billsDueSoon.map((b: any) => ({
