@@ -121,16 +121,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, imported })
 }
-
-// Temporary — deletes the fake test rows left over from debugging (steps:1,
-// the old 103/103.2 test weights). Remove after running once.
-export async function DELETE(req: NextRequest) {
-  const key = req.headers.get('x-api-key')
-  if (!process.env.HEALTH_IMPORT_KEY || key !== process.env.HEALTH_IMPORT_KEY) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
-  const result = await prisma.bodyMetric.deleteMany({
-    where: { id: { in: ['cmt0n7qum0000d6439asw05hx', 'cmsywa0d20003tq62o8ret0xg'] } },
-  })
-  return NextResponse.json({ deleted: result.count })
-}
