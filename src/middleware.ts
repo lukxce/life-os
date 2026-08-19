@@ -6,6 +6,7 @@ const PUBLIC_PREFIXES = [
   '/share',              // shared calendar links (top-level route)
   '/life/share',         // legacy share redirect
   '/api/life/public',    // public calendar ICS API (token-gated itself)
+  '/api/fitness/health-import', // Apple Health → iOS Shortcut, PIN login isn't reachable from a Shortcut — own X-API-Key check inside the route instead
   '/login',              // login page itself
   '/api/auth',           // login/logout API
   '/_next',
