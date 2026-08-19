@@ -45,7 +45,7 @@ function parseImportDate(raw: string): Date | null {
     return Number.isNaN(d.getTime()) ? null : d
   }
 
-  const dotted = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\.?/) // D.M.YYYY
+  const dotted = raw.match(/^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\.?/) // D. M. YYYY (Serbian phone locale, may have spaces after each dot)
   if (dotted) {
     const d = new Date(Date.UTC(+dotted[3], +dotted[2] - 1, +dotted[1]))
     return Number.isNaN(d.getTime()) ? null : d
