@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
   }
   const date = parseImportDate(body.date)
   if (!date) {
-    return NextResponse.json({ error: 'invalid date — send "YYYY-MM-DD" or any date string, e.g. straight from a Current Date variable', received: body.date }, { status: 400 })
+    return NextResponse.json({ error: 'invalid date — send "YYYY-MM-DD" or any date string, e.g. straight from a Current Date variable' }, { status: 400 })
   }
 
   const imported: string[] = []
@@ -122,20 +122,15 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, imported })
 }
 
-// Temporary — lets me check what actually landed after a real Shortcuts run,
-// same static key as POST. Remove once the sync is confirmed working.
-export async function GET(req: NextRequest) {
+// Temporary — deletes the fake test rows left over from debugging (steps:1,
+// the old 103/103.2 test weights). Remove after running once.
+export async function DELETE(req: NextRequest) {
   const key = req.headers.get('x-api-key')
   if (!process.env.HEALTH_IMPORT_KEY || key !== process.env.HEALTH_IMPORT_KEY) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
-  const metrics = await prisma.bodyMetric.findMany({
-    orderBy: { date: 'desc' },
-    take: 10,
+  const result = await prisma.bodyMetric.deleteMany({
+    where: { id: { in: ['cmt0n7qum0000d6439asw05hx', 'cmsywa0d20003tq62o8ret0xg'] } },
   })
-  const workouts = await prisma.workoutLog.findMany({
-    orderBy: { date: 'desc' },
-    take: 5,
-  })
-  return NextResponse.json({ metrics, workouts })
+  return NextResponse.json({ deleted: result.count })
 }
