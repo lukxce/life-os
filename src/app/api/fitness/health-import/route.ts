@@ -18,19 +18,39 @@ import { prisma } from '@/lib/prisma'
 // workout the same day) rather than an array, to keep the payload — and
 // the Shortcut that builds it — as simple as possible.
 
-// Accepts either a clean "YYYY-MM-DD" (what the Scriptable export-parser
-// sends) or whatever raw string Shortcuts' un-formatted Current Date
-// variable produces when dropped straight into a text field (something like
-// "August 20, 2026 at 12:10 AM") — a Format Date action shouldn't be a
-// precondition for this to work. Either way, only the CALENDAR DAY matters
-// (this is a once-a-day import), so the exact time of day gets discarded
-// and re-anchored to UTC midnight of whichever day the string represents.
+// Accepts a clean "YYYY-MM-DD" (what the Scriptable export-parser sends) or
+// whatever raw string Shortcuts' un-formatted Current Date variable
+// produces when dropped straight into a text field — a Format Date action
+// shouldn't be a precondition for this to work. Tried a plain `new
+// Date(raw)` for that case first; JS's native parser turned out to choke
+// outright on the literal word "at" in "August 20, 2026 at 12:10 AM" (an
+// actual format Shortcuts produces), so long-month-name and dotted
+// day.month.year (the Serbian date format) are matched explicitly before
+// falling back to native parsing for anything else. Either way, only the
+// CALENDAR DAY matters (this is a once-a-day import) — the exact time of
+// day gets discarded and re-anchored to UTC midnight of whichever day the
+// string represents.
+const MONTH_NAMES = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+
 function parseImportDate(raw: string): Date | null {
   const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
   if (iso) {
     const d = new Date(Date.UTC(+iso[1], +iso[2] - 1, +iso[3]))
     return Number.isNaN(d.getTime()) ? null : d
   }
+
+  const named = raw.toLowerCase().match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2}),?\s+(\d{4})/)
+  if (named) {
+    const d = new Date(Date.UTC(+named[3], MONTH_NAMES.indexOf(named[1]), +named[2]))
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+
+  const dotted = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\.?/) // D.M.YYYY
+  if (dotted) {
+    const d = new Date(Date.UTC(+dotted[3], +dotted[2] - 1, +dotted[1]))
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+
   const parsed = new Date(raw)
   if (Number.isNaN(parsed.getTime())) return null
   return new Date(Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()))
