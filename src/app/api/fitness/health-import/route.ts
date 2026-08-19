@@ -121,3 +121,21 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, imported })
 }
+
+// Temporary — lets me check what actually landed after a real Shortcuts run,
+// same static key as POST. Remove once the sync is confirmed working.
+export async function GET(req: NextRequest) {
+  const key = req.headers.get('x-api-key')
+  if (!process.env.HEALTH_IMPORT_KEY || key !== process.env.HEALTH_IMPORT_KEY) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
+  const metrics = await prisma.bodyMetric.findMany({
+    orderBy: { date: 'desc' },
+    take: 10,
+  })
+  const workouts = await prisma.workoutLog.findMany({
+    orderBy: { date: 'desc' },
+    take: 5,
+  })
+  return NextResponse.json({ metrics, workouts })
+}
