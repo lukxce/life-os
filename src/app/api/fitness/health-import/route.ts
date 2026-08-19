@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
   }
   const date = parseImportDate(body.date)
   if (!date) {
-    return NextResponse.json({ error: 'invalid date — send "YYYY-MM-DD" or any date string, e.g. straight from a Current Date variable' }, { status: 400 })
+    return NextResponse.json({ error: 'invalid date — send "YYYY-MM-DD" or any date string, e.g. straight from a Current Date variable', received: body.date }, { status: 400 })
   }
 
   const imported: string[] = []
