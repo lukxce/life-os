@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
 
   const nudges: Nudge[] = []
 
-  const [habits, mealPlan, mealLogsToday, bills, expenseCount, noExpCfg, lastWeight, contacts, todayLog] = await Promise.all([
+  const [habits, mealPlan, mealLogsToday, bills, expenseCount, noExpCfg, lastWeight, contacts, todayLog, lastJournalEvent] = await Promise.all([
     prisma.habit.findMany({
       where: { active: true, paused: false, category: { not: 'Weekly Check-in' } },
       include: { logs: { where: { date: { gte: streakLookback } }, select: { date: true, completed: true } } },
@@ -84,6 +84,7 @@ export async function GET(req: NextRequest) {
     prisma.bodyMetric.findFirst({ where: { metric: 'weight' }, orderBy: { date: 'desc' } }),
     prisma.contact.findMany(),
     prisma.dailyLog.findUnique({ where: { date: today } }),
+    prisma.journalEvent.findFirst({ orderBy: { date: 'desc' } }),
   ])
 
   // ── Habits: pending in an open window; streaks at risk get top billing ────
@@ -237,6 +238,24 @@ export async function GET(req: NextRequest) {
       score: 35,
       message: `"${slipped.name}" was at ${slipped.lastWeekPct}% last week, only ${slipped.thisWeekPct}% this week — everything okay?`,
       href: '/life/analytics',
+    })
+  }
+
+  // ── Journal tags: prompted "from time to time," not every day — only once
+  // it's been a few days since anything was tagged (alcohol, vitamins,
+  // shared bed, ...), same "stale" idiom as the weight check above. Evening
+  // only, and deliberately fires before the mood-tap nudge below rather than
+  // alongside/after it.
+  const daysSinceJournalEvent = lastJournalEvent ? Math.floor((today.getTime() - lastJournalEvent.date.getTime()) / 86400000) : null
+  if (hour >= 19 && (daysSinceJournalEvent === null || daysSinceJournalEvent >= 3)) {
+    nudges.push({
+      id: 'journal-tag-stale',
+      module: 'life',
+      score: 22,
+      message: daysSinceJournalEvent === null
+        ? "Anything worth tagging today — alcohol, vitamins, poor sleep?"
+        : `Nothing tagged in ${daysSinceJournalEvent} days — anything notable about today?`,
+      href: '/life/day-log',
     })
   }
 
