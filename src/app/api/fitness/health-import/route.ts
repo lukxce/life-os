@@ -250,7 +250,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'nothing recognized in the payload — checked scalar vitals, workoutType, sleep totals, and sleepSegments' }, { status: 400 })
   }
 
-  return NextResponse.json({ ok: true, imported })
+  // TEMP: echo back the exact raw weightKg value+type as received, to
+  // debug a reproducible corrupted-number bug (always the same garbage
+  // digits, even from a brand new Shortcut) — remove once diagnosed.
+  return NextResponse.json({ ok: true, imported, debugWeightKgRaw: body.weightKg, debugWeightKgType: typeof body.weightKg })
 }
 
 // Read-only check, same static key — lets me confirm what actually landed
