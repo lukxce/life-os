@@ -301,13 +301,15 @@ model DailyTask {
 // day's picture (habits, water, meals, tasks) is auto-filled at read time
 // from the tables that already track it — never duplicated here.
 model DailyLog {
-  id        String   @id @default(cuid())
-  userId    String   @default("default")
-  date      DateTime @unique // UTC midnight, the day this entry is for
-  mood      String?  // a single emoji, or null if only notes were left
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                       String    @id @default(cuid())
+  userId                   String    @default("default")
+  date                     DateTime  @unique // UTC midnight, the day this entry is for
+  mood                     String?   // a single emoji, or null if only notes were left
+  notes                    String?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  autoNarrative            String?   @db.Text // AI-authored day recap, generated once a day is over
+  autoNarrativeGeneratedAt DateTime?
 }
 
 model WeeklyDigest {
@@ -355,13 +357,65 @@ model MealPlanSlot {
 }
 
 model WorkoutLog {
+  id              String   @id @default(cuid())
+  userId          String   @default("default")
+  date            DateTime
+  type            String   // "pt" | "cardio_bike" | "cardio_other" | "rest" | "other"
+  duration        Int?
+  notes           String?
+  createdAt       DateTime @default(now())
+  avgHeartRate    Int?
+  maxHeartRate    Int?
+  calories        Int?
+  rawActivityType String?  // untranslated HK activity name, e.g. "Functional Strength Training" — kept alongside the coarse `type` bucket
+  source          String   @default("manual") // "manual" | "apple_health"
+  externalId      String?  @unique            // HealthKit workout UUID — makes re-imports idempotent (upsert instead of blind create)
+}
+
+// One night's sleep, bucketed by wake date (the morning you got up), not the
+// calendar day the segments started on — so the night of Aug 19→20 is
+// bucketed under Aug 20. This matters when correlating a night's sleep score
+// against that same morning's recovery score in vitals.ts.
+// Aggregated minute fields here are DERIVED — recomputed idempotently on
+// every import, never hand-entered. SleepSegment rows are the source of
+// truth for anything needing stage-level detail (e.g. a future hypnogram).
+model SleepSession {
   id        String   @id @default(cuid())
-  userId    String   @default("default")
+  date      DateTime @unique
+  bedTime   DateTime?
+  wakeTime  DateTime?
+  inBedMin  Int?
+  asleepMin Int?      // core + deep + rem + unspecified
+  remMin    Int?
+  coreMin   Int?
+  deepMin   Int?
+  awakeMin  Int?       // interruptions while in bed
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  segments  SleepSegment[]
+}
+
+model SleepSegment {
+  id        String       @id @default(cuid())
+  sessionId String
+  session   SleepSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  stage     String       // "inBed" | "awake" | "asleepCore" | "asleepDeep" | "asleepREM" | "asleepUnspecified"
+  startAt   DateTime
+  endAt     DateTime
+}
+
+// Manual life-event tags ("alcohol", "shared_bed", "vitamins", ...) plus the
+// same tags auto-deduced from meal/habit text by the day-log auto-narrative.
+// Append-only like MealLog/WaterLog — a day can have multiple "alcohol" rows.
+model JournalEvent {
+  id        String   @id @default(cuid())
   date      DateTime
-  type      String   // "pt" | "cardio_bike" | "cardio_other" | "rest" | "other"
-  duration  Int?
+  type      String   // free-form, mirrors BodyMetric.metric
+  source    String   @default("manual") // "manual" (user tap) | "auto" (AI-deduced)
   notes     String?
   createdAt DateTime @default(now())
+  @@index([date])
+  @@index([type, date])
 }
 
 model ScheduleBlock {
@@ -526,10 +580,13 @@ model WatchlistItem {
 // ─── Shared ───────────────────────────────────────────────────────────────────
 
 model Settings {
-  id           String   @id @default("default")
-  userId       String   @default("default") @unique
-  manualRate   Float    @default(117.5)
-  weekStartsOn Int      @default(1)
-  theme        String   @default("light")
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default("default")
+  userId         String   @default("default") @unique
+  manualRate     Float    @default(117.5)
+  weekStartsOn   Int      @default(1)
+  theme          String   @default("light")
+  updatedAt      DateTime @updatedAt
+  maxHeartRate   Int?     // manual override for strain math; falls back to 220-age if birthYear set
+  birthYear      Int?
+  sleepNeedHours Float?   @default(8)
 }
