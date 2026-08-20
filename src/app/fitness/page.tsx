@@ -7,6 +7,7 @@ import { ScoreRing, Delta } from '@/components/ui/synth'
 import { Card, Label, SolidBtn } from '@/components/ledger/primitives'
 import { MealPhotoButton } from '@/components/ui/MealPhotoButton'
 import { cn } from '@/lib/utils'
+import { TRAINING_PLAN, type TrainingIconKey } from '@/lib/trainingPlan'
 
 interface MealSlot { id: string; dayOfWeek: number; mealType: string; name: string; calories: number; protein: number }
 interface WorkoutLog { id: string; date: string; type: string; duration: number | null }
@@ -16,14 +17,8 @@ interface MealLogRow { id: string; mealType: string; description: string | null;
 const KCAL_TARGET = 2100
 const PROTEIN_TARGET = 150
 
-const DAY_PLAN: Record<number, { activity: string; icon: typeof Dumbbell; desc: string }> = {
-  1: { activity: 'PT Session',  icon: Dumbbell,        desc: 'Mon · 60 min gym' },
-  2: { activity: 'Bike Ride',   icon: Bike,            desc: 'Tue · 45–60 min Zone 2' },
-  3: { activity: 'PT Session',  icon: Dumbbell,        desc: 'Wed · 60 min gym' },
-  4: { activity: 'Active Rest', icon: PersonStanding,  desc: 'Thu · long walk 40–50 min' },
-  5: { activity: 'PT Session',  icon: Dumbbell,        desc: 'Fri · 60 min gym' },
-  6: { activity: 'Long Ride',   icon: Bike,            desc: 'Sat · 60–75 min Zone 2' },
-  7: { activity: 'Full Rest',   icon: BedDouble,       desc: 'Sun · casual walk only' },
+const PLAN_ICONS: Record<TrainingIconKey, typeof Dumbbell> = {
+  dumbbell: Dumbbell, bike: Bike, walk: PersonStanding, bed: BedDouble,
 }
 
 const MEAL_ORDER = ['breakfast', 'snack', 'dinner']
@@ -48,7 +43,7 @@ export default function FitnessTodayPage() {
 
   const todayDow = (new Date().getDay() || 7)
   const todayStr = toLocalDate(new Date())
-  const plan     = DAY_PLAN[todayDow]
+  const plan     = TRAINING_PLAN[todayDow]
 
   const load = useCallback(async () => {
     const [mRes, wRes, hRes, bRes, lRes] = await Promise.all([
@@ -101,9 +96,8 @@ export default function FitnessTodayPage() {
   const totalCal   = mealLogs.reduce((a, l) => a + (l.calories ?? 0), 0)
   const totalProt  = mealLogs.reduce((a, l) => a + (l.protein ?? 0), 0)
 
-  // Day is "done" when the planned workout type is logged
-  const expectedType: Record<number, string | null> = { 1: 'pt', 2: 'cardio_bike', 3: 'pt', 4: null, 5: 'pt', 6: 'cardio_bike', 7: null }
-  const wanted = expectedType[todayDow]
+  // Day is "done" when the planned workout type is logged (rest days have no expected type to match)
+  const wanted = plan.type === 'rest' ? null : plan.type
   const todayWorkout = workouts.find(w => w.date.slice(0, 10) === todayStr && (wanted == null || w.type === wanted))
 
   const lastWeight = weights.at(-1) ?? null
@@ -111,7 +105,7 @@ export default function FitnessTodayPage() {
   const weightDelta = lastWeight && prevWeight ? Math.round((lastWeight.value - prevWeight.value) * 10) / 10 : null
 
   const today = new Date()
-  const PlanIcon = plan.icon
+  const PlanIcon = PLAN_ICONS[plan.iconKey]
 
   if (loading) return (
     <div className="max-w-5xl mx-auto space-y-4">

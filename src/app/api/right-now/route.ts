@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { isScheduledDay, utcMidnight } from '@/lib/utils'
 import { parseICS, type ICSEvent } from '@/lib/ics'
+import { TRAINING_PLAN } from '@/lib/trainingPlan'
 
 // ── Real, first-party data only. No invented urgency, no fake countdowns. ──
 // "Now" is always the CLIENT's local clock, passed in as query params — the
@@ -12,16 +13,6 @@ import { parseICS, type ICSEvent } from '@/lib/ics'
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 const MEAL_TIMES: Record<string, string> = { breakfast: '12:00', snack: '15:30', dinner: '19:00' }
-const TRAINING_PLAN: Record<number, { activity: string; type: 'pt' | 'cardio_bike' | 'rest' }> = {
-  1: { activity: 'PT Session',  type: 'pt' },
-  2: { activity: 'Bike Ride',   type: 'cardio_bike' },
-  3: { activity: 'PT Session',  type: 'pt' },
-  4: { activity: 'Active Rest', type: 'rest' },
-  5: { activity: 'PT Session',  type: 'pt' },
-  6: { activity: 'Long Ride',   type: 'cardio_bike' },
-  7: { activity: 'Full Rest',   type: 'rest' },
-}
-
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(':').map(Number)
   return h * 60 + (m ?? 0)

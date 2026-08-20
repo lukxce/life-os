@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { computeRecovery, computeSleepScore, type RecoveryResult } from '@/lib/vitals'
 
 // ── Cross-module patterns ─────────────────────────────────────────────────
 // Nothing in the app connects modules to each other today — every mascot
@@ -106,6 +107,90 @@ export async function computePatterns(): Promise<PatternFinding[]> {
           id: 'mood-vs-habits',
           text: `Mood runs ${diff > 0 ? 'higher' : 'lower'} in weeks with 75%+ habit completion `
             + `(avg ${r.hiAvg.toFixed(1)}/5 vs ${r.loAvg.toFixed(1)}/5) — last ${pool.length} weeks with mood + habit data.`,
+        })
+      }
+    }
+  }
+
+  findings.push(...await computeJournalCorrelations())
+
+  return findings
+}
+
+// ── Journal-event correlations ──────────────────────────────────────────────
+// Day-bucketed (not week-bucketed like everything above) — does a manually-
+// tagged JournalEvent ("alcohol", "shared_bed", ...) predict next-morning
+// Recovery/Sleep? Bounded hard on cost: computeRecovery/computeSleepScore
+// each do several DB queries, and this runs on every Home load via
+// computePatterns(), so both the event-types considered and the "without"
+// control-group sample are capped regardless of how far back the lookback
+// window goes — this is NOT the place for an exhaustive scan.
+
+const JOURNAL_LOOKBACK_DAYS = 60
+const MIN_EVENT_NIGHTS = 3
+const MAX_CONTROL_SAMPLE = 15
+
+function isoDay(d: Date) { return d.toISOString().slice(0, 10) }
+function nextDayIso(d: Date) { const n = new Date(d); n.setUTCDate(n.getUTCDate() + 1); return isoDay(n) }
+
+async function computeJournalCorrelations(): Promise<PatternFinding[]> {
+  const findings: PatternFinding[] = []
+  const end = new Date(); end.setUTCHours(0, 0, 0, 0)
+  const start = new Date(end); start.setUTCDate(start.getUTCDate() - JOURNAL_LOOKBACK_DAYS)
+
+  const events = await prisma.journalEvent.findMany({ where: { date: { gte: start, lt: end } }, select: { date: true, type: true } })
+  if (events.length === 0) return findings
+
+  const byType = new Map<string, Date[]>()
+  for (const e of events) {
+    if (!byType.has(e.type)) byType.set(e.type, [])
+    byType.get(e.type)!.push(e.date)
+  }
+  const qualifying = Array.from(byType.entries()).filter(([, dates]) => dates.length >= MIN_EVENT_NIGHTS)
+  if (qualifying.length === 0) return findings
+
+  const eventDaySet = new Set(events.map(e => isoDay(e.date)))
+  const nonEventDays: Date[] = []
+  for (let d = new Date(start); d < end && nonEventDays.length < MAX_CONTROL_SAMPLE; d.setUTCDate(d.getUTCDate() + 1)) {
+    if (!eventDaySet.has(isoDay(d))) nonEventDays.push(new Date(d))
+  }
+  if (nonEventDays.length < MIN_EVENT_NIGHTS) return findings
+
+  for (const [type, dates] of qualifying) {
+    const [withRecovery, withoutRecovery] = await Promise.all([
+      Promise.all(dates.map(d => computeRecovery(nextDayIso(d)))),
+      Promise.all(nonEventDays.map(d => computeRecovery(nextDayIso(d)))),
+    ])
+    const withOk = withRecovery.filter((r): r is RecoveryResult => r.status === 'ok')
+    const withoutOk = withoutRecovery.filter((r): r is RecoveryResult => r.status === 'ok')
+    if (withOk.length >= MIN_EVENT_NIGHTS && withoutOk.length >= MIN_EVENT_NIGHTS) {
+      const withAvg = withOk.reduce((s, r) => s + r.score, 0) / withOk.length
+      const withoutAvg = withoutOk.reduce((s, r) => s + r.score, 0) / withoutOk.length
+      const diff = withoutAvg - withAvg
+      if (Math.abs(diff) >= 5) {
+        findings.push({
+          id: `journal-${type}-recovery`,
+          text: `Nights with "${type}" logged are followed by ~${Math.round(Math.abs(diff))}% ${diff > 0 ? 'lower' : 'higher'} recovery the next morning `
+            + `(${Math.round(withAvg)}% vs ${Math.round(withoutAvg)}%) — ${withOk.length} nights with data.`,
+        })
+      }
+    }
+
+    const [withSleep, withoutSleep] = await Promise.all([
+      Promise.all(dates.map(d => computeSleepScore(nextDayIso(d)))),
+      Promise.all(nonEventDays.map(d => computeSleepScore(nextDayIso(d)))),
+    ])
+    const withSleepOk = withSleep.filter((s): s is NonNullable<typeof s> => s !== null)
+    const withoutSleepOk = withoutSleep.filter((s): s is NonNullable<typeof s> => s !== null)
+    if (withSleepOk.length >= MIN_EVENT_NIGHTS && withoutSleepOk.length >= MIN_EVENT_NIGHTS) {
+      const withAvg = withSleepOk.reduce((s, r) => s + r.score, 0) / withSleepOk.length
+      const withoutAvg = withoutSleepOk.reduce((s, r) => s + r.score, 0) / withoutSleepOk.length
+      const diff = withoutAvg - withAvg
+      if (Math.abs(diff) >= 5) {
+        findings.push({
+          id: `journal-${type}-sleep`,
+          text: `Nights with "${type}" logged score ~${Math.round(Math.abs(diff))}% ${diff > 0 ? 'lower' : 'higher'} on sleep `
+            + `(${Math.round(withAvg)}% vs ${Math.round(withoutAvg)}%) — ${withSleepOk.length} nights with data.`,
         })
       }
     }
