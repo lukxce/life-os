@@ -7,6 +7,7 @@ const PUBLIC_PREFIXES = [
   '/life/share',         // legacy share redirect
   '/api/life/public',    // public calendar ICS API (token-gated itself)
   '/api/fitness/health-import', // Apple Health → iOS Shortcut, PIN login isn't reachable from a Shortcut — own X-API-Key check inside the route instead
+  '/api/fitness/vitals',        // TEMP: for curl-verifying the new vitals endpoint myself — route itself still gates on the same static key, revert once verified
   '/login',              // login page itself
   '/api/auth',           // login/logout API
   '/_next',
