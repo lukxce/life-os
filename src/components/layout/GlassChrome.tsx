@@ -155,8 +155,18 @@ export function GlassHeader({ actions }: { actions: QuickAction[] }) {
               logo + 4 tabs + 5-6 icon buttons in one pill; trying to keep
               this "always visible, just scroll" squeezed it down to an
               invisible sliver. Mobile instead gets every module inside the
-              "Menu" button's bottom sheet — see below. */}
-          <div className="hidden md:flex no-scrollbar" style={{ gap: 2, flex: 1, justifyContent: 'center', alignItems: 'center', overflowX: 'auto', minWidth: 0 }}>
+              "Menu" button's bottom sheet — see below.
+              No overflowX here (unlike the mobile dock, which genuinely can
+              overflow with many icons): GLOBAL_NAV is only 4 short pills +
+              "More", which never overflows at any md+ width, and overflow-x
+              on this row is exactly the bug the mobile dock's own comment
+              warns about — setting only one overflow axis to `auto` forces
+              the OTHER axis to `auto` too per the CSS spec, which silently
+              clips the "More" flyout below it since it renders inside this
+              same box. That was the actual cause of "More" looking
+              unclickable on desktop: the toggle worked, the dropdown was
+              just being clipped invisible by its own scroll container. */}
+          <div className="hidden md:flex no-scrollbar" style={{ gap: 2, flex: 1, justifyContent: 'center', alignItems: 'center', minWidth: 0 }}>
             {GLOBAL_NAV.map(n => {
               const active = isPathActive(path, n.href)
               return (
