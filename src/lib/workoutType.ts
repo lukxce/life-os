@@ -1,19 +1,17 @@
 // Canonical workout-type bucket + display config, shared by:
 // - api/fitness/workouts (manual CRUD)
-// - api/fitness/habit-workouts (read-time projection over ticked habits)
 // - api/fitness/health-import (Apple Health → Shortcuts sync)
 // - fitness/workouts/page.tsx (display)
 //
-// Two separate classifiers on purpose, not one merged regex set: they read
-// different vocabularies for different reasons. HealthKit's own activity-type
-// strings ("Functional Strength Training", "Walking", "HIIT") are Apple's
-// controlled vocabulary from a real recorded session — a HealthKit "Walking"
-// workout is genuine cardio. A user's own habit name ("Morning Walk") is
-// casual self-naming where "walk" more often means a leisurely/rest-type
-// activity for this person, not a workout to log training load against.
-// Forcing these through one ruleset would misclassify one domain using the
-// other's assumptions, so they stay distinct — they just share the same
-// output buckets and the same display config below.
+// Workouts used to also be synthesized from ticked habits (a "PT Session"
+// habit checkbox turned into a fake WorkoutLog-shaped row) — removed: once
+// Apple Health import gives real type/duration/HR data, a habit tick is a
+// weaker, easier-to-fake signal than the real thing, and having three
+// sources of truth for "did I work out" was more confusing than useful.
+// classifyFromHealthKitType() reads HealthKit's own controlled activity-type
+// vocabulary ("Functional Strength Training", "Walking", "HIIT") — a
+// HealthKit "Walking" workout is genuine cardio, so it maps differently than
+// a casual habit name like "Morning Walk" used to.
 
 export const WORKOUT_TYPES = [
   { value: 'pt',           label: 'PT Session',     icon: '🏋️', color: 'bg-ldg-ink/[0.06] text-ldg-ink/70' },
@@ -27,21 +25,6 @@ export type WorkoutType = typeof WORKOUT_TYPES[number]['value']
 
 export function workoutTypeConfig(value: string) {
   return WORKOUT_TYPES.find(t => t.value === value) ?? WORKOUT_TYPES[4]
-}
-
-// From a habit's own name (user-typed, casual vocabulary). Returns null for
-// habits that are tracked but shouldn't show up as a "workout" at all
-// (mobility/stretch routines, plain step-count habits).
-const HABIT_EXCLUDE = ['bend', 'circuit', 'bodyweight', 'stretch', 'mobility', 'steps']
-
-export function classifyFromHabitName(name: string): WorkoutType | null {
-  const n = name.toLowerCase()
-  if (HABIT_EXCLUDE.some(k => n.includes(k))) return null
-  if (/(bike|cycl|ride)/.test(n)) return 'cardio_bike'
-  if (/(run|jog|swim|cardio|row)/.test(n)) return 'cardio_other'
-  if (/(pt|gym|train|lift|strength)/.test(n)) return 'pt'
-  if (/(walk|rest|yoga)/.test(n)) return 'rest'
-  return 'other'
 }
 
 // From HealthKit's own workout activity-type string (Apple's controlled

@@ -1,25 +1,32 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { ChevronRight, Droplets, Footprints, Moon, Check, Plus, X, Dumbbell, Bike, PersonStanding, BedDouble } from 'lucide-react'
+import { ChevronRight, Droplets, Footprints, Moon, Check, Plus, X, Dumbbell, Bike, PersonStanding, BedDouble, HeartPulse } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { ScoreRing, Delta } from '@/components/ui/synth'
+import { ScoreRing, Delta, grade } from '@/components/ui/synth'
 import { Card, Label, SolidBtn } from '@/components/ledger/primitives'
 import { MealPhotoButton } from '@/components/ui/MealPhotoButton'
 import { cn } from '@/lib/utils'
 import { TRAINING_PLAN, type TrainingIconKey } from '@/lib/trainingPlan'
+import { KCAL_TARGET, PROTEIN_TARGET_MIN, PROTEIN_TARGET_MAX, EATING_WINDOW, EATING_WINDOW_NOTE } from '@/lib/nutritionTargets'
 
 interface MealSlot { id: string; dayOfWeek: number; mealType: string; name: string; calories: number; protein: number }
 interface WorkoutLog { id: string; date: string; type: string; duration: number | null }
 interface BodyRow   { id: string; date: string; metric: string; value: number }
 interface MealLogRow { id: string; mealType: string; description: string | null; calories: number | null; protein: number | null; createdAt: string }
-
-const KCAL_TARGET = 2100
-const PROTEIN_TARGET = 150
+interface WaterLogRow { id: string; drink: string; volumeMl: number }
+interface VitalsSummary {
+  recovery: { status: 'ok'; score: number } | { status: 'collecting_baseline' }
+  sleep: { status: 'ok'; score: number; asleepMin: number } | null
+  strain: { status: 'ok'; strain: number }
+}
 
 const PLAN_ICONS: Record<TrainingIconKey, typeof Dumbbell> = {
   dumbbell: Dumbbell, bike: Bike, walk: PersonStanding, bed: BedDouble,
 }
+
+const STEPS_TARGET = 10000
+const WATER_TARGET_ML = 3000
 
 const MEAL_ORDER = ['breakfast', 'snack', 'dinner']
 const MEAL_META: Record<string, { emoji: string; time: string }> = {
@@ -36,7 +43,10 @@ export default function FitnessTodayPage() {
   const [meals,    setMeals]    = useState<MealSlot[]>([])
   const [workouts, setWorkouts] = useState<WorkoutLog[]>([])
   const [weights,  setWeights]  = useState<BodyRow[]>([])
+  const [steps,    setSteps]    = useState<number | null>(null)
   const [mealLogs, setMealLogs] = useState<MealLogRow[]>([])
+  const [water,    setWater]    = useState<WaterLogRow[]>([])
+  const [vitals,   setVitals]   = useState<VitalsSummary | null>(null)
   const [loading,  setLoading]  = useState(true)
   const [loggingType, setLoggingType] = useState<string | null>(null)
   const [logText, setLogText] = useState('')
@@ -46,18 +56,26 @@ export default function FitnessTodayPage() {
   const plan     = TRAINING_PLAN[todayDow]
 
   const load = useCallback(async () => {
-    const [mRes, wRes, hRes, bRes, lRes] = await Promise.all([
+    const [mRes, wRes, bRes, lRes, waterRes, vitalsRes] = await Promise.all([
       fetch('/api/fitness/meal-plan'),
       fetch('/api/fitness/workouts?limit=7'),
-      fetch('/api/fitness/habit-workouts?days=2'),
-      fetch('/api/life/body-metrics?metrics=weight'),
+      fetch('/api/life/body-metrics?metrics=weight,steps'),
       fetch(`/api/life/meal-log?date=${todayStr}`),
+      fetch(`/api/life/water?date=${todayStr}`),
+      fetch(`/api/fitness/vitals?date=${todayStr}`, { cache: 'no-store' }),
     ])
-    const [mData, wData, hData, bData, lData] = await Promise.all([mRes.json(), wRes.json(), hRes.json(), bRes.json(), lRes.json()])
+    const [mData, wData, bData, lData, waterData, vitalsData] = await Promise.all([
+      mRes.json(), wRes.json(), bRes.json(), lRes.json(), waterRes.json(), vitalsRes.json(),
+    ])
     setMeals(mData)
-    setWorkouts([...(wData as WorkoutLog[]), ...(hData as WorkoutLog[])])
-    setWeights((bData as BodyRow[]).filter(r => r.metric === 'weight'))
+    setWorkouts(wData as WorkoutLog[])
+    const bodyRows = bData as BodyRow[]
+    setWeights(bodyRows.filter(r => r.metric === 'weight'))
+    const stepsRow = bodyRows.filter(r => r.metric === 'steps').at(-1)
+    setSteps(stepsRow && stepsRow.date.slice(0, 10) === todayStr ? stepsRow.value : null)
     setMealLogs(lData)
+    setWater(waterData)
+    setVitals(vitalsData)
     setLoading(false)
   }, [todayStr])
 
@@ -104,6 +122,10 @@ export default function FitnessTodayPage() {
   const prevWeight = weights.at(-2) ?? null
   const weightDelta = lastWeight && prevWeight ? Math.round((lastWeight.value - prevWeight.value) * 10) / 10 : null
 
+  const waterMl = water.filter(w => w.drink === 'Water').reduce((a, w) => a + w.volumeMl, 0)
+  const hasRecovery = vitals?.recovery.status === 'ok'
+  const hasSleep = vitals?.sleep?.status === 'ok'
+
   const today = new Date()
   const PlanIcon = PLAN_ICONS[plan.iconKey]
 
@@ -141,8 +163,8 @@ export default function FitnessTodayPage() {
           <div className="flex-1 grid grid-cols-1 gap-3.5 min-w-0">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-ldg-ink/55">Protein</p>
-              <p className={cn('font-mono text-[15px] font-semibold mt-0.5', totalProt >= 140 ? 'text-ldg-green' : 'text-ldg-ink/55')}>{totalProt}g</p>
-              <p className="font-mono text-[11px] text-ldg-ink/55 mt-0.5">target 140–160g</p>
+              <p className={cn('font-mono text-[15px] font-semibold mt-0.5', totalProt >= PROTEIN_TARGET_MIN ? 'text-ldg-green' : 'text-ldg-ink/55')}>{totalProt}g</p>
+              <p className="font-mono text-[11px] text-ldg-ink/55 mt-0.5">target {PROTEIN_TARGET_MIN}–{PROTEIN_TARGET_MAX}g</p>
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-ldg-ink/55">Weight</p>
@@ -154,12 +176,45 @@ export default function FitnessTodayPage() {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-ldg-ink/55">Eating window</p>
-              <p className="font-mono text-[15px] font-semibold mt-0.5">12:00 – 20:00</p>
-              <p className="font-mono text-[11px] text-ldg-ink/55 mt-0.5">16:8 IF</p>
+              <p className="font-mono text-[15px] font-semibold mt-0.5">{EATING_WINDOW}</p>
+              <p className="font-mono text-[11px] text-ldg-ink/55 mt-0.5">{EATING_WINDOW_NOTE}</p>
             </div>
           </div>
         </div>
       </Card>
+
+      {/* ── Vitals snapshot ── */}
+      {(hasRecovery || hasSleep) && (
+        <Link href="/fitness/vitals">
+          <Card className="p-4 hover:bg-black/[0.015] dark:hover:bg-white/[0.015] transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <HeartPulse size={13} className="text-ldg-green" />
+                <Label>Vitals</Label>
+              </div>
+              <ChevronRight size={14} className="text-ldg-ink/30" />
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-ldg-ink/[0.07] mt-3">
+              <div className="text-center">
+                <p className={cn('text-lg font-bold tabular-nums', hasRecovery ? grade((vitals!.recovery as { score: number }).score).text : 'text-ldg-ink/30')}>
+                  {hasRecovery ? `${(vitals!.recovery as { score: number }).score}%` : '—'}
+                </p>
+                <p className="text-[10px] uppercase tracking-wide text-ldg-ink/40 mt-0.5">Recovery</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold tabular-nums text-ldg-ink/70">{vitals!.strain.strain.toFixed(1)}</p>
+                <p className="text-[10px] uppercase tracking-wide text-ldg-ink/40 mt-0.5">Strain</p>
+              </div>
+              <div className="text-center">
+                <p className={cn('text-lg font-bold tabular-nums', hasSleep ? grade(vitals!.sleep!.score).text : 'text-ldg-ink/30')}>
+                  {hasSleep ? `${vitals!.sleep!.score}%` : '—'}
+                </p>
+                <p className="text-[10px] uppercase tracking-wide text-ldg-ink/40 mt-0.5">Sleep</p>
+              </div>
+            </div>
+          </Card>
+        </Link>
+      )}
 
       {/* ── Today's meals ── */}
       <Card className="overflow-hidden">
@@ -264,23 +319,31 @@ export default function FitnessTodayPage() {
         </div>
       </Card>
 
-      {/* ── Daily non-negotiables ── */}
+      {/* ── Daily non-negotiables — real numbers where we have them ── */}
       <Card className="overflow-hidden">
         <div className="px-5 py-3.5 border-b border-ldg-ink/[0.07]">
           <Label>Daily non-negotiables</Label>
         </div>
         <div className="px-5 divide-y divide-ldg-ink/[0.07]">
           {[
-            { icon: <Footprints size={16} />, label: '10,000 steps', target: 'min daily' },
-            { icon: <Droplets size={16} />,   label: '3L water',     target: 'stay hydrated' },
-            { icon: <Moon size={16} />,       label: '7.5h sleep',   target: 'lights out 23:30' },
+            { icon: <Footprints size={16} />, label: 'Steps', value: steps, target: STEPS_TARGET, unit: '', fmt: (v: number) => v.toLocaleString() },
+            { icon: <Droplets size={16} />,   label: 'Water', value: waterMl || null, target: WATER_TARGET_ML, unit: 'ml', fmt: (v: number) => `${(v / 1000).toFixed(1)}L` },
+            { icon: <Moon size={16} />,       label: 'Sleep', value: hasSleep ? vitals!.sleep!.asleepMin : null, target: 450, unit: 'min', fmt: (v: number) => `${(v / 60).toFixed(1)}h` },
           ].map(item => (
             <div key={item.label} className="flex items-center gap-3 py-3">
               <span className="text-ldg-ink/55">{item.icon}</span>
               <div className="flex-1">
                 <p className="text-[14px] font-medium text-ldg-ink">{item.label}</p>
-                <p className="font-mono text-[11px] text-ldg-ink/55">{item.target}</p>
+                <p className="font-mono text-[11px] text-ldg-ink/55">
+                  {item.value != null ? `${item.fmt(item.value)} of ${item.fmt(item.target)} target` : `target ${item.fmt(item.target)}`}
+                </p>
               </div>
+              {item.value != null && (
+                <span className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wide',
+                  item.value >= item.target ? 'text-ldg-green bg-ldg-green/10' : 'text-ldg-ink/40 bg-ldg-ink/[0.05]')}>
+                  {item.value >= item.target ? 'Done' : `${Math.round((item.value / item.target) * 100)}%`}
+                </span>
+              )}
             </div>
           ))}
         </div>

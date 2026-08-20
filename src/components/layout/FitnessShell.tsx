@@ -1,6 +1,6 @@
 'use client'
 import { AppShell, ModuleConfig } from './AppShell'
-import { LayoutDashboard, UtensilsCrossed, Scale, Dumbbell, HeartPulse } from 'lucide-react'
+import { LayoutDashboard, UtensilsCrossed, Scale, Dumbbell, HeartPulse, NotebookPen } from 'lucide-react'
 
 const config: ModuleConfig = {
   name: 'Fitness',
@@ -17,6 +17,7 @@ const config: ModuleConfig = {
       { href: '/fitness/meal-plan', label: 'Meal Plan', icon: UtensilsCrossed },
       { href: '/fitness/body',      label: 'Body',      icon: Scale },
       { href: '/fitness/workouts',  label: 'Workouts',  icon: Dumbbell },
+      { href: '/life/day-log',      label: 'Day Log',   icon: NotebookPen },
     ]},
   ],
   tabs: [

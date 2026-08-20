@@ -91,3 +91,31 @@ export async function PUT(req: NextRequest) {
   })
   return NextResponse.json(slot)
 }
+
+// Adds a slot beyond the fixed breakfast/snack/dinner three (e.g. a second
+// snack, a post-workout shake) — mealType is the unique-per-day key, so a
+// custom one gets slugified from the name and de-duped with a numeric
+// suffix if it collides, rather than requiring the caller to invent one.
+export async function POST(req: NextRequest) {
+  const { dayOfWeek, name, calories, protein, notes } = await req.json()
+  const cal  = Number(calories) || 0
+  const prot = Number(protein) || 0
+
+  const base = (name || 'meal').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30) || 'meal'
+  let mealType = base
+  let suffix = 1
+  while (await prisma.mealPlanSlot.findUnique({ where: { userId_dayOfWeek_mealType: { userId: 'default', dayOfWeek, mealType } } })) {
+    mealType = `${base}_${++suffix}`
+  }
+
+  const slot = await prisma.mealPlanSlot.create({
+    data: { userId: 'default', dayOfWeek, mealType, name: name || 'New meal', calories: Math.round(cal), protein: Math.round(prot), notes: notes || null },
+  })
+  return NextResponse.json(slot)
+}
+
+export async function DELETE(req: NextRequest) {
+  const { id } = await req.json()
+  await prisma.mealPlanSlot.delete({ where: { id } })
+  return NextResponse.json({ ok: true })
+}

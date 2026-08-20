@@ -1,13 +1,21 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { Dumbbell, Plus, Trash2, X, Timer } from 'lucide-react'
-import Link from 'next/link'
+import { Dumbbell, Plus, Trash2, X, Timer, HeartPulse, Flame } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { WORKOUT_TYPES as TYPES, workoutTypeConfig } from '@/lib/workoutType'
 
+// Real workouts only — Apple Health import (source: 'apple_health', real
+// type/duration/HR/calories from the Watch) or manual entry (source:
+// 'manual'). No more deriving fake workout entries from ticked habits: a
+// habit checkbox is a weaker, easier-to-fake signal than a Watch-recorded
+// session or an honest manual log, and having three sources of truth for
+// "did I work out" was more confusing than useful. The PT Session/Bike Ride
+// habits themselves still exist for whoever wants them for streaks — they
+// just don't feed this page anymore.
 interface WorkoutEntry {
   id: string; date: string; type: string; duration: number | null; notes: string | null
-  source: 'manual' | 'habit'; habitName?: string
+  source: 'manual' | 'apple_health'
+  avgHeartRate: number | null; maxHeartRate: number | null; calories: number | null; rawActivityType: string | null
 }
 
 const typeOf = workoutTypeConfig
@@ -25,31 +33,21 @@ function mondayStr(now: Date) {
 }
 
 export default function WorkoutsPage() {
-  const [manualLogs, setManualLogs] = useState<WorkoutEntry[]>([])
-  const [habitLogs,  setHabitLogs]  = useState<WorkoutEntry[]>([])
-  const [loading,    setLoading]    = useState(true)
-  const [showForm,   setShowForm]   = useState(false)
+  const [logs,      setLogs]      = useState<WorkoutEntry[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [showForm,  setShowForm]  = useState(false)
   const [form, setForm] = useState({ type: 'pt', duration: '', notes: '', date: toLocalDate(new Date()) })
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
-    const [mRes, hRes] = await Promise.all([
-      fetch('/api/fitness/workouts?limit=60'),
-      fetch('/api/fitness/habit-workouts?days=30'),
-    ])
-    const [mData, hData] = await Promise.all([mRes.json(), hRes.json()])
-    setManualLogs((mData as WorkoutEntry[]).map(l => ({ ...l, date: l.date.slice(0, 10), source: 'manual' as const })))
-    setHabitLogs((hData as WorkoutEntry[]).map(l => ({ ...l, source: 'habit' as const })))
+    const res = await fetch('/api/fitness/workouts?limit=60')
+    const data = await res.json()
+    setLogs((data as WorkoutEntry[]).map(l => ({ ...l, date: l.date.slice(0, 10) })))
     setLoading(false)
   }, [])
   useEffect(() => { load() }, [load])
 
-  // Manual entry wins over habit tick for the same date+type
-  const manualKeys = new Set(manualLogs.map(l => `${l.date}|${l.type}`))
-  const allLogs = [
-    ...manualLogs,
-    ...habitLogs.filter(l => !manualKeys.has(`${l.date}|${l.type}`)),
-  ].sort((a, b) => b.date.localeCompare(a.date))
+  const allLogs = [...logs].sort((a, b) => b.date.localeCompare(a.date))
 
   async function addLog(e: React.FormEvent) {
     e.preventDefault()
@@ -67,7 +65,7 @@ export default function WorkoutsPage() {
 
   async function del(id: string) {
     await fetch('/api/fitness/workouts', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
-    setManualLogs(l => l.filter(x => x.id !== id))
+    setLogs(l => l.filter(x => x.id !== id))
   }
 
   const weekStart = mondayStr(new Date())
@@ -85,7 +83,7 @@ export default function WorkoutsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Workouts</h1>
-          <p className="text-sm text-gray-400 mt-0.5">From habits + manual logs</p>
+          <p className="text-sm text-gray-400 mt-0.5">Apple Health + manual logs</p>
         </div>
         <button onClick={() => setShowForm(s => !s)}
           className="flex items-center gap-1.5 bg-[rgb(var(--l-green))] text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-[rgb(var(--l-green))] active:scale-95 transition-all">
@@ -110,10 +108,9 @@ export default function WorkoutsPage() {
         ))}
       </div>
 
-      {habitLogs.length === 0 && (
+      {allLogs.every(l => l.source !== 'apple_health') && (
         <div className="bg-ldg-ink/[0.04] border border-ldg-ink/10 rounded-2xl px-4 py-3 text-sm text-ldg-ink/70">
-          Tick <strong>PT Session</strong> or <strong>Bike Ride</strong> in{' '}
-          <Link href="/life" className="underline font-semibold">Habits</Link> and they'll appear here automatically.
+          No Apple Health workouts synced yet — once your Shortcuts automation is sending workout data, sessions from your Watch show up here automatically.
         </div>
       )}
 
@@ -161,7 +158,7 @@ export default function WorkoutsPage() {
       {allLogs.length === 0 ? (
         <div className="text-center py-16">
           <Dumbbell size={40} className="text-gray-300 dark:text-gray-700 mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">No workouts yet. Tick a Fitness habit or log manually.</p>
+          <p className="text-gray-400 text-sm">No workouts yet. Log one manually, or sync from Apple Health.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -180,24 +177,32 @@ export default function WorkoutsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', t.color)}>
-                          {log.source === 'habit' && log.habitName ? log.habitName : t.label}
+                          {log.rawActivityType ?? t.label}
                         </span>
                         {log.duration && (
                           <span className="text-xs text-gray-400 flex items-center gap-1">
                             <Timer size={10} /> {log.duration} min
                           </span>
                         )}
-                        {log.source === 'habit' && (
-                          <span className="text-[10px] text-gray-400 italic">from habits</span>
+                        {log.avgHeartRate && (
+                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                            <HeartPulse size={10} /> {log.avgHeartRate} bpm avg
+                          </span>
+                        )}
+                        {log.calories && (
+                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                            <Flame size={10} /> {log.calories} kcal
+                          </span>
+                        )}
+                        {log.source === 'apple_health' && (
+                          <span className="text-[10px] text-gray-400 italic">🍎 Apple Health</span>
                         )}
                       </div>
                       {log.notes && <p className="text-xs text-gray-500 mt-1 truncate">{log.notes}</p>}
                     </div>
-                    {log.source === 'manual' && (
-                      <button onClick={() => del(log.id)} className="text-gray-300 hover:text-red-400 transition-colors shrink-0">
-                        <Trash2 size={14} />
-                      </button>
-                    )}
+                    <button onClick={() => del(log.id)} className="text-gray-300 hover:text-red-400 transition-colors shrink-0">
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 )
               })}
