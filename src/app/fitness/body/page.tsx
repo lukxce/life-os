@@ -6,19 +6,11 @@ import {
 } from 'recharts'
 import { cn } from '@/lib/utils'
 import { Scale, Plus, X } from 'lucide-react'
+import { BODY_METRICS as METRICS } from '@/lib/metrics'
 
 interface BodyRow { id: string; date: string; metric: string; value: number }
 
-const METRICS = [
-  { key: 'weight',    label: 'Weight',     unit: 'kg', icon: '⚖️',  color: '#2e7d4f', cadence: 'weekly'  },
-  { key: 'waist',     label: 'Waist',      unit: 'cm', icon: '📏',  color: '#54555c', cadence: 'weekly'  },
-  { key: 'chest',     label: 'Chest',      unit: 'cm', icon: '💪',  color: '#8fb8a0', cadence: 'monthly' },
-  { key: 'bicep',     label: 'Bicep',      unit: 'cm', icon: '💪',  color: '#3d6650', cadence: 'monthly' },
-  { key: 'shoulders', label: 'Shoulders',  unit: 'cm', icon: '🏋️', color: '#84858c', cadence: 'monthly' },
-  { key: 'thigh',     label: 'Thigh',      unit: 'cm', icon: '🦵',  color: '#6f9080', cadence: 'monthly' },
-] as const
-
-type MetricKey = typeof METRICS[number]['key']
+type MetricKey = string
 
 function statLine(rows: BodyRow[]) {
   if (rows.length === 0) return null

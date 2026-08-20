@@ -3,21 +3,14 @@ import { useEffect, useState, useCallback } from 'react'
 import { Dumbbell, Plus, Trash2, X, Timer } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { WORKOUT_TYPES as TYPES, workoutTypeConfig } from '@/lib/workoutType'
 
 interface WorkoutEntry {
   id: string; date: string; type: string; duration: number | null; notes: string | null
   source: 'manual' | 'habit'; habitName?: string
 }
 
-const TYPES = [
-  { value: 'pt',           label: 'PT Session',     icon: '🏋️', color: 'bg-ldg-ink/[0.06] text-ldg-ink/70' },
-  { value: 'cardio_bike',  label: 'Bike Ride',      icon: '🚴', color: 'bg-ldg-ink/[0.06] text-ldg-ink/70' },
-  { value: 'cardio_other', label: 'Cardio (other)', icon: '🏃', color: 'bg-ldg-ink/[0.06] text-ldg-ink/70' },
-  { value: 'rest',         label: 'Active Rest',    icon: '🧘', color: 'bg-ldg-green/10 text-ldg-green' },
-  { value: 'other',        label: 'Other',          icon: '⚡', color: 'bg-ldg-ink/[0.06] text-ldg-ink/55' },
-]
-
-const typeOf = (v: string) => TYPES.find(t => t.value === v) ?? TYPES[4]
+const typeOf = workoutTypeConfig
 
 function toLocalDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
