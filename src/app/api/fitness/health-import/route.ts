@@ -253,20 +253,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, imported })
 }
 
-// Temporary — clears the synthetic test vitals/sleep/workout data posted
-// while verifying vitals.ts's scoring math, so it doesn't pollute the real
-// baseline once actual Apple Health data starts flowing in. Remove after running once.
-export async function DELETE(req: NextRequest) {
-  const key = req.headers.get('x-api-key')
-  if (!process.env.HEALTH_IMPORT_KEY || key !== process.env.HEALTH_IMPORT_KEY) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
-  const metrics = await prisma.bodyMetric.deleteMany({ where: { metric: { in: ['hrvSDNN', 'restingHeartRate', 'respiratoryRate'] } } })
-  const sleep = await prisma.sleepSession.deleteMany({})
-  const workouts = await prisma.workoutLog.deleteMany({ where: { source: 'apple_health' } })
-  return NextResponse.json({ deletedMetrics: metrics.count, deletedSleep: sleep.count, deletedWorkouts: workouts.count })
-}
-
 // Read-only check, same static key — lets me confirm what actually landed
 // after a real Shortcuts run while the rest of the metrics get wired up.
 export async function GET(req: NextRequest) {
