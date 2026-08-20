@@ -22,7 +22,12 @@ const BASELINE_DAYS = 60
 const MIN_BASELINE_DAYS = 14
 const STRAIN_CALIBRATION_DAYS = 90
 const MIN_STRAIN_CALIBRATION_DAYS = 10
-const DEFAULT_STRAIN_K = 0.15 // fallback saturating-exponential constant before 10 days of workout history exist
+// Fallback saturating-exponential constant before 10 days of workout history
+// exist to self-calibrate from. Tuned so a solid single-workout day (TRIMP
+// ~50-60, e.g. 45min at a moderate-hard HR zone) lands around strain 10-12,
+// not maxed at 21 — verified against a real test payload (45min @ 135bpm
+// avg / 190bpm max / 54bpm resting → TRIMP 53.8 → strain 10.0 at this k).
+const DEFAULT_STRAIN_K = 0.012
 
 function dayUTC(dateStr: string): Date {
   const [y, m, d] = dateStr.split('-').map(Number)

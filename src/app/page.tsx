@@ -9,6 +9,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { MealPhotoButton } from '@/components/ui/MealPhotoButton'
 import { WeeklyDigestCard } from '@/components/ui/WeeklyDigestCard'
 import { PatternsCard } from '@/components/ui/PatternsCard'
+import { RecoveryCard } from '@/components/ui/RecoveryCard'
 import { GlassHeader, GlassHeaderSpacer, GlassMobileDock } from '@/components/layout/GlassChrome'
 import { QuickAction } from '@/components/ledger/QuickMenu'
 import { Card, Label, SolidBtn, GhostBtn } from '@/components/ledger/primitives'
@@ -193,6 +194,7 @@ export default function HomePage() {
 
         <WeeklyDigestCard />
         <PatternsCard />
+        <RecoveryCard />
 
         {/* The day in figures + the week */}
         <Card className="p-5">
