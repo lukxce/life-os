@@ -115,7 +115,12 @@ export default function SubscriptionsPage() {
     load()
   }
 
-  const selectedCat = categories.find(c => c.name === form.category)
+  // Categories aren't just filtered by name — "Other" exists in both the
+  // personal and business sets (same name, different type, per the
+  // Category model's @@unique([userId, name, type])), so a name-only match
+  // could silently grab the wrong type's subcategories.
+  const categoriesForType = categories.filter(c => c.type === form.type)
+  const selectedCat = categoriesForType.find(c => c.name === form.category)
 
   // USD treated as ~0.92 EUR (rough parity); RSD uses manualRate
   const toEur = (s: any) => {
@@ -193,7 +198,7 @@ export default function SubscriptionsPage() {
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Type</label>
-              <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
+              <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value, category: '', subcategory: '' }))}
                 className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100">
                 <option value="personal">Personal</option>
                 <option value="business">Business</option>
@@ -216,7 +221,7 @@ export default function SubscriptionsPage() {
               <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value, subcategory: '' }))}
                 className="mt-1 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--l-green))] dark:bg-gray-800 dark:text-gray-100">
                 <option value="">None</option>
-                {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                {categoriesForType.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
             </div>
             <div>
