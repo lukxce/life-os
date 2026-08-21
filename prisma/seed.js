@@ -1,3 +1,13 @@
+// Manual-only (`npm run seed`) — used to be wired as a `postbuild` hook,
+// running automatically on every single deploy. That meant every upsert
+// below (habits, categories, schedule days) got silently re-created any
+// time it was deleted through the app's own UI — there was no "user
+// deleted this on purpose" guard anywhere in this file. Confirmed cause of
+// "Stretches"/"Bend App" habits and the "Food & Groceries" category
+// reappearing after every deploy no matter how many times they were
+// removed. Only ever useful for provisioning a genuinely fresh database —
+// this one has been running for a long time and already has everything it
+// needs, so there's no reason for this to run unattended anymore.
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 

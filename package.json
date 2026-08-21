@@ -7,7 +7,7 @@
     "build": "prisma db push --skip-generate --accept-data-loss && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "postbuild": "node prisma/seed.js"
+    "seed": "node prisma/seed.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
